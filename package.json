@@ -1,0 +1,26 @@
+{
+  "name": "stardust",
+  "version": "1.0.0",
+  "description": "多端部署系统 - 网站/Android/iOS/微信小程序/抖音小程序",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run start:dev",
+    "dev:frontend": "cd frontend && npm run dev:h5",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build:h5",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "uni-app",
+    "nest.js",
+    "multi-platform",
+    "astrology",
+    "social"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

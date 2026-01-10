@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String?   @unique
+  phone         String?   @unique
+  password      String
+  nickname      String?
+  avatar        String?
+  birthYear     Int
+  birthMonth    Int
+  birthDay      Int
+  birthHour     Int
+  lunarDate     String?
+  zodiacSign    String?
+  fiveElements  String?
+  gender        String?
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  prayers       Prayer[]
+  confessions   Confession[]
+  treeholes     Treehole[]
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  matches       Match[]  @relation("UserMatches")
+  matchedUsers  Match[]  @relation("MatchedUsers")
+
+  @@map("users")
+}
+
+model Prayer {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  targetName  String?
+  image       String?
+  prayerCount Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("prayers")
+}
+
+model Confession {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetName  String
+  content     String
+  isAnonymous Boolean  @default(true)
+  isMatched   Boolean  @default(false)
+  matchedWith String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("confessions")
+}
+
+model Treehole {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  image     String?
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("treeholes")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("messages")
+}
+
+model Match {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation("UserMatches", fields: [userId], references: [id], onDelete: Cascade)
+  matchedId  String
+  matchedUser User    @relation("MatchedUsers", fields: [matchedId], references: [id], onDelete: Cascade)
+  score      Float
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, matchedId])
+  @@map("matches")
+}
