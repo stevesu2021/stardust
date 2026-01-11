@@ -1,7 +1,7 @@
 {
   "name": "stardust",
   "version": "1.0.0",
-  "description": "多端部署系统 - 网站/Android/iOS/微信小程序/抖音小程序",
+  "description": "星契集 - 多端部署系统，支持网站/Android/iOS/微信小程序/抖音小程序",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "cd backend && npm run start:dev",

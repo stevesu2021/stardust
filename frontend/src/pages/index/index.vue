@@ -1,7 +1,7 @@
 <template>
   <view class="container">
     <view class="header">
-      <text class="title">星尘</text>
+      <text class="title">星契集</text>
       <text class="subtitle">探索你的星座与缘分</text>
     </view>
 
