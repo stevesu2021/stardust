@@ -6,17 +6,18 @@ export default defineConfig({
   base: '/',
   server: {
     port: 8080,
-    host: true,
+    host: '0.0.0.0',
     strictPort: false,
+    // 完全禁用 HMR 以防止自动刷新
+    hmr: false,
     proxy: {
       '/api': {
-        target: 'http://0.0.0.0:3000',
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true,
+        secure: false,
+        ws: true,
         rewrite: (path) => path.replace(/^\/api/, '/api')
       }
-    },
-    hmr: {
-      overlay: true
     }
   },
   build: {

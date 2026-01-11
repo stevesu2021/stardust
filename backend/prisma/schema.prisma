@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -11,7 +11,7 @@ model User {
   id            String    @id @default(uuid())
   email         String?   @unique
   phone         String?   @unique
-  password      String
+  password      String?
   nickname      String?
   avatar        String?
   birthYear     Int
@@ -23,6 +23,8 @@ model User {
   fiveElements  String?
   gender        String?
   bio           String?
+  wechatOpenId  String?   @unique  // 微信OpenID
+  wechatUnionId String?   @unique  // 微信UnionID
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

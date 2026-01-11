@@ -1,20 +1,11 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ([
-/* 0 */,
-/* 1 */
-/***/ ((module) => {
+/******/ 	var __webpack_modules__ = ({
 
-module.exports = require("@nestjs/core");
-
-/***/ }),
-/* 2 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/common");
-
-/***/ }),
-/* 3 */
+/***/ "./src/app.module.ts":
+/*!***************************!*\
+  !*** ./src/app.module.ts ***!
+  \***************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -26,16 +17,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AppModule = void 0;
-const common_1 = __webpack_require__(2);
-const config_1 = __webpack_require__(4);
-const prisma_module_1 = __webpack_require__(5);
-const auth_module_1 = __webpack_require__(8);
-const user_module_1 = __webpack_require__(14);
-const astrology_module_1 = __webpack_require__(18);
-const prayer_module_1 = __webpack_require__(23);
-const confession_module_1 = __webpack_require__(27);
-const treehole_module_1 = __webpack_require__(30);
-const dating_module_1 = __webpack_require__(33);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+const prisma_module_1 = __webpack_require__(/*! ./common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+const auth_module_1 = __webpack_require__(/*! ./modules/auth/auth.module */ "./src/modules/auth/auth.module.ts");
+const user_module_1 = __webpack_require__(/*! ./modules/user/user.module */ "./src/modules/user/user.module.ts");
+const astrology_module_1 = __webpack_require__(/*! ./modules/astrology/astrology.module */ "./src/modules/astrology/astrology.module.ts");
+const prayer_module_1 = __webpack_require__(/*! ./modules/prayer/prayer.module */ "./src/modules/prayer/prayer.module.ts");
+const confession_module_1 = __webpack_require__(/*! ./modules/confession/confession.module */ "./src/modules/confession/confession.module.ts");
+const treehole_module_1 = __webpack_require__(/*! ./modules/treehole/treehole.module */ "./src/modules/treehole/treehole.module.ts");
+const dating_module_1 = __webpack_require__(/*! ./modules/dating/dating.module */ "./src/modules/dating/dating.module.ts");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -60,462 +51,11 @@ exports.AppModule = AppModule = __decorate([
 
 
 /***/ }),
-/* 4 */
-/***/ ((module) => {
 
-module.exports = require("@nestjs/config");
-
-/***/ }),
-/* 5 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaModule = void 0;
-const common_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(6);
-let PrismaModule = class PrismaModule {
-};
-exports.PrismaModule = PrismaModule;
-exports.PrismaModule = PrismaModule = __decorate([
-    (0, common_1.Global)(),
-    (0, common_1.Module)({
-        providers: [prisma_service_1.PrismaService],
-        exports: [prisma_service_1.PrismaService],
-    })
-], PrismaModule);
-
-
-/***/ }),
-/* 6 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrismaService = void 0;
-const common_1 = __webpack_require__(2);
-const client_1 = __webpack_require__(7);
-let PrismaService = class PrismaService extends client_1.PrismaClient {
-    async onModuleInit() {
-        await this.$connect();
-    }
-    async onModuleDestroy() {
-        await this.$disconnect();
-    }
-};
-exports.PrismaService = PrismaService;
-exports.PrismaService = PrismaService = __decorate([
-    (0, common_1.Injectable)()
-], PrismaService);
-
-
-/***/ }),
-/* 7 */
-/***/ ((module) => {
-
-module.exports = require("@prisma/client");
-
-/***/ }),
-/* 8 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AuthModule = void 0;
-const common_1 = __webpack_require__(2);
-const jwt_1 = __webpack_require__(9);
-const passport_1 = __webpack_require__(10);
-const auth_service_1 = __webpack_require__(11);
-const auth_controller_1 = __webpack_require__(13);
-const prisma_module_1 = __webpack_require__(5);
-let AuthModule = class AuthModule {
-};
-exports.AuthModule = AuthModule;
-exports.AuthModule = AuthModule = __decorate([
-    (0, common_1.Module)({
-        imports: [
-            prisma_module_1.PrismaModule,
-            passport_1.PassportModule,
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET || 'your-secret-key',
-                signOptions: { expiresIn: process.env.JWT_EXPIRATION || '7d' },
-                global: true,
-            }),
-        ],
-        controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService],
-        exports: [auth_service_1.AuthService, jwt_1.JwtModule],
-    })
-], AuthModule);
-
-
-/***/ }),
-/* 9 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/jwt");
-
-/***/ }),
-/* 10 */
-/***/ ((module) => {
-
-module.exports = require("@nestjs/passport");
-
-/***/ }),
-/* 11 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a, _b;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AuthService = void 0;
-const common_1 = __webpack_require__(2);
-const jwt_1 = __webpack_require__(9);
-const prisma_service_1 = __webpack_require__(6);
-const bcrypt = __importStar(__webpack_require__(12));
-let AuthService = class AuthService {
-    constructor(prisma, jwtService) {
-        this.prisma = prisma;
-        this.jwtService = jwtService;
-    }
-    async register(data) {
-        const hashedPassword = await bcrypt.hash(data.password, 10);
-        const user = await this.prisma.user.create({
-            data: {
-                ...data,
-                password: hashedPassword,
-            },
-        });
-        const token = this.generateToken(user.id);
-        return {
-            user: this.sanitizeUser(user),
-            token,
-        };
-    }
-    async login(identifier, password) {
-        const user = await this.prisma.user.findFirst({
-            where: {
-                OR: [{ email: identifier }, { phone: identifier }],
-            },
-        });
-        if (!user) {
-            throw new Error('用户不存在');
-        }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            throw new Error('密码错误');
-        }
-        const token = this.generateToken(user.id);
-        return {
-            user: this.sanitizeUser(user),
-            token,
-        };
-    }
-    generateToken(userId) {
-        return this.jwtService.sign({ sub: userId });
-    }
-    sanitizeUser(user) {
-        const { password, ...sanitized } = user;
-        return sanitized;
-    }
-};
-exports.AuthService = AuthService;
-exports.AuthService = AuthService = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _b : Object])
-], AuthService);
-
-
-/***/ }),
-/* 12 */
-/***/ ((module) => {
-
-module.exports = require("bcrypt");
-
-/***/ }),
-/* 13 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AuthController = void 0;
-const common_1 = __webpack_require__(2);
-const auth_service_1 = __webpack_require__(11);
-let AuthController = class AuthController {
-    constructor(authService) {
-        this.authService = authService;
-    }
-    async register(data) {
-        return this.authService.register(data);
-    }
-    async login(data) {
-        return this.authService.login(data.identifier, data.password);
-    }
-};
-exports.AuthController = AuthController;
-__decorate([
-    (0, common_1.Post)('register'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], AuthController.prototype, "register", null);
-__decorate([
-    (0, common_1.Post)('login'),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], AuthController.prototype, "login", null);
-exports.AuthController = AuthController = __decorate([
-    (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [typeof (_a = typeof auth_service_1.AuthService !== "undefined" && auth_service_1.AuthService) === "function" ? _a : Object])
-], AuthController);
-
-
-/***/ }),
-/* 14 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserModule = void 0;
-const common_1 = __webpack_require__(2);
-const user_service_1 = __webpack_require__(15);
-const user_controller_1 = __webpack_require__(16);
-const prisma_module_1 = __webpack_require__(5);
-const auth_module_1 = __webpack_require__(8);
-let UserModule = class UserModule {
-};
-exports.UserModule = UserModule;
-exports.UserModule = UserModule = __decorate([
-    (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
-        controllers: [user_controller_1.UserController],
-        providers: [user_service_1.UserService],
-        exports: [user_service_1.UserService],
-    })
-], UserModule);
-
-
-/***/ }),
-/* 15 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserService = void 0;
-const common_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(6);
-let UserService = class UserService {
-    constructor(prisma) {
-        this.prisma = prisma;
-    }
-    async getUserById(id) {
-        return this.prisma.user.findUnique({
-            where: { id },
-        });
-    }
-    async updateUser(id, data) {
-        return this.prisma.user.update({
-            where: { id },
-            data,
-        });
-    }
-    async deleteUser(id) {
-        return this.prisma.user.delete({
-            where: { id },
-        });
-    }
-    async getAllUsers(skip = 0, take = 20) {
-        return this.prisma.user.findMany({
-            skip,
-            take,
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
-    }
-};
-exports.UserService = UserService;
-exports.UserService = UserService = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
-], UserService);
-
-
-/***/ }),
-/* 16 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.UserController = void 0;
-const common_1 = __webpack_require__(2);
-const user_service_1 = __webpack_require__(15);
-const jwt_auth_guard_1 = __webpack_require__(17);
-let UserController = class UserController {
-    constructor(userService) {
-        this.userService = userService;
-    }
-    async getUser(id) {
-        return this.userService.getUserById(id);
-    }
-    async updateUser(id, data) {
-        return this.userService.updateUser(id, data);
-    }
-    async deleteUser(id) {
-        return this.userService.deleteUser(id);
-    }
-    async getAllUsers(skip = 0, take = 20) {
-        return this.userService.getAllUsers(Number(skip), Number(take));
-    }
-};
-exports.UserController = UserController;
-__decorate([
-    (0, common_1.Get)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getUser", null);
-__decorate([
-    (0, common_1.Put)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "updateUser", null);
-__decorate([
-    (0, common_1.Delete)(':id'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "deleteUser", null);
-__decorate([
-    (0, common_1.Get)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Query)('skip')),
-    __param(1, (0, common_1.Query)('take')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number]),
-    __metadata("design:returntype", Promise)
-], UserController.prototype, "getAllUsers", null);
-exports.UserController = UserController = __decorate([
-    (0, common_1.Controller)('user'),
-    __metadata("design:paramtypes", [typeof (_a = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _a : Object])
-], UserController);
-
-
-/***/ }),
-/* 17 */
+/***/ "./src/common/guards/jwt-auth.guard.ts":
+/*!*********************************************!*\
+  !*** ./src/common/guards/jwt-auth.guard.ts ***!
+  \*********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -531,8 +71,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.JwtAuthGuard = void 0;
-const common_1 = __webpack_require__(2);
-const jwt_1 = __webpack_require__(9);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
 let JwtAuthGuard = class JwtAuthGuard {
     constructor(jwtService) {
         this.jwtService = jwtService;
@@ -565,7 +105,11 @@ exports.JwtAuthGuard = JwtAuthGuard = __decorate([
 
 
 /***/ }),
-/* 18 */
+
+/***/ "./src/common/prisma/prisma.module.ts":
+/*!********************************************!*\
+  !*** ./src/common/prisma/prisma.module.ts ***!
+  \********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -576,28 +120,27 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AstrologyModule = void 0;
-const common_1 = __webpack_require__(2);
-const astrology_service_1 = __webpack_require__(19);
-const astrology_controller_1 = __webpack_require__(22);
-const prisma_module_1 = __webpack_require__(5);
-const astrology_utils_1 = __webpack_require__(20);
-const auth_module_1 = __webpack_require__(8);
-let AstrologyModule = class AstrologyModule {
+exports.PrismaModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ./prisma.service */ "./src/common/prisma/prisma.service.ts");
+let PrismaModule = class PrismaModule {
 };
-exports.AstrologyModule = AstrologyModule;
-exports.AstrologyModule = AstrologyModule = __decorate([
+exports.PrismaModule = PrismaModule;
+exports.PrismaModule = PrismaModule = __decorate([
+    (0, common_1.Global)(),
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
-        controllers: [astrology_controller_1.AstrologyController],
-        providers: [astrology_service_1.AstrologyServiceModule, astrology_utils_1.AstrologyService],
-        exports: [astrology_service_1.AstrologyServiceModule],
+        providers: [prisma_service_1.PrismaService],
+        exports: [prisma_service_1.PrismaService],
     })
-], AstrologyModule);
+], PrismaModule);
 
 
 /***/ }),
-/* 19 */
+
+/***/ "./src/common/prisma/prisma.service.ts":
+/*!*********************************************!*\
+  !*** ./src/common/prisma/prisma.service.ts ***!
+  \*********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -607,55 +150,30 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AstrologyServiceModule = void 0;
-const common_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(6);
-const astrology_utils_1 = __webpack_require__(20);
-let AstrologyServiceModule = class AstrologyServiceModule {
-    constructor(prisma, astrologyService) {
-        this.prisma = prisma;
-        this.astrologyService = astrologyService;
+exports.PrismaService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const client_1 = __webpack_require__(/*! @prisma/client */ "@prisma/client");
+let PrismaService = class PrismaService extends client_1.PrismaClient {
+    async onModuleInit() {
+        await this.$connect();
     }
-    async calculateAstrology(userId) {
-        const user = await this.prisma.user.findUnique({
-            where: { id: userId },
-        });
-        if (!user) {
-            throw new Error('用户不存在');
-        }
-        const lunar = this.astrologyService.solarToLunar(user.birthYear, user.birthMonth, user.birthDay, user.birthHour);
-        const zodiacSign = this.astrologyService.getZodiacSign(user.birthMonth, user.birthDay);
-        const fiveElements = this.astrologyService.getFiveElements(user.birthYear, user.birthMonth, user.birthDay, user.birthHour);
-        const updatedUser = await this.prisma.user.update({
-            where: { id: userId },
-            data: {
-                lunarDate: `${lunar.lunarYearText}年${lunar.lunarMonthText}${lunar.lunarDayText}`,
-                zodiacSign,
-                fiveElements: JSON.stringify(fiveElements),
-            },
-        });
-        return {
-            user: updatedUser,
-            lunar,
-            zodiacSign,
-            fiveElements,
-        };
+    async onModuleDestroy() {
+        await this.$disconnect();
     }
 };
-exports.AstrologyServiceModule = AstrologyServiceModule;
-exports.AstrologyServiceModule = AstrologyServiceModule = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof astrology_utils_1.AstrologyService !== "undefined" && astrology_utils_1.AstrologyService) === "function" ? _b : Object])
-], AstrologyServiceModule);
+exports.PrismaService = PrismaService;
+exports.PrismaService = PrismaService = __decorate([
+    (0, common_1.Injectable)()
+], PrismaService);
 
 
 /***/ }),
-/* 20 */
+
+/***/ "./src/common/utils/astrology.utils.ts":
+/*!*********************************************!*\
+  !*** ./src/common/utils/astrology.utils.ts ***!
+  \*********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -667,8 +185,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AstrologyService = void 0;
-const common_1 = __webpack_require__(2);
-const lunar_javascript_1 = __webpack_require__(21);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const lunar_javascript_1 = __webpack_require__(/*! lunar-javascript */ "lunar-javascript");
 let AstrologyService = class AstrologyService {
     solarToLunar(year, month, day, hour) {
         const solar = lunar_javascript_1.Solar.fromYmdHms(year, month, day, hour, 0, 0);
@@ -781,13 +299,11 @@ exports.AstrologyService = AstrologyService = __decorate([
 
 
 /***/ }),
-/* 21 */
-/***/ ((module) => {
 
-module.exports = require("lunar-javascript");
-
-/***/ }),
-/* 22 */
+/***/ "./src/modules/astrology/astrology.controller.ts":
+/*!*******************************************************!*\
+  !*** ./src/modules/astrology/astrology.controller.ts ***!
+  \*******************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -806,9 +322,9 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AstrologyController = void 0;
-const common_1 = __webpack_require__(2);
-const astrology_service_1 = __webpack_require__(19);
-const jwt_auth_guard_1 = __webpack_require__(17);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const astrology_service_1 = __webpack_require__(/*! ./astrology.service */ "./src/modules/astrology/astrology.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
 let AstrologyController = class AstrologyController {
     constructor(astrologyService) {
         this.astrologyService = astrologyService;
@@ -833,7 +349,11 @@ exports.AstrologyController = AstrologyController = __decorate([
 
 
 /***/ }),
-/* 23 */
+
+/***/ "./src/modules/astrology/astrology.module.ts":
+/*!***************************************************!*\
+  !*** ./src/modules/astrology/astrology.module.ts ***!
+  \***************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -844,27 +364,32 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrayerModule = void 0;
-const common_1 = __webpack_require__(2);
-const prayer_service_1 = __webpack_require__(24);
-const prayer_controller_1 = __webpack_require__(25);
-const prisma_module_1 = __webpack_require__(5);
-const auth_module_1 = __webpack_require__(8);
-let PrayerModule = class PrayerModule {
+exports.AstrologyModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const astrology_service_1 = __webpack_require__(/*! ./astrology.service */ "./src/modules/astrology/astrology.service.ts");
+const astrology_controller_1 = __webpack_require__(/*! ./astrology.controller */ "./src/modules/astrology/astrology.controller.ts");
+const prisma_module_1 = __webpack_require__(/*! ../../common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+const astrology_utils_1 = __webpack_require__(/*! ../../common/utils/astrology.utils */ "./src/common/utils/astrology.utils.ts");
+const auth_module_1 = __webpack_require__(/*! ../auth/auth.module */ "./src/modules/auth/auth.module.ts");
+let AstrologyModule = class AstrologyModule {
 };
-exports.PrayerModule = PrayerModule;
-exports.PrayerModule = PrayerModule = __decorate([
+exports.AstrologyModule = AstrologyModule;
+exports.AstrologyModule = AstrologyModule = __decorate([
     (0, common_1.Module)({
         imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
-        controllers: [prayer_controller_1.PrayerController],
-        providers: [prayer_service_1.PrayerService],
-        exports: [prayer_service_1.PrayerService],
+        controllers: [astrology_controller_1.AstrologyController],
+        providers: [astrology_service_1.AstrologyServiceModule, astrology_utils_1.AstrologyService],
+        exports: [astrology_service_1.AstrologyServiceModule],
     })
-], PrayerModule);
+], AstrologyModule);
 
 
 /***/ }),
-/* 24 */
+
+/***/ "./src/modules/astrology/astrology.service.ts":
+/*!****************************************************!*\
+  !*** ./src/modules/astrology/astrology.service.ts ***!
+  \****************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -877,75 +402,499 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrayerService = void 0;
-const common_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(6);
-let PrayerService = class PrayerService {
-    constructor(prisma) {
+exports.AstrologyServiceModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
+const astrology_utils_1 = __webpack_require__(/*! ../../common/utils/astrology.utils */ "./src/common/utils/astrology.utils.ts");
+let AstrologyServiceModule = class AstrologyServiceModule {
+    constructor(prisma, astrologyService) {
         this.prisma = prisma;
+        this.astrologyService = astrologyService;
     }
-    async createPrayer(userId, data) {
-        return this.prisma.prayer.create({
+    async calculateAstrology(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new Error('用户不存在');
+        }
+        const lunar = this.astrologyService.solarToLunar(user.birthYear, user.birthMonth, user.birthDay, user.birthHour);
+        const zodiacSign = this.astrologyService.getZodiacSign(user.birthMonth, user.birthDay);
+        const fiveElements = this.astrologyService.getFiveElements(user.birthYear, user.birthMonth, user.birthDay, user.birthHour);
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
             data: {
-                userId,
-                ...data,
-            },
-            include: {
-                user: true,
+                lunarDate: `${lunar.lunarYearText}年${lunar.lunarMonthText}${lunar.lunarDayText}`,
+                zodiacSign,
+                fiveElements: JSON.stringify(fiveElements),
             },
         });
-    }
-    async getPrayers(userId) {
-        return this.prisma.prayer.findMany({
-            where: { userId },
-            include: {
-                user: true,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
-    }
-    async incrementPrayerCount(prayerId) {
-        return this.prisma.prayer.update({
-            where: { id: prayerId },
-            data: {
-                prayerCount: {
-                    increment: 1,
-                },
-            },
-        });
-    }
-    async getPublicPrayers(skip = 0, take = 20) {
-        return this.prisma.prayer.findMany({
-            skip,
-            take,
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        nickname: true,
-                        avatar: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+        return {
+            user: updatedUser,
+            lunar,
+            zodiacSign,
+            fiveElements,
+        };
     }
 };
-exports.PrayerService = PrayerService;
-exports.PrayerService = PrayerService = __decorate([
+exports.AstrologyServiceModule = AstrologyServiceModule;
+exports.AstrologyServiceModule = AstrologyServiceModule = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
-], PrayerService);
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof astrology_utils_1.AstrologyService !== "undefined" && astrology_utils_1.AstrologyService) === "function" ? _b : Object])
+], AstrologyServiceModule);
 
 
 /***/ }),
-/* 25 */
+
+/***/ "./src/modules/auth/auth.controller.ts":
+/*!*********************************************!*\
+  !*** ./src/modules/auth/auth.controller.ts ***!
+  \*********************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AuthController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const auth_service_1 = __webpack_require__(/*! ./auth.service */ "./src/modules/auth/auth.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
+let AuthController = class AuthController {
+    constructor(authService) {
+        this.authService = authService;
+    }
+    async register(data) {
+        try {
+            const result = await this.authService.register(data);
+            return {
+                success: true,
+                ...result
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || '注册失败');
+        }
+    }
+    async login(data) {
+        try {
+            const result = await this.authService.login(data.identifier, data.password);
+            return {
+                success: true,
+                ...result
+            };
+        }
+        catch (error) {
+            if (error.message === '账号不存在') {
+                throw new common_1.NotFoundException(error.message);
+            }
+            throw new common_1.BadRequestException(error.message || '登录失败');
+        }
+    }
+    async wechatLogin(data) {
+        try {
+            const result = await this.authService.wechatLogin(data.code, data.userInfo);
+            return {
+                success: true,
+                ...result
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || '微信登录失败');
+        }
+    }
+    async bindWechat(req, data) {
+        try {
+            const userId = req.user.sub;
+            const result = await this.authService.bindWechat(userId, data.code);
+            return {
+                success: true,
+                ...result
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || '绑定微信失败');
+        }
+    }
+    async unbindWechat(req) {
+        try {
+            const userId = req.user.sub;
+            const result = await this.authService.unbindWechat(userId);
+            return {
+                success: true,
+                ...result
+            };
+        }
+        catch (error) {
+            throw new common_1.BadRequestException(error.message || '解绑微信失败');
+        }
+    }
+    async getProfile(req) {
+        const userId = req.user.sub;
+        return {
+            success: true,
+            userId,
+            message: '认证成功'
+        };
+    }
+};
+exports.AuthController = AuthController;
+__decorate([
+    (0, common_1.Post)('register'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "register", null);
+__decorate([
+    (0, common_1.Post)('login'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('wechat/login'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "wechatLogin", null);
+__decorate([
+    (0, common_1.Post)('wechat/bind'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "bindWechat", null);
+__decorate([
+    (0, common_1.Post)('wechat/unbind'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "unbindWechat", null);
+__decorate([
+    (0, common_1.Get)('profile'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "getProfile", null);
+exports.AuthController = AuthController = __decorate([
+    (0, common_1.Controller)('auth'),
+    __metadata("design:paramtypes", [typeof (_a = typeof auth_service_1.AuthService !== "undefined" && auth_service_1.AuthService) === "function" ? _a : Object])
+], AuthController);
+
+
+/***/ }),
+
+/***/ "./src/modules/auth/auth.module.ts":
+/*!*****************************************!*\
+  !*** ./src/modules/auth/auth.module.ts ***!
+  \*****************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AuthModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+const passport_1 = __webpack_require__(/*! @nestjs/passport */ "@nestjs/passport");
+const auth_service_1 = __webpack_require__(/*! ./auth.service */ "./src/modules/auth/auth.service.ts");
+const auth_controller_1 = __webpack_require__(/*! ./auth.controller */ "./src/modules/auth/auth.controller.ts");
+const prisma_module_1 = __webpack_require__(/*! ../../common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+let AuthModule = class AuthModule {
+};
+exports.AuthModule = AuthModule;
+exports.AuthModule = AuthModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            prisma_module_1.PrismaModule,
+            passport_1.PassportModule,
+            jwt_1.JwtModule.register({
+                secret: process.env.JWT_SECRET || 'your-secret-key',
+                signOptions: { expiresIn: process.env.JWT_EXPIRATION || '7d' },
+                global: true,
+            }),
+        ],
+        controllers: [auth_controller_1.AuthController],
+        providers: [auth_service_1.AuthService],
+        exports: [auth_service_1.AuthService, jwt_1.JwtModule],
+    })
+], AuthModule);
+
+
+/***/ }),
+
+/***/ "./src/modules/auth/auth.service.ts":
+/*!******************************************!*\
+  !*** ./src/modules/auth/auth.service.ts ***!
+  \******************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AuthService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const jwt_1 = __webpack_require__(/*! @nestjs/jwt */ "@nestjs/jwt");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
+const bcrypt = __importStar(__webpack_require__(/*! bcrypt */ "bcrypt"));
+let AuthService = class AuthService {
+    constructor(prisma, jwtService) {
+        this.prisma = prisma;
+        this.jwtService = jwtService;
+    }
+    async register(data) {
+        if (!data.password) {
+            throw new Error('密码不能为空');
+        }
+        if (!data.birthYear || !data.birthMonth || !data.birthDay || data.birthHour === undefined) {
+            throw new Error('请填写完整的出生信息');
+        }
+        if (!data.phone && !data.email) {
+            throw new Error('请提供手机号或邮箱');
+        }
+        if (data.phone) {
+            const existingPhone = await this.prisma.user.findUnique({
+                where: { phone: data.phone },
+            });
+            if (existingPhone) {
+                throw new Error('该手机号已被注册');
+            }
+        }
+        if (data.email) {
+            const existingEmail = await this.prisma.user.findUnique({
+                where: { email: data.email },
+            });
+            if (existingEmail) {
+                throw new Error('该邮箱已被注册');
+            }
+        }
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const user = await this.prisma.user.create({
+            data: {
+                ...data,
+                password: hashedPassword,
+            },
+        });
+        const token = this.generateToken(user.id);
+        return {
+            user: this.sanitizeUser(user),
+            token,
+        };
+    }
+    async login(identifier, password) {
+        if (!identifier || !password) {
+            throw new Error('请填写账号和密码');
+        }
+        const user = await this.prisma.user.findFirst({
+            where: {
+                OR: [{ email: identifier }, { phone: identifier }],
+            },
+        });
+        if (!user) {
+            throw new Error('账号不存在');
+        }
+        if (!user.password) {
+            throw new Error('该账号为微信登录，请使用微信登录');
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw new Error('密码错误');
+        }
+        const token = this.generateToken(user.id);
+        return {
+            user: this.sanitizeUser(user),
+            token,
+        };
+    }
+    async wechatLogin(code, userInfo) {
+        if (!code) {
+            throw new Error('微信登录code不能为空');
+        }
+        const wechatResult = {
+            openid: `mock_openid_${code}`,
+            unionid: `mock_unionid_${code}`,
+            session_key: 'mock_session_key'
+        };
+        if (wechatResult.errcode) {
+            throw new Error(`微信登录失败: ${wechatResult.errmsg}`);
+        }
+        let user = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { wechatOpenId: wechatResult.openid },
+                    { wechatUnionId: wechatResult.unionid }
+                ]
+            }
+        });
+        let isNewUser = false;
+        if (!user) {
+            isNewUser = true;
+            const nickname = userInfo?.nickName || `用户_${wechatResult.openid.slice(-6)}`;
+            const avatar = userInfo?.avatarUrl || '';
+            user = await this.prisma.user.create({
+                data: {
+                    wechatOpenId: wechatResult.openid,
+                    wechatUnionId: wechatResult.unionid,
+                    nickname,
+                    avatar,
+                    birthYear: 1990,
+                    birthMonth: 1,
+                    birthDay: 1,
+                    birthHour: 0,
+                }
+            });
+        }
+        const token = this.generateToken(user.id);
+        return {
+            user: this.sanitizeUser(user),
+            token,
+            isNewUser
+        };
+    }
+    async bindWechat(userId, code) {
+        const wechatResult = {
+            openid: `mock_openid_${code}`,
+            unionid: `mock_unionid_${code}`,
+            session_key: 'mock_session_key'
+        };
+        const existingUser = await this.prisma.user.findFirst({
+            where: {
+                OR: [
+                    { wechatOpenId: wechatResult.openid },
+                    { wechatUnionId: wechatResult.unionid }
+                ]
+            }
+        });
+        if (existingUser) {
+            throw new Error('该微信账号已绑定其他账号');
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                wechatOpenId: wechatResult.openid,
+                wechatUnionId: wechatResult.unionid
+            }
+        });
+        return {
+            success: true,
+            user: this.sanitizeUser(updatedUser)
+        };
+    }
+    async unbindWechat(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId }
+        });
+        if (!user) {
+            throw new Error('用户不存在');
+        }
+        if (!user.wechatOpenId) {
+            throw new Error('该账号未绑定微信');
+        }
+        if (!user.email && !user.phone) {
+            throw new Error('无法解绑：该账号仅支持微信登录，请先绑定手机号或邮箱');
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                wechatOpenId: null,
+                wechatUnionId: null
+            }
+        });
+        return {
+            success: true,
+            user: this.sanitizeUser(updatedUser)
+        };
+    }
+    generateToken(userId) {
+        return this.jwtService.sign({ sub: userId });
+    }
+    sanitizeUser(user) {
+        const { password, ...sanitized } = user;
+        return sanitized;
+    }
+};
+exports.AuthService = AuthService;
+exports.AuthService = AuthService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof jwt_1.JwtService !== "undefined" && jwt_1.JwtService) === "function" ? _b : Object])
+], AuthService);
+
+
+/***/ }),
+
+/***/ "./src/modules/confession/confession.controller.ts":
+/*!*********************************************************!*\
+  !*** ./src/modules/confession/confession.controller.ts ***!
+  \*********************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -963,32 +912,32 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.PrayerController = void 0;
-const common_1 = __webpack_require__(2);
-const prayer_service_1 = __webpack_require__(24);
-const jwt_auth_guard_1 = __webpack_require__(17);
-const express_1 = __webpack_require__(26);
-let PrayerController = class PrayerController {
-    constructor(prayerService) {
-        this.prayerService = prayerService;
+exports.ConfessionController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const confession_service_1 = __webpack_require__(/*! ./confession.service */ "./src/modules/confession/confession.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
+const express_1 = __webpack_require__(/*! express */ "express");
+let ConfessionController = class ConfessionController {
+    constructor(confessionService) {
+        this.confessionService = confessionService;
     }
-    async createPrayer(data, req) {
+    async createConfession(data, req) {
         const userId = req.user.sub;
-        return this.prayerService.createPrayer(userId, data);
+        return this.confessionService.createConfession(userId, data);
     }
-    async getUserPrayers(userId) {
-        return this.prayerService.getPrayers(userId);
+    async getUserConfessions(userId) {
+        return this.confessionService.getConfessions(userId);
     }
-    async incrementPrayerCount(prayerId) {
-        return this.prayerService.incrementPrayerCount(prayerId);
+    async checkMatch(confessionId) {
+        return this.confessionService.checkMatch(confessionId);
     }
-    async getPublicPrayers(skip, take) {
+    async getPublicConfessions(skip, take) {
         const skipNum = skip ? Number(skip) : 0;
         const takeNum = take ? Number(take) : 20;
-        return this.prayerService.getPublicPrayers(skipNum, takeNum);
+        return this.confessionService.getPublicConfessions(skipNum, takeNum);
     }
 };
-exports.PrayerController = PrayerController;
+exports.ConfessionController = ConfessionController;
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
@@ -997,7 +946,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, typeof (_b = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
-], PrayerController.prototype, "createPrayer", null);
+], ConfessionController.prototype, "createConfession", null);
 __decorate([
     (0, common_1.Get)('user/:userId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
@@ -1005,15 +954,15 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], PrayerController.prototype, "getUserPrayers", null);
+], ConfessionController.prototype, "getUserConfessions", null);
 __decorate([
-    (0, common_1.Post)('increment/:prayerId'),
+    (0, common_1.Post)('match/:confessionId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('prayerId')),
+    __param(0, (0, common_1.Param)('confessionId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], PrayerController.prototype, "incrementPrayerCount", null);
+], ConfessionController.prototype, "checkMatch", null);
 __decorate([
     (0, common_1.Get)('public'),
     __param(0, (0, common_1.Query)('skip')),
@@ -1021,21 +970,19 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], PrayerController.prototype, "getPublicPrayers", null);
-exports.PrayerController = PrayerController = __decorate([
-    (0, common_1.Controller)('prayer'),
-    __metadata("design:paramtypes", [typeof (_a = typeof prayer_service_1.PrayerService !== "undefined" && prayer_service_1.PrayerService) === "function" ? _a : Object])
-], PrayerController);
+], ConfessionController.prototype, "getPublicConfessions", null);
+exports.ConfessionController = ConfessionController = __decorate([
+    (0, common_1.Controller)('confession'),
+    __metadata("design:paramtypes", [typeof (_a = typeof confession_service_1.ConfessionService !== "undefined" && confession_service_1.ConfessionService) === "function" ? _a : Object])
+], ConfessionController);
 
 
 /***/ }),
-/* 26 */
-/***/ ((module) => {
 
-module.exports = require("express");
-
-/***/ }),
-/* 27 */
+/***/ "./src/modules/confession/confession.module.ts":
+/*!*****************************************************!*\
+  !*** ./src/modules/confession/confession.module.ts ***!
+  \*****************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1047,11 +994,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ConfessionModule = void 0;
-const common_1 = __webpack_require__(2);
-const confession_service_1 = __webpack_require__(28);
-const confession_controller_1 = __webpack_require__(29);
-const prisma_module_1 = __webpack_require__(5);
-const auth_module_1 = __webpack_require__(8);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const confession_service_1 = __webpack_require__(/*! ./confession.service */ "./src/modules/confession/confession.service.ts");
+const confession_controller_1 = __webpack_require__(/*! ./confession.controller */ "./src/modules/confession/confession.controller.ts");
+const prisma_module_1 = __webpack_require__(/*! ../../common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+const auth_module_1 = __webpack_require__(/*! ../auth/auth.module */ "./src/modules/auth/auth.module.ts");
 let ConfessionModule = class ConfessionModule {
 };
 exports.ConfessionModule = ConfessionModule;
@@ -1066,7 +1013,11 @@ exports.ConfessionModule = ConfessionModule = __decorate([
 
 
 /***/ }),
-/* 28 */
+
+/***/ "./src/modules/confession/confession.service.ts":
+/*!******************************************************!*\
+  !*** ./src/modules/confession/confession.service.ts ***!
+  \******************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1082,8 +1033,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ConfessionService = void 0;
-const common_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(6);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
 let ConfessionService = class ConfessionService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -1170,7 +1121,11 @@ exports.ConfessionService = ConfessionService = __decorate([
 
 
 /***/ }),
-/* 29 */
+
+/***/ "./src/modules/dating/dating.controller.ts":
+/*!*************************************************!*\
+  !*** ./src/modules/dating/dating.controller.ts ***!
+  \*************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1188,293 +1143,77 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ConfessionController = void 0;
-const common_1 = __webpack_require__(2);
-const confession_service_1 = __webpack_require__(28);
-const jwt_auth_guard_1 = __webpack_require__(17);
-const express_1 = __webpack_require__(26);
-let ConfessionController = class ConfessionController {
-    constructor(confessionService) {
-        this.confessionService = confessionService;
+exports.DatingController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const dating_service_1 = __webpack_require__(/*! ./dating.service */ "./src/modules/dating/dating.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
+const express_1 = __webpack_require__(/*! express */ "express");
+let DatingController = class DatingController {
+    constructor(datingService) {
+        this.datingService = datingService;
     }
-    async createConfession(data, req) {
-        const userId = req.user.sub;
-        return this.confessionService.createConfession(userId, data);
+    async findMatches(userId, data) {
+        return this.datingService.findMatches(userId, data.limit || 10);
     }
-    async getUserConfessions(userId) {
-        return this.confessionService.getConfessions(userId);
+    async sendMessage(data, req) {
+        const senderId = req.user.sub;
+        return this.datingService.sendMessage({ ...data, senderId });
     }
-    async checkMatch(confessionId) {
-        return this.confessionService.checkMatch(confessionId);
+    async getMessages(userId, otherUserId) {
+        return this.datingService.getMessages(userId, otherUserId);
     }
-    async getPublicConfessions(skip, take) {
-        const skipNum = skip ? Number(skip) : 0;
-        const takeNum = take ? Number(take) : 20;
-        return this.confessionService.getPublicConfessions(skipNum, takeNum);
+    async markAsRead(messageId) {
+        return this.datingService.markAsRead(messageId);
     }
 };
-exports.ConfessionController = ConfessionController;
+exports.DatingController = DatingController;
 __decorate([
-    (0, common_1.Post)(),
+    (0, common_1.Post)('matches/:userId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('userId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], DatingController.prototype, "findMatches", null);
+__decorate([
+    (0, common_1.Post)('message'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, typeof (_b = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
-], ConfessionController.prototype, "createConfession", null);
+], DatingController.prototype, "sendMessage", null);
 __decorate([
-    (0, common_1.Get)('user/:userId'),
+    (0, common_1.Get)('messages/:userId/:otherUserId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Param)('userId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], ConfessionController.prototype, "getUserConfessions", null);
-__decorate([
-    (0, common_1.Post)('match/:confessionId'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('confessionId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], ConfessionController.prototype, "checkMatch", null);
-__decorate([
-    (0, common_1.Get)('public'),
-    __param(0, (0, common_1.Query)('skip')),
-    __param(1, (0, common_1.Query)('take')),
+    __param(1, (0, common_1.Param)('otherUserId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
-], ConfessionController.prototype, "getPublicConfessions", null);
-exports.ConfessionController = ConfessionController = __decorate([
-    (0, common_1.Controller)('confession'),
-    __metadata("design:paramtypes", [typeof (_a = typeof confession_service_1.ConfessionService !== "undefined" && confession_service_1.ConfessionService) === "function" ? _a : Object])
-], ConfessionController);
-
-
-/***/ }),
-/* 30 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TreeholeModule = void 0;
-const common_1 = __webpack_require__(2);
-const treehole_service_1 = __webpack_require__(31);
-const treehole_controller_1 = __webpack_require__(32);
-const prisma_module_1 = __webpack_require__(5);
-const auth_module_1 = __webpack_require__(8);
-let TreeholeModule = class TreeholeModule {
-};
-exports.TreeholeModule = TreeholeModule;
-exports.TreeholeModule = TreeholeModule = __decorate([
-    (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
-        controllers: [treehole_controller_1.TreeholeController],
-        providers: [treehole_service_1.TreeholeService],
-        exports: [treehole_service_1.TreeholeService],
-    })
-], TreeholeModule);
-
-
-/***/ }),
-/* 31 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var _a;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TreeholeService = void 0;
-const common_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(6);
-let TreeholeService = class TreeholeService {
-    constructor(prisma) {
-        this.prisma = prisma;
-    }
-    async createTreehole(userId, data) {
-        return this.prisma.treehole.create({
-            data: {
-                userId,
-                ...data,
-            },
-            include: {
-                user: true,
-            },
-        });
-    }
-    async getTreeholes(userId) {
-        return this.prisma.treehole.findMany({
-            where: { userId },
-            include: {
-                user: true,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
-    }
-    async getPublicTreeholes(skip = 0, take = 20) {
-        return this.prisma.treehole.findMany({
-            skip,
-            take,
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        nickname: true,
-                        avatar: true,
-                    },
-                },
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
-    }
-    async likeTreehole(treeholeId) {
-        return this.prisma.treehole.update({
-            where: { id: treeholeId },
-            data: {
-                likes: {
-                    increment: 1,
-                },
-            },
-        });
-    }
-    async deleteTreehole(treeholeId, userId) {
-        const treehole = await this.prisma.treehole.findUnique({
-            where: { id: treeholeId },
-        });
-        if (!treehole || treehole.userId !== userId) {
-            throw new Error('无权删除此树洞');
-        }
-        return this.prisma.treehole.delete({
-            where: { id: treeholeId },
-        });
-    }
-};
-exports.TreeholeService = TreeholeService;
-exports.TreeholeService = TreeholeService = __decorate([
-    (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
-], TreeholeService);
-
-
-/***/ }),
-/* 32 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __metadata = (this && this.__metadata) || function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
-};
-var __param = (this && this.__param) || function (paramIndex, decorator) {
-    return function (target, key) { decorator(target, key, paramIndex); }
-};
-var _a, _b, _c;
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.TreeholeController = void 0;
-const common_1 = __webpack_require__(2);
-const treehole_service_1 = __webpack_require__(31);
-const jwt_auth_guard_1 = __webpack_require__(17);
-const express_1 = __webpack_require__(26);
-let TreeholeController = class TreeholeController {
-    constructor(treeholeService) {
-        this.treeholeService = treeholeService;
-    }
-    async createTreehole(data, req) {
-        const userId = req.user.sub;
-        return this.treeholeService.createTreehole(userId, data);
-    }
-    async getUserTreeholes(userId) {
-        return this.treeholeService.getTreeholes(userId);
-    }
-    async getPublicTreeholes(skip, take) {
-        const skipNum = skip ? Number(skip) : 0;
-        const takeNum = take ? Number(take) : 20;
-        return this.treeholeService.getPublicTreeholes(skipNum, takeNum);
-    }
-    async likeTreehole(treeholeId) {
-        return this.treeholeService.likeTreehole(treeholeId);
-    }
-    async deleteTreehole(treeholeId, req) {
-        const userId = req.user.sub;
-        return this.treeholeService.deleteTreehole(treeholeId, userId);
-    }
-};
-exports.TreeholeController = TreeholeController;
+], DatingController.prototype, "getMessages", null);
 __decorate([
-    (0, common_1.Post)(),
+    (0, common_1.Post)('message/read/:messageId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, typeof (_b = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _b : Object]),
-    __metadata("design:returntype", Promise)
-], TreeholeController.prototype, "createTreehole", null);
-__decorate([
-    (0, common_1.Get)('user/:userId'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('userId')),
+    __param(0, (0, common_1.Param)('messageId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], TreeholeController.prototype, "getUserTreeholes", null);
-__decorate([
-    (0, common_1.Get)('public'),
-    __param(0, (0, common_1.Query)('skip')),
-    __param(1, (0, common_1.Query)('take')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", Promise)
-], TreeholeController.prototype, "getPublicTreeholes", null);
-__decorate([
-    (0, common_1.Post)('like/:treeholeId'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('treeholeId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
-], TreeholeController.prototype, "likeTreehole", null);
-__decorate([
-    (0, common_1.Delete)(':treeholeId'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('treeholeId')),
-    __param(1, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, typeof (_c = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _c : Object]),
-    __metadata("design:returntype", Promise)
-], TreeholeController.prototype, "deleteTreehole", null);
-exports.TreeholeController = TreeholeController = __decorate([
-    (0, common_1.Controller)('treehole'),
-    __metadata("design:paramtypes", [typeof (_a = typeof treehole_service_1.TreeholeService !== "undefined" && treehole_service_1.TreeholeService) === "function" ? _a : Object])
-], TreeholeController);
+], DatingController.prototype, "markAsRead", null);
+exports.DatingController = DatingController = __decorate([
+    (0, common_1.Controller)('dating'),
+    __metadata("design:paramtypes", [typeof (_a = typeof dating_service_1.DatingService !== "undefined" && dating_service_1.DatingService) === "function" ? _a : Object])
+], DatingController);
 
 
 /***/ }),
-/* 33 */
+
+/***/ "./src/modules/dating/dating.module.ts":
+/*!*********************************************!*\
+  !*** ./src/modules/dating/dating.module.ts ***!
+  \*********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1486,11 +1225,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DatingModule = void 0;
-const common_1 = __webpack_require__(2);
-const dating_service_1 = __webpack_require__(34);
-const dating_controller_1 = __webpack_require__(35);
-const prisma_module_1 = __webpack_require__(5);
-const auth_module_1 = __webpack_require__(8);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const dating_service_1 = __webpack_require__(/*! ./dating.service */ "./src/modules/dating/dating.service.ts");
+const dating_controller_1 = __webpack_require__(/*! ./dating.controller */ "./src/modules/dating/dating.controller.ts");
+const prisma_module_1 = __webpack_require__(/*! ../../common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+const auth_module_1 = __webpack_require__(/*! ../auth/auth.module */ "./src/modules/auth/auth.module.ts");
 let DatingModule = class DatingModule {
 };
 exports.DatingModule = DatingModule;
@@ -1505,7 +1244,11 @@ exports.DatingModule = DatingModule = __decorate([
 
 
 /***/ }),
-/* 34 */
+
+/***/ "./src/modules/dating/dating.service.ts":
+/*!**********************************************!*\
+  !*** ./src/modules/dating/dating.service.ts ***!
+  \**********************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1521,8 +1264,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DatingService = void 0;
-const common_1 = __webpack_require__(2);
-const prisma_service_1 = __webpack_require__(6);
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
 let DatingService = class DatingService {
     constructor(prisma) {
         this.prisma = prisma;
@@ -1656,7 +1399,11 @@ exports.DatingService = DatingService = __decorate([
 
 
 /***/ }),
-/* 35 */
+
+/***/ "./src/modules/prayer/prayer.controller.ts":
+/*!*************************************************!*\
+  !*** ./src/modules/prayer/prayer.controller.ts ***!
+  \*************************************************/
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -1674,73 +1421,696 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 };
 var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.DatingController = void 0;
-const common_1 = __webpack_require__(2);
-const dating_service_1 = __webpack_require__(34);
-const jwt_auth_guard_1 = __webpack_require__(17);
-const express_1 = __webpack_require__(26);
-let DatingController = class DatingController {
-    constructor(datingService) {
-        this.datingService = datingService;
+exports.PrayerController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prayer_service_1 = __webpack_require__(/*! ./prayer.service */ "./src/modules/prayer/prayer.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
+const express_1 = __webpack_require__(/*! express */ "express");
+let PrayerController = class PrayerController {
+    constructor(prayerService) {
+        this.prayerService = prayerService;
     }
-    async findMatches(userId, data) {
-        return this.datingService.findMatches(userId, data.limit || 10);
+    async createPrayer(data, req) {
+        const userId = req.user.sub;
+        return this.prayerService.createPrayer(userId, data);
     }
-    async sendMessage(data, req) {
-        const senderId = req.user.sub;
-        return this.datingService.sendMessage({ ...data, senderId });
+    async getUserPrayers(userId) {
+        return this.prayerService.getPrayers(userId);
     }
-    async getMessages(userId, otherUserId) {
-        return this.datingService.getMessages(userId, otherUserId);
+    async incrementPrayerCount(prayerId) {
+        return this.prayerService.incrementPrayerCount(prayerId);
     }
-    async markAsRead(messageId) {
-        return this.datingService.markAsRead(messageId);
+    async getPublicPrayers(skip, take) {
+        const skipNum = skip ? Number(skip) : 0;
+        const takeNum = take ? Number(take) : 20;
+        return this.prayerService.getPublicPrayers(skipNum, takeNum);
     }
 };
-exports.DatingController = DatingController;
+exports.PrayerController = PrayerController;
 __decorate([
-    (0, common_1.Post)('matches/:userId'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", Promise)
-], DatingController.prototype, "findMatches", null);
-__decorate([
-    (0, common_1.Post)('message'),
+    (0, common_1.Post)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, typeof (_b = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _b : Object]),
     __metadata("design:returntype", Promise)
-], DatingController.prototype, "sendMessage", null);
+], PrayerController.prototype, "createPrayer", null);
 __decorate([
-    (0, common_1.Get)('messages/:userId/:otherUserId'),
+    (0, common_1.Get)('user/:userId'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Param)('otherUserId')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", Promise)
-], DatingController.prototype, "getMessages", null);
-__decorate([
-    (0, common_1.Post)('message/read/:messageId'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Param)('messageId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], DatingController.prototype, "markAsRead", null);
-exports.DatingController = DatingController = __decorate([
-    (0, common_1.Controller)('dating'),
-    __metadata("design:paramtypes", [typeof (_a = typeof dating_service_1.DatingService !== "undefined" && dating_service_1.DatingService) === "function" ? _a : Object])
-], DatingController);
+], PrayerController.prototype, "getUserPrayers", null);
+__decorate([
+    (0, common_1.Post)('increment/:prayerId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('prayerId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], PrayerController.prototype, "incrementPrayerCount", null);
+__decorate([
+    (0, common_1.Get)('public'),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], PrayerController.prototype, "getPublicPrayers", null);
+exports.PrayerController = PrayerController = __decorate([
+    (0, common_1.Controller)('prayer'),
+    __metadata("design:paramtypes", [typeof (_a = typeof prayer_service_1.PrayerService !== "undefined" && prayer_service_1.PrayerService) === "function" ? _a : Object])
+], PrayerController);
 
+
+/***/ }),
+
+/***/ "./src/modules/prayer/prayer.module.ts":
+/*!*********************************************!*\
+  !*** ./src/modules/prayer/prayer.module.ts ***!
+  \*********************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrayerModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prayer_service_1 = __webpack_require__(/*! ./prayer.service */ "./src/modules/prayer/prayer.service.ts");
+const prayer_controller_1 = __webpack_require__(/*! ./prayer.controller */ "./src/modules/prayer/prayer.controller.ts");
+const prisma_module_1 = __webpack_require__(/*! ../../common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+const auth_module_1 = __webpack_require__(/*! ../auth/auth.module */ "./src/modules/auth/auth.module.ts");
+let PrayerModule = class PrayerModule {
+};
+exports.PrayerModule = PrayerModule;
+exports.PrayerModule = PrayerModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
+        controllers: [prayer_controller_1.PrayerController],
+        providers: [prayer_service_1.PrayerService],
+        exports: [prayer_service_1.PrayerService],
+    })
+], PrayerModule);
+
+
+/***/ }),
+
+/***/ "./src/modules/prayer/prayer.service.ts":
+/*!**********************************************!*\
+  !*** ./src/modules/prayer/prayer.service.ts ***!
+  \**********************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PrayerService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
+let PrayerService = class PrayerService {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async createPrayer(userId, data) {
+        return this.prisma.prayer.create({
+            data: {
+                userId,
+                ...data,
+            },
+            include: {
+                user: true,
+            },
+        });
+    }
+    async getPrayers(userId) {
+        return this.prisma.prayer.findMany({
+            where: { userId },
+            include: {
+                user: true,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+    }
+    async incrementPrayerCount(prayerId) {
+        return this.prisma.prayer.update({
+            where: { id: prayerId },
+            data: {
+                prayerCount: {
+                    increment: 1,
+                },
+            },
+        });
+    }
+    async getPublicPrayers(skip = 0, take = 20) {
+        return this.prisma.prayer.findMany({
+            skip,
+            take,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        nickname: true,
+                        avatar: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+    }
+};
+exports.PrayerService = PrayerService;
+exports.PrayerService = PrayerService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
+], PrayerService);
+
+
+/***/ }),
+
+/***/ "./src/modules/treehole/treehole.controller.ts":
+/*!*****************************************************!*\
+  !*** ./src/modules/treehole/treehole.controller.ts ***!
+  \*****************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TreeholeController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const treehole_service_1 = __webpack_require__(/*! ./treehole.service */ "./src/modules/treehole/treehole.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
+const express_1 = __webpack_require__(/*! express */ "express");
+let TreeholeController = class TreeholeController {
+    constructor(treeholeService) {
+        this.treeholeService = treeholeService;
+    }
+    async createTreehole(data, req) {
+        const userId = req.user.sub;
+        return this.treeholeService.createTreehole(userId, data);
+    }
+    async getUserTreeholes(userId) {
+        return this.treeholeService.getTreeholes(userId);
+    }
+    async getPublicTreeholes(skip, take) {
+        const skipNum = skip ? Number(skip) : 0;
+        const takeNum = take ? Number(take) : 20;
+        return this.treeholeService.getPublicTreeholes(skipNum, takeNum);
+    }
+    async likeTreehole(treeholeId) {
+        return this.treeholeService.likeTreehole(treeholeId);
+    }
+    async deleteTreehole(treeholeId, req) {
+        const userId = req.user.sub;
+        return this.treeholeService.deleteTreehole(treeholeId, userId);
+    }
+};
+exports.TreeholeController = TreeholeController;
+__decorate([
+    (0, common_1.Post)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_b = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _b : Object]),
+    __metadata("design:returntype", Promise)
+], TreeholeController.prototype, "createTreehole", null);
+__decorate([
+    (0, common_1.Get)('user/:userId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], TreeholeController.prototype, "getUserTreeholes", null);
+__decorate([
+    (0, common_1.Get)('public'),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], TreeholeController.prototype, "getPublicTreeholes", null);
+__decorate([
+    (0, common_1.Post)('like/:treeholeId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('treeholeId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], TreeholeController.prototype, "likeTreehole", null);
+__decorate([
+    (0, common_1.Delete)(':treeholeId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('treeholeId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, typeof (_c = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], TreeholeController.prototype, "deleteTreehole", null);
+exports.TreeholeController = TreeholeController = __decorate([
+    (0, common_1.Controller)('treehole'),
+    __metadata("design:paramtypes", [typeof (_a = typeof treehole_service_1.TreeholeService !== "undefined" && treehole_service_1.TreeholeService) === "function" ? _a : Object])
+], TreeholeController);
+
+
+/***/ }),
+
+/***/ "./src/modules/treehole/treehole.module.ts":
+/*!*************************************************!*\
+  !*** ./src/modules/treehole/treehole.module.ts ***!
+  \*************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TreeholeModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const treehole_service_1 = __webpack_require__(/*! ./treehole.service */ "./src/modules/treehole/treehole.service.ts");
+const treehole_controller_1 = __webpack_require__(/*! ./treehole.controller */ "./src/modules/treehole/treehole.controller.ts");
+const prisma_module_1 = __webpack_require__(/*! ../../common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+const auth_module_1 = __webpack_require__(/*! ../auth/auth.module */ "./src/modules/auth/auth.module.ts");
+let TreeholeModule = class TreeholeModule {
+};
+exports.TreeholeModule = TreeholeModule;
+exports.TreeholeModule = TreeholeModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
+        controllers: [treehole_controller_1.TreeholeController],
+        providers: [treehole_service_1.TreeholeService],
+        exports: [treehole_service_1.TreeholeService],
+    })
+], TreeholeModule);
+
+
+/***/ }),
+
+/***/ "./src/modules/treehole/treehole.service.ts":
+/*!**************************************************!*\
+  !*** ./src/modules/treehole/treehole.service.ts ***!
+  \**************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.TreeholeService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
+let TreeholeService = class TreeholeService {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async createTreehole(userId, data) {
+        return this.prisma.treehole.create({
+            data: {
+                userId,
+                ...data,
+            },
+            include: {
+                user: true,
+            },
+        });
+    }
+    async getTreeholes(userId) {
+        return this.prisma.treehole.findMany({
+            where: { userId },
+            include: {
+                user: true,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+    }
+    async getPublicTreeholes(skip = 0, take = 20) {
+        return this.prisma.treehole.findMany({
+            skip,
+            take,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        nickname: true,
+                        avatar: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+    }
+    async likeTreehole(treeholeId) {
+        return this.prisma.treehole.update({
+            where: { id: treeholeId },
+            data: {
+                likes: {
+                    increment: 1,
+                },
+            },
+        });
+    }
+    async deleteTreehole(treeholeId, userId) {
+        const treehole = await this.prisma.treehole.findUnique({
+            where: { id: treeholeId },
+        });
+        if (!treehole || treehole.userId !== userId) {
+            throw new Error('无权删除此树洞');
+        }
+        return this.prisma.treehole.delete({
+            where: { id: treeholeId },
+        });
+    }
+};
+exports.TreeholeService = TreeholeService;
+exports.TreeholeService = TreeholeService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
+], TreeholeService);
+
+
+/***/ }),
+
+/***/ "./src/modules/user/user.controller.ts":
+/*!*********************************************!*\
+  !*** ./src/modules/user/user.controller.ts ***!
+  \*********************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const user_service_1 = __webpack_require__(/*! ./user.service */ "./src/modules/user/user.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
+let UserController = class UserController {
+    constructor(userService) {
+        this.userService = userService;
+    }
+    async getUser(id) {
+        return this.userService.getUserById(id);
+    }
+    async updateUser(id, data) {
+        return this.userService.updateUser(id, data);
+    }
+    async deleteUser(id) {
+        return this.userService.deleteUser(id);
+    }
+    async getAllUsers(skip = 0, take = 20) {
+        return this.userService.getAllUsers(Number(skip), Number(take));
+    }
+};
+exports.UserController = UserController;
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getUser", null);
+__decorate([
+    (0, common_1.Put)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "updateUser", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "deleteUser", null);
+__decorate([
+    (0, common_1.Get)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "getAllUsers", null);
+exports.UserController = UserController = __decorate([
+    (0, common_1.Controller)('user'),
+    __metadata("design:paramtypes", [typeof (_a = typeof user_service_1.UserService !== "undefined" && user_service_1.UserService) === "function" ? _a : Object])
+], UserController);
+
+
+/***/ }),
+
+/***/ "./src/modules/user/user.module.ts":
+/*!*****************************************!*\
+  !*** ./src/modules/user/user.module.ts ***!
+  \*****************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const user_service_1 = __webpack_require__(/*! ./user.service */ "./src/modules/user/user.service.ts");
+const user_controller_1 = __webpack_require__(/*! ./user.controller */ "./src/modules/user/user.controller.ts");
+const prisma_module_1 = __webpack_require__(/*! ../../common/prisma/prisma.module */ "./src/common/prisma/prisma.module.ts");
+const auth_module_1 = __webpack_require__(/*! ../auth/auth.module */ "./src/modules/auth/auth.module.ts");
+let UserModule = class UserModule {
+};
+exports.UserModule = UserModule;
+exports.UserModule = UserModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
+        controllers: [user_controller_1.UserController],
+        providers: [user_service_1.UserService],
+        exports: [user_service_1.UserService],
+    })
+], UserModule);
+
+
+/***/ }),
+
+/***/ "./src/modules/user/user.service.ts":
+/*!******************************************!*\
+  !*** ./src/modules/user/user.service.ts ***!
+  \******************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UserService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
+let UserService = class UserService {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async getUserById(id) {
+        return this.prisma.user.findUnique({
+            where: { id },
+        });
+    }
+    async updateUser(id, data) {
+        return this.prisma.user.update({
+            where: { id },
+            data,
+        });
+    }
+    async deleteUser(id) {
+        return this.prisma.user.delete({
+            where: { id },
+        });
+    }
+    async getAllUsers(skip = 0, take = 20) {
+        return this.prisma.user.findMany({
+            skip,
+            take,
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+    }
+};
+exports.UserService = UserService;
+exports.UserService = UserService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
+], UserService);
+
+
+/***/ }),
+
+/***/ "@nestjs/common":
+/*!*********************************!*\
+  !*** external "@nestjs/common" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/common");
+
+/***/ }),
+
+/***/ "@nestjs/config":
+/*!*********************************!*\
+  !*** external "@nestjs/config" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/config");
+
+/***/ }),
+
+/***/ "@nestjs/core":
+/*!*******************************!*\
+  !*** external "@nestjs/core" ***!
+  \*******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/core");
+
+/***/ }),
+
+/***/ "@nestjs/jwt":
+/*!******************************!*\
+  !*** external "@nestjs/jwt" ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/jwt");
+
+/***/ }),
+
+/***/ "@nestjs/passport":
+/*!***********************************!*\
+  !*** external "@nestjs/passport" ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = require("@nestjs/passport");
+
+/***/ }),
+
+/***/ "@prisma/client":
+/*!*********************************!*\
+  !*** external "@prisma/client" ***!
+  \*********************************/
+/***/ ((module) => {
+
+module.exports = require("@prisma/client");
+
+/***/ }),
+
+/***/ "bcrypt":
+/*!*************************!*\
+  !*** external "bcrypt" ***!
+  \*************************/
+/***/ ((module) => {
+
+module.exports = require("bcrypt");
+
+/***/ }),
+
+/***/ "express":
+/*!**************************!*\
+  !*** external "express" ***!
+  \**************************/
+/***/ ((module) => {
+
+module.exports = require("express");
+
+/***/ }),
+
+/***/ "lunar-javascript":
+/*!***********************************!*\
+  !*** external "lunar-javascript" ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = require("lunar-javascript");
 
 /***/ })
-/******/ 	]);
+
+/******/ 	});
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
@@ -1771,11 +2141,14 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
 var exports = __webpack_exports__;
+/*!*********************!*\
+  !*** ./src/main.ts ***!
+  \*********************/
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __webpack_require__(1);
-const common_1 = __webpack_require__(2);
-const app_module_1 = __webpack_require__(3);
+const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const app_module_1 = __webpack_require__(/*! ./app.module */ "./src/app.module.ts");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({

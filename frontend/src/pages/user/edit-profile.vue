@@ -7,13 +7,8 @@
       </view>
 
       <view class="form-item">
-        <text class="label">手机号</text>
-        <input class="input" v-model="phone" placeholder="请输入手机号" />
-      </view>
-
-      <view class="form-item">
-        <text class="label">密码</text>
-        <input class="input" v-model="password" type="password" placeholder="请输入密码" />
+        <text class="label">个人简介</text>
+        <textarea class="textarea" v-model="bio" placeholder="介绍一下自己" />
       </view>
 
       <view class="form-item">
@@ -39,28 +34,24 @@
 
       <view class="form-item">
         <text class="label">出生时辰</text>
-        <picker mode="selector" :range="hours" @change="onHourChange">
+        <picker mode="selector" :range="hours" :value="birthHour !== null ? birthHour : 0" @change="onHourChange">
           <view class="picker">{{ birthHour !== null ? hours[birthHour] : '请选择出生时辰' }}</view>
         </picker>
       </view>
 
-      <button class="btn" @click="handleRegister" :loading="loading">注册</button>
-
-      <view class="links">
-        <text class="link" @click="goToLogin">已有账号？去登录</text>
-      </view>
+      <button class="btn" @click="handleSave" :loading="loading">保存修改</button>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
 
+const userStore = useUserStore()
 const nickname = ref('')
-const phone = ref('')
-const password = ref('')
+const bio = ref('')
 const gender = ref('male')
 const birthDate = ref('')
 const birthYear = ref(0)
@@ -68,7 +59,6 @@ const birthMonth = ref(0)
 const birthDay = ref(0)
 const birthHour = ref<number | null>(null)
 const loading = ref(false)
-const userStore = useUserStore()
 
 const hours = [
   '子时 (23:00-01:00)',
@@ -85,6 +75,28 @@ const hours = [
   '亥时 (21:00-23:00)'
 ]
 
+onMounted(() => {
+  // 加载当前用户信息
+  if (userStore.userInfo) {
+    const user = userStore.userInfo
+    nickname.value = user.nickname || ''
+    bio.value = user.bio || ''
+    gender.value = user.gender || 'male'
+
+    // 如果用户已有出生日期，设置为已有值
+    if (user.birthYear && user.birthMonth && user.birthDay) {
+      birthYear.value = user.birthYear
+      birthMonth.value = user.birthMonth
+      birthDay.value = user.birthDay
+      birthDate.value = `${user.birthYear}-${String(user.birthMonth).padStart(2, '0')}-${String(user.birthDay).padStart(2, '0')}`
+    }
+    // 如果用户已有时辰信息
+    if (user.birthHour !== undefined && user.birthHour !== null) {
+      birthHour.value = user.birthHour
+    }
+  }
+})
+
 function onGenderChange(e: any) {
   gender.value = e.detail.value
 }
@@ -98,34 +110,12 @@ function onDateChange(e: any) {
 }
 
 function onHourChange(e: any) {
-  birthHour.value = e.detail.value
+  birthHour.value = parseInt(e.detail.value)
 }
 
-function goToLogin() {
-  uni.navigateTo({ url: '/pages/auth/login' })
-}
-
-async function handleRegister() {
-  // 表单验证
+async function handleSave() {
   if (!nickname.value || !nickname.value.trim()) {
     uni.showToast({ title: '请输入昵称', icon: 'none' })
-    return
-  }
-
-  if (!phone.value || !phone.value.trim()) {
-    uni.showToast({ title: '请输入手机号', icon: 'none' })
-    return
-  }
-
-  // 手机号格式验证
-  const phoneRegex = /^1[3-9]\d{9}$/
-  if (!phoneRegex.test(phone.value)) {
-    uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
-    return
-  }
-
-  if (!password.value || password.value.length < 6) {
-    uni.showToast({ title: '密码至少6位', icon: 'none' })
     return
   }
 
@@ -141,50 +131,42 @@ async function handleRegister() {
 
   loading.value = true
   try {
-    const res: any = await api.auth.register({
+    const updateData: any = {
       nickname: nickname.value.trim(),
-      phone: phone.value.trim(),
-      password: password.value,
+      bio: bio.value.trim(),
       gender: gender.value,
       birthYear: birthYear.value,
       birthMonth: birthMonth.value,
       birthDay: birthDay.value,
       birthHour: birthHour.value
-    })
-
-    console.log('注册成功，响应数据:', res)
-
-    // 注册成功后自动计算星盘
-    if (res.user?.id) {
-      try {
-        const astrologyResult: any = await api.astrology.calculate(res.user.id)
-        console.log('星盘计算成功:', astrologyResult)
-      } catch (astroError) {
-        console.error('星盘计算失败:', astroError)
-        // 星盘计算失败不影响注册流程
-      }
     }
 
-    // 显示成功提示
-    uni.showToast({ title: '注册成功', icon: 'success' })
+    const res: any = await api.user.update(userStore.userInfo!.id, updateData)
+    userStore.setUserInfo(res)
 
-    // 延迟跳转到登录页面，让用户看到成功提示
+    // 保存成功后自动计算星盘
+    try {
+      const astrologyResult: any = await api.astrology.calculate(userStore.userInfo!.id)
+      // 更新store中的用户信息
+      userStore.setUserInfo(astrologyResult.user)
+      console.log('星盘计算成功:', astrologyResult)
+    } catch (astroError) {
+      console.error('星盘计算失败:', astroError)
+      // 星盘计算失败不影响保存流程
+    }
+
+    uni.showToast({ title: '保存成功', icon: 'success' })
+
     setTimeout(() => {
-      uni.navigateTo({ url: '/pages/auth/login' })
+      uni.navigateBack()
     }, 1500)
   } catch (error: any) {
-    console.error('注册错误:', error)
-
-    // 提取错误信息
-    let errorMsg = '注册失败，请稍后重试'
+    let errorMsg = '保存失败，请稍后重试'
     if (error.message) {
       errorMsg = error.message
-    } else if (error.errMsg) {
-      errorMsg = error.errMsg
     } else if (error.data && error.data.message) {
       errorMsg = error.data.message
     }
-
     uni.showToast({ title: errorMsg, icon: 'none', duration: 3000 })
   } finally {
     loading.value = false
@@ -195,6 +177,8 @@ async function handleRegister() {
 <style lang="scss" scoped>
 .container {
   padding: 60rpx 40rpx;
+  min-height: 100vh;
+  background: #f8f9fa;
 }
 
 .form {
@@ -206,6 +190,7 @@ async function handleRegister() {
       font-size: 28rpx;
       color: #333;
       margin-bottom: 20rpx;
+      font-weight: bold;
     }
 
     .input {
@@ -214,6 +199,16 @@ async function handleRegister() {
       background: white;
       border-radius: 12rpx;
       padding: 0 30rpx;
+      font-size: 28rpx;
+      border: 1rpx solid #e5e5e5;
+    }
+
+    .textarea {
+      width: 100%;
+      min-height: 160rpx;
+      background: white;
+      border-radius: 12rpx;
+      padding: 20rpx 30rpx;
       font-size: 28rpx;
       border: 1rpx solid #e5e5e5;
     }
@@ -243,16 +238,7 @@ async function handleRegister() {
     border-radius: 12rpx;
     font-size: 32rpx;
     margin-top: 40rpx;
-  }
-
-  .links {
-    text-align: center;
-    margin-top: 30rpx;
-
-    .link {
-      font-size: 28rpx;
-      color: #667eea;
-    }
+    font-weight: bold;
   }
 }
 </style>

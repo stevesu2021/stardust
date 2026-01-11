@@ -1,3 +1,16 @@
+// API 基础 URL 配置
+// 为了解决跨域和代理问题，这里使用直接的后端地址
+// 在生产环境中，应该配置 Nginx 反向代理
+
+// API 基础 URL 配置
+// 在开发环境，前端通过 Vite 代理访问后端
+// 在生产环境，需要配置 Nginx 反向代理
+
+// 检测是否在浏览器环境
+const isBrowser = typeof window !== 'undefined'
+
+// 开发环境：使用相对路径，通过 Vite proxy 代理到后端
+// 生产环境：需要根据实际部署配置
 const BASE_URL = '/api'
 
 interface RequestOptions {
@@ -10,17 +23,37 @@ interface RequestOptions {
 export function request<T = any>(options: RequestOptions): Promise<T> {
   const { url, method = 'GET', data, header } = options
 
+  // 获取 token（从 localStorage 或 uni.getStorageSync）
+  let token = ''
+  try {
+    if (isBrowser) {
+      token = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}').token : ''
+    } else {
+      token = uni.getStorageSync('user')?.token || ''
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  const headers: any = {
+    'Content-Type': 'application/json',
+    ...header
+  }
+
+  // 如果有 token，添加到 Authorization header
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   return new Promise((resolve, reject) => {
     uni.request({
       url: BASE_URL + url,
       method,
       data,
-      header: {
-        'Content-Type': 'application/json',
-        ...header
-      },
+      header: headers,
       success: (res: any) => {
-        if (res.statusCode === 200) {
+        // 200 OK 和 201 Created 都视为成功
+        if (res.statusCode === 200 || res.statusCode === 201) {
           resolve(res.data)
         } else {
           reject(new Error(res.data.message || '请求失败'))
@@ -36,7 +69,11 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
 export const api = {
   auth: {
     register: (data: any) => request({ url: '/auth/register', method: 'POST', data }),
-    login: (data: any) => request({ url: '/auth/login', method: 'POST', data })
+    login: (data: any) => request({ url: '/auth/login', method: 'POST', data }),
+    wechatLogin: (data: any) => request({ url: '/auth/wechat/login', method: 'POST', data }),
+    bindWechat: (data: any) => request({ url: '/auth/wechat/bind', method: 'POST', data }),
+    unbindWechat: () => request({ url: '/auth/wechat/unbind', method: 'POST' }),
+    getProfile: () => request({ url: '/auth/profile', method: 'GET' })
   },
   astrology: {
     calculate: (userId: string) => request({ url: `/astrology/calculate/${userId}`, method: 'POST' })

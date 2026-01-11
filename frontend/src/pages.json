@@ -79,9 +79,27 @@
       }
     },
     {
+      "path": "pages/palm/reading",
+      "style": {
+        "navigationBarTitleText": "看手相"
+      }
+    },
+    {
       "path": "pages/user/profile",
       "style": {
         "navigationBarTitleText": "个人中心"
+      }
+    },
+    {
+      "path": "pages/user/edit-profile",
+      "style": {
+        "navigationBarTitleText": "编辑资料"
+      }
+    },
+    {
+      "path": "pages/shop/list",
+      "style": {
+        "navigationBarTitleText": "商城"
       }
     }
   ],
@@ -110,10 +128,10 @@
         "text": "交友"
       },
       {
-        "pagePath": "pages/treehole/list",
-        "iconPath": "static/tab-treehole.png",
-        "selectedIconPath": "static/tab-treehole-active.png",
-        "text": "树洞"
+        "pagePath": "pages/shop/list",
+        "iconPath": "static/tab-shop.png",
+        "selectedIconPath": "static/tab-shop-active.png",
+        "text": "商城"
       },
       {
         "pagePath": "pages/user/profile",

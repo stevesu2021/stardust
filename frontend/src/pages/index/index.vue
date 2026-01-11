@@ -18,10 +18,10 @@
         <text class="feature-desc">为爱情祈福</text>
       </view>
 
-      <view class="feature-item" @click="goToPage('/pages/confession/list')">
-        <text class="feature-icon">❤️</text>
-        <text class="feature-title">月老红线</text>
-        <text class="feature-desc">暗恋表白</text>
+      <view class="feature-item" @click="goToPage('/pages/shop/list')">
+        <text class="feature-icon">🛍️</text>
+        <text class="feature-title">商城</text>
+        <text class="feature-desc">星座周边商品</text>
       </view>
 
       <view class="feature-item" @click="goToPage('/pages/treehole/list')">
@@ -34,6 +34,12 @@
         <text class="feature-icon">💑</text>
         <text class="feature-title">缘分匹配</text>
         <text class="feature-desc">基于星座五行的交友</text>
+      </view>
+
+      <view class="feature-item" @click="goToPage('/pages/palm/reading')">
+        <text class="feature-icon">🤚</text>
+        <text class="feature-title">看手相</text>
+        <text class="feature-desc">AI手相分析</text>
       </view>
     </view>
   </view>
