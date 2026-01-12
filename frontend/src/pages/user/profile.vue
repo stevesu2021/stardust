@@ -52,9 +52,10 @@
           <text class="value">{{ userInfo.zodiacSign || '未计算' }}</text>
         </view>
 
-        <view class="info-item">
-          <text class="label">五行</text>
-          <text class="value">{{ userInfo.fiveElements || '未计算' }}</text>
+        <view class="info-item full-width">
+          <text class="label">五行命理</text>
+          <FiveElementsChart :data="fiveElementsData" v-if="fiveElementsData" />
+          <text class="value" v-else>未计算</text>
         </view>
 
         <view class="info-item">
@@ -90,10 +91,21 @@
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import FiveElementsChart from '@/components/FiveElementsChart.vue'
 
 const userStore = useUserStore()
 const userInfo = ref<any>(null)
 const loading = ref(false)
+
+// 解析五行数据
+const fiveElementsData = computed(() => {
+  if (!userInfo.value?.fiveElements) return null
+  try {
+    return JSON.parse(userInfo.value.fiveElements)
+  } catch {
+    return null
+  }
+})
 
 // 计算登录状态
 const isLoggedin = computed(() => {
@@ -436,6 +448,10 @@ function goToSettings() {
         font-size: 32rpx;
         color: #333;
         font-weight: bold;
+      }
+
+      &.full-width {
+        padding-bottom: 40rpx;
       }
     }
   }

@@ -35,6 +35,7 @@ model User {
   receivedMessages Message[] @relation("ReceivedMessages")
   matches       Match[]  @relation("UserMatches")
   matchedUsers  Match[]  @relation("MatchedUsers")
+  palmReadings  PalmReading[]
 
   @@map("users")
 }
@@ -106,4 +107,19 @@ model Match {
 
   @@unique([userId, matchedId])
   @@map("matches")
+}
+
+model PalmReading {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imageUrl    String   @db.LongText // MinIO 中存储的图片 URL 或 base64 数据
+  lifeLine    String   @db.LongText
+  wisdomLine  String   @db.LongText
+  loveLine    String   @db.LongText
+  careerLine  String   @db.LongText
+  overall     String   @db.LongText
+  createdAt   DateTime @default(now())
+
+  @@map("palm_readings")
 }

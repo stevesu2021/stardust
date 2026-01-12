@@ -103,6 +103,10 @@ export const api = {
     messages: (userId: string, otherUserId: string) => request({ url: `/dating/messages/${userId}/${otherUserId}`, method: 'GET' }),
     markRead: (messageId: string) => request({ url: `/dating/message/read/${messageId}`, method: 'POST' })
   },
+  palm: {
+    getHistory: () => request({ url: '/palm/history', method: 'GET' }),
+    delete: (id: string) => request({ url: `/palm/history/${id}`, method: 'DELETE' })
+  },
   user: {
     get: (id: string) => request({ url: `/user/${id}`, method: 'GET' }),
     update: (id: string, data: any) => request({ url: `/user/${id}`, method: 'PUT', data }),
