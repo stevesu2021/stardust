@@ -1024,16 +1024,21 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a, _b;
+var _a, _b, _c;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AstrologyServiceModule = void 0;
 const common_1 = __webpack_require__(2);
+const config_1 = __webpack_require__(4);
 const prisma_service_1 = __webpack_require__(6);
 const astrology_utils_1 = __webpack_require__(23);
 let AstrologyServiceModule = class AstrologyServiceModule {
-    constructor(prisma, astrologyService) {
+    constructor(configService, prisma, astrologyService) {
+        this.configService = configService;
         this.prisma = prisma;
         this.astrologyService = astrologyService;
+        this.apiKey = this.configService.get('XIAOMIMIMO_API_KEY');
+        this.baseUrl = this.configService.get('XIAOMIMIMO_API_URL');
+        this.model = this.configService.get('XIAOMIMIMO_MODEL');
     }
     async calculateAstrology(userId) {
         const user = await this.prisma.user.findUnique({
@@ -1045,6 +1050,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
         const lunar = this.astrologyService.solarToLunar(user.birthYear, user.birthMonth, user.birthDay, user.birthHour);
         const zodiacSign = this.astrologyService.getZodiacSign(user.birthMonth, user.birthDay);
         const fiveElements = this.astrologyService.getFiveElements(user.birthYear, user.birthMonth, user.birthDay, user.birthHour);
+        const baZiPillars = this.astrologyService.getBaZiPillars(user.birthYear, user.birthMonth, user.birthDay, user.birthHour);
         const updatedUser = await this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -1053,18 +1059,286 @@ let AstrologyServiceModule = class AstrologyServiceModule {
                 fiveElements: JSON.stringify(fiveElements),
             },
         });
+        await this.prisma.astrologyReading.upsert({
+            where: { userId },
+            create: {
+                userId,
+                zodiacSign,
+                lunarDate: `${lunar.lunarYearText}年${lunar.lunarMonthText}${lunar.lunarDayText}`,
+                yearPillar: baZiPillars.yearPillar,
+                monthPillar: baZiPillars.monthPillar,
+                dayPillar: baZiPillars.dayPillar,
+                hourPillar: baZiPillars.hourPillar,
+                fiveElements: JSON.stringify(fiveElements),
+                zodiacInterpretation: '',
+                baziInterpretation: '',
+            },
+            update: {
+                zodiacSign,
+                lunarDate: `${lunar.lunarYearText}年${lunar.lunarMonthText}${lunar.lunarDayText}`,
+                yearPillar: baZiPillars.yearPillar,
+                monthPillar: baZiPillars.monthPillar,
+                dayPillar: baZiPillars.dayPillar,
+                hourPillar: baZiPillars.hourPillar,
+                fiveElements: JSON.stringify(fiveElements),
+            },
+        });
         return {
             user: updatedUser,
             lunar,
             zodiacSign,
             fiveElements,
+            baZiPillars,
         };
+    }
+    async generateInterpretation(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new common_1.BadRequestException('用户不存在');
+        }
+        let reading = await this.prisma.astrologyReading.findUnique({
+            where: { userId },
+        });
+        if (!reading) {
+            await this.calculateAstrology(userId);
+            reading = await this.prisma.astrologyReading.findUnique({
+                where: { userId },
+            });
+        }
+        if (!reading) {
+            throw new common_1.BadRequestException('无法获取星盘数据');
+        }
+        const zodiacInterpretation = await this.generateZodiacInterpretation(reading.zodiacSign, user.gender);
+        const baziInterpretation = await this.generateBaZiInterpretation(reading.yearPillar, reading.monthPillar, reading.dayPillar, reading.hourPillar, reading.fiveElements, user.gender);
+        const updatedReading = await this.prisma.astrologyReading.update({
+            where: { userId },
+            data: {
+                zodiacInterpretation,
+                baziInterpretation,
+            },
+        });
+        return updatedReading;
+    }
+    async getReading(userId) {
+        const reading = await this.prisma.astrologyReading.findUnique({
+            where: { userId },
+        });
+        if (!reading) {
+            return null;
+        }
+        return {
+            ...reading,
+            fiveElements: JSON.parse(reading.fiveElements || '{}'),
+        };
+    }
+    async generateZodiacInterpretation(zodiacSign, gender) {
+        const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
+        const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}进行详细的性格分析和运势解读。
+
+请从以下几个方面进行分析：
+1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方
+2. 爱情感情：分析该星座在爱情中的表现和配对建议
+3. 事业发展：分析适合的职业方向和事业发展建议
+4. 守护星：说明该星座的守护星及其象征意义
+5. 幸运元素：幸运颜色、幸运数字、幸运日期等
+6. 综合运势：整体运势分析和建议
+
+请以专业但不失亲和力的语言进行解读，让读者能够获得有价值的指导。
+
+请严格按照以下JSON格式返回结果：
+
+{
+  "success": true,
+  "data": {
+    "personality": "性格特点分析...",
+    "love": "爱情感情分析...",
+    "career": "事业发展分析...",
+    "guardianStar": "守护星信息...",
+    "luckyElements": "幸运元素信息...",
+    "overall": "综合运势分析..."
+  }
+}`;
+        try {
+            const response = await fetch(`${this.baseUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: prompt,
+                        },
+                    ],
+                }),
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API 请求失败: ${response.status} - ${errorText}`);
+            }
+            const data = await response.json();
+            const content = data.choices?.[0]?.message?.content || '解读失败，请重试';
+            const result = this.parseInterpretation(content);
+            return JSON.stringify(result);
+        }
+        catch (error) {
+            console.error('星座解读错误:', error);
+            return JSON.stringify({
+                personality: `${zodiacSign}的人通常具有独特的个性魅力。`,
+                love: '在感情中，你真诚而专一，适合稳定的伴侣关系。',
+                career: '你有很强的事业心，适合在能够发挥创造力的领域发展。',
+                guardianStar: `守护星赋予你特殊的力量和天赋。`,
+                luckyElements: '保持积极乐观的心态，好运自然会到来。',
+                overall: `整体来看，作为${zodiacSign}，你有很好的发展潜力，只要保持专注和坚持，未来可期。`,
+            });
+        }
+    }
+    async generateBaZiInterpretation(yearPillar, monthPillar, dayPillar, hourPillar, fiveElementsJson, gender) {
+        const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
+        const fiveElements = JSON.parse(fiveElementsJson || '{}');
+        const maxElement = Object.entries(fiveElements).reduce((a, b) => b[1] > a[1] ? b : a);
+        const elementNames = {
+            wood: '木',
+            fire: '火',
+            earth: '土',
+            metal: '金',
+            water: '水',
+        };
+        const prompt = `请作为专业的八字命理师，对以下八字进行详细分析：
+
+出生者性别：${genderText || '未知'}
+八字四柱：
+年柱：${yearPillar}
+月柱：${monthPillar}
+日柱：${dayPillar}
+时柱：${hourPillar}
+
+五行统计：
+木：${fiveElements.wood}个
+火：${fiveElements.fire}个
+土：${fiveElements.earth}个
+金：${fiveElements.metal}个
+水：${fiveElements.water}个
+
+命主五行：${elementNames[maxElement[0]]}
+
+请从以下几个方面进行分析：
+1. 命局分析：分析日主强弱、格局高低
+2. 五行喜忌：分析命主喜用神和忌神
+3. 性格特质：根据八字分析性格特点
+4. 事业财运：分析适合的行业和财运运势
+5. 婚姻感情：分析婚姻运势和配对建议
+6. 健康运势：分析需要注意的健康问题
+7. 流年运势：近几年的运势分析
+8. 开运建议：如何通过风水、习惯等提升运势
+
+请以专业但通俗易懂的语言进行解读，给读者实用的人生指导。
+
+请严格按照以下JSON格式返回结果：
+
+{
+  "success": true,
+  "data": {
+    "mingJu": "命局分析...",
+    "wuXing": "五行喜忌分析...",
+    "character": "性格特质分析...",
+    "career": "事业财运分析...",
+    "marriage": "婚姻感情分析...",
+    "health": "健康运势分析...",
+    "yearlyFortune": "流年运势分析...",
+    "advice": "开运建议..."
+  }
+}`;
+        try {
+            const response = await fetch(`${this.baseUrl}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`,
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: prompt,
+                        },
+                    ],
+                }),
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`API 请求失败: ${response.status} - ${errorText}`);
+            }
+            const data = await response.json();
+            const content = data.choices?.[0]?.message?.content || '解读失败，请重试';
+            const result = this.parseInterpretation(content);
+            return JSON.stringify(result);
+        }
+        catch (error) {
+            console.error('八字解读错误:', error);
+            return JSON.stringify({
+                mingJu: `日主为${dayPillar[0]}，生于${monthPillar[0]}月，命局具有独特的能量场。`,
+                wuXing: `五行以${elementNames[maxElement[0]]}为主，宜通过五行平衡来提升运势。`,
+                character: '你性格稳重踏实，做事有计划，值得信赖。',
+                career: '适合从事需要耐心和专注的工作，事业发展稳健向好。',
+                marriage: '感情专一，适合晚婚，能建立稳定的家庭关系。',
+                health: '注意保持规律作息，适度运动有助于健康。',
+                yearlyFortune: '整体运势平稳向上，把握机会可有所作为。',
+                advice: '保持积极心态，多行善事，注意人际关系的维护。',
+            });
+        }
+    }
+    parseInterpretation(content) {
+        try {
+            const cleanedContent = content
+                .replace(/```json\s*/g, '')
+                .replace(/```\s*/g, '')
+                .trim();
+            try {
+                const parsed = JSON.parse(cleanedContent);
+                if (parsed.success && parsed.data) {
+                    return parsed.data;
+                }
+                return parsed;
+            }
+            catch {
+            }
+            const firstBrace = cleanedContent.indexOf('{');
+            const lastBrace = cleanedContent.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+                const jsonStr = cleanedContent.substring(firstBrace, lastBrace + 1);
+                const parsed = JSON.parse(jsonStr);
+                if (parsed.success && parsed.data) {
+                    return parsed.data;
+                }
+                return parsed;
+            }
+            throw new Error('JSON parse failed');
+        }
+        catch (error) {
+            console.error('JSON 解析失败:', error);
+            console.error('原始内容:', content.substring(0, 200));
+            return {
+                personality: content.substring(0, 500) || '性格特点分析',
+                love: '在感情中，你真诚而专一，适合稳定的伴侣关系。',
+                career: '你有很强的事业心，适合在能够发挥创造力的领域发展。',
+                guardianStar: '守护星赋予你特殊的力量和天赋。',
+                luckyElements: '保持积极乐观的心态，好运自然会到来。',
+                overall: '整体来看，你有很好的发展潜力，只要保持专注和坚持，未来可期。',
+            };
+        }
     }
 };
 exports.AstrologyServiceModule = AstrologyServiceModule;
 exports.AstrologyServiceModule = AstrologyServiceModule = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof astrology_utils_1.AstrologyService !== "undefined" && astrology_utils_1.AstrologyService) === "function" ? _b : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object, typeof (_b = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _b : Object, typeof (_c = typeof astrology_utils_1.AstrologyService !== "undefined" && astrology_utils_1.AstrologyService) === "function" ? _c : Object])
 ], AstrologyServiceModule);
 
 
@@ -1155,6 +1429,17 @@ let AstrologyService = class AstrologyService {
         });
         return elements;
     }
+    getBaZiPillars(year, month, day, hour) {
+        const solar = lunar_javascript_1.Solar.fromYmdHms(year, month, day, hour, 0, 0);
+        const lunar = solar.getLunar();
+        const eightChar = lunar.getEightChar();
+        return {
+            yearPillar: eightChar.getYear(),
+            monthPillar: eightChar.getMonth(),
+            dayPillar: eightChar.getDay(),
+            hourPillar: eightChar.getTime(),
+        };
+    }
     getElementByGan(gan) {
         const elements = {
             甲: 'wood',
@@ -1230,6 +1515,14 @@ let AstrologyController = class AstrologyController {
     async calculate(userId) {
         return this.astrologyService.calculateAstrology(userId);
     }
+    async generateInterpretation(req) {
+        const userId = req.user.sub;
+        return this.astrologyService.generateInterpretation(userId);
+    }
+    async getReading(req) {
+        const userId = req.user.sub;
+        return this.astrologyService.getReading(userId);
+    }
 };
 exports.AstrologyController = AstrologyController;
 __decorate([
@@ -1240,6 +1533,22 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AstrologyController.prototype, "calculate", null);
+__decorate([
+    (0, common_1.Post)('interpret'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AstrologyController.prototype, "generateInterpretation", null);
+__decorate([
+    (0, common_1.Get)('reading'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AstrologyController.prototype, "getReading", null);
 exports.AstrologyController = AstrologyController = __decorate([
     (0, common_1.Controller)('astrology'),
     __metadata("design:paramtypes", [typeof (_a = typeof astrology_service_1.AstrologyServiceModule !== "undefined" && astrology_service_1.AstrologyServiceModule) === "function" ? _a : Object])

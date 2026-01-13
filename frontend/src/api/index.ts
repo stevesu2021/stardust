@@ -76,7 +76,9 @@ export const api = {
     getProfile: () => request({ url: '/auth/profile', method: 'GET' })
   },
   astrology: {
-    calculate: (userId: string) => request({ url: `/astrology/calculate/${userId}`, method: 'POST' })
+    calculate: (userId: string) => request({ url: `/astrology/calculate/${userId}`, method: 'POST' }),
+    generateInterpretation: () => request({ url: '/astrology/interpret', method: 'POST' }),
+    getReading: () => request({ url: '/astrology/reading', method: 'GET' })
   },
   prayer: {
     create: (data: any) => request({ url: '/prayer', method: 'POST', data }),

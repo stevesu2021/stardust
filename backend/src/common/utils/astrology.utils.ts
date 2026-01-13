@@ -6,7 +6,7 @@ export class AstrologyService {
   solarToLunar(year: number, month: number, day: number, hour: number) {
     const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
     const lunar = solar.getLunar();
-    
+
     return {
       lunarYear: lunar.getYear(),
       lunarMonth: lunar.getMonth(),
@@ -85,6 +85,22 @@ export class AstrologyService {
     });
 
     return elements;
+  }
+
+  /**
+   * 获取八字四柱
+   */
+  getBaZiPillars(year: number, month: number, day: number, hour: number) {
+    const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
+    const lunar = solar.getLunar();
+    const eightChar = lunar.getEightChar();
+
+    return {
+      yearPillar: eightChar.getYear(),   // 年柱，如：甲辰
+      monthPillar: eightChar.getMonth(),  // 月柱，如：丙寅
+      dayPillar: eightChar.getDay(),      // 日柱，如：戊子
+      hourPillar: eightChar.getTime(),   // 时柱，如：壬子
+    };
   }
 
   private getElementByGan(gan: string): string {

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Request } from '@nestjs/common';
 import { AstrologyServiceModule } from './astrology.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -6,9 +6,32 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class AstrologyController {
   constructor(private astrologyService: AstrologyServiceModule) {}
 
+  /**
+   * 计算星盘基础数据（不含AI解读）
+   */
   @Post('calculate/:userId')
   @UseGuards(JwtAuthGuard)
   async calculate(@Param('userId') userId: string) {
     return this.astrologyService.calculateAstrology(userId);
+  }
+
+  /**
+   * 生成AI解读
+   */
+  @Post('interpret')
+  @UseGuards(JwtAuthGuard)
+  async generateInterpretation(@Request() req) {
+    const userId = req.user.sub;
+    return this.astrologyService.generateInterpretation(userId);
+  }
+
+  /**
+   * 获取用户的星盘解读记录
+   */
+  @Get('reading')
+  @UseGuards(JwtAuthGuard)
+  async getReading(@Request() req) {
+    const userId = req.user.sub;
+    return this.astrologyService.getReading(userId);
   }
 }
