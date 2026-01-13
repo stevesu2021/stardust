@@ -82,6 +82,7 @@ export class AstrologyServiceModule {
         fiveElements: JSON.stringify(fiveElements),
         zodiacInterpretation: '',
         baziInterpretation: '',
+        klineInterpretation: '',
       },
       update: {
         zodiacSign,
@@ -148,12 +149,25 @@ export class AstrologyServiceModule {
       user.gender,
     );
 
+    // 生成人生K线解读
+    const klineInterpretation = await this.generateKlineInterpretation(
+      user.birthYear,
+      user.birthMonth,
+      user.birthDay,
+      user.birthHour,
+      reading.zodiacSign,
+      reading.yearPillar,
+      reading.dayPillar,
+      user.gender,
+    );
+
     // 更新解读结果
     const updatedReading = await this.prisma.astrologyReading.update({
       where: { userId },
       data: {
         zodiacInterpretation,
         baziInterpretation,
+        klineInterpretation,
       },
     });
 
@@ -372,11 +386,12 @@ export class AstrologyServiceModule {
 
   /**
    * 解析AI返回的JSON结果
+   * 尝试修复被截断的 JSON
    */
-  private parseInterpretation(content: string) {
+  private parseInterpretation(content: string): any {
     try {
       // 清理内容，移除可能的 markdown 代码块标记
-      const cleanedContent = content
+      let cleanedContent = content
         .replace(/```json\s*/g, '')
         .replace(/```\s*/g, '')
         .trim();
@@ -392,39 +407,181 @@ export class AstrologyServiceModule {
 
         // 如果返回的是直接的 data 对象
         return parsed;
-      } catch {
-        // 直接解析失败，尝试提取 JSON 对象
+      } catch (e) {
+        // 直接解析失败，尝试修复被截断的 JSON
       }
 
-      // 尝试匹配 JSON 对象（从第一个 { 到最后一个 }）
+      // 尝试修复被截断的 JSON
       const firstBrace = cleanedContent.indexOf('{');
       const lastBrace = cleanedContent.lastIndexOf('}');
 
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        const jsonStr = cleanedContent.substring(firstBrace, lastBrace + 1);
-        const parsed = JSON.parse(jsonStr);
+        let jsonStr = cleanedContent.substring(firstBrace, lastBrace + 1);
 
-        if (parsed.success && parsed.data) {
-          return parsed.data;
+        // 尝试修复常见的不完整 JSON
+        // 1. 如果在字符串内部被截断，尝试补全引号和括号
+        const openBraces = (jsonStr.match(/{/g) || []).length;
+        const closeBraces = (jsonStr.match(/}/g) || []).length;
+        const openBrackets = (jsonStr.match(/\[/g) || []).length;
+        const closeBrackets = (jsonStr.match(/\]/g) || []).length;
+
+        // 补全缺少的括号
+        jsonStr += '}'.repeat(Math.max(0, openBraces - closeBraces));
+        jsonStr += ']'.repeat(Math.max(0, openBrackets - closeBrackets));
+
+        // 如果字符串未闭合（在值部分被截断），尝试补全引号
+        const lastQuoteIndex = jsonStr.lastIndexOf('"');
+        if (lastQuoteIndex !== -1) {
+          const afterLastQuote = jsonStr.substring(lastQuoteIndex + 1);
+          // 如果最后一个引号后面没有逗号、冒号或括号，说明字符串可能未闭合
+          if (!/^[,\]\}\s]*$/.test(afterLastQuote)) {
+            // 找到这个字段的开始
+            const fieldMatch = jsonStr.substring(0, lastQuoteIndex).match(/"([^"]+)":\s*"$/);
+            if (fieldMatch) {
+              // 补全引号
+              jsonStr = jsonStr.substring(0, lastQuoteIndex + 1) + '"' + jsonStr.substring(lastQuoteIndex + 1);
+            }
+          }
         }
 
-        return parsed;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          if (parsed.success && parsed.data) {
+            return parsed.data;
+          }
+          return parsed;
+        } catch (e2) {
+          // 修复后仍然失败
+        }
       }
 
-      // JSON 解析失败，返回默认内容
+      // JSON 解析完全失败，抛出异常让调用者处理
       throw new Error('JSON parse failed');
     } catch (error) {
-      console.error('JSON 解析失败:', error);
-      console.error('原始内容:', content.substring(0, 200));
-      // 返回原始文本作为后备方案
-      return {
-        personality: content.substring(0, 500) || '性格特点分析',
-        love: '在感情中，你真诚而专一，适合稳定的伴侣关系。',
-        career: '你有很强的事业心，适合在能够发挥创造力的领域发展。',
-        guardianStar: '守护星赋予你特殊的力量和天赋。',
-        luckyElements: '保持积极乐观的心态，好运自然会到来。',
-        overall: '整体来看，你有很好的发展潜力，只要保持专注和坚持，未来可期。',
-      };
+      console.error('JSON 解析失败:', error instanceof Error ? error.message : error);
+      console.error('原始内容:', content.substring(0, 500));
+      throw error; // 抛出异常，让调用方法的 catch 块返回正确的默认值
+    }
+  }
+
+  /**
+   * 生成人生K线AI解读
+   */
+  private async generateKlineInterpretation(
+    birthYear: number,
+    birthMonth: number,
+    birthDay: number,
+    birthHour: number,
+    zodiacSign: string,
+    yearPillar: string,
+    dayPillar: string,
+    gender?: string,
+  ) {
+    const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - birthYear;
+
+    // 计算人生阶段
+    const lifeStages = [];
+    for (let i = 0; i <= 80; i += 10) {
+      const year = birthYear + i;
+      const stageAge = i;
+      lifeStages.push({ year, age: stageAge });
+    }
+
+    const prompt = `请作为专业的人生规划师和命理分析师，为一位${age}岁的${genderText}生成"人生K线"分析。
+
+出生信息：
+- 出生日期：${birthYear}年${birthMonth}月${birthDay}日${birthHour}时
+- 星座：${zodiacSign}
+- 年柱：${yearPillar}（日主：${dayPillar[0]}）
+
+请分析人生运势走势，按照人生每10年为一个阶段，生成类似股票K线的分析数据。包括：
+1. **运势指数**：0-100的数值，表示该阶段的整体运势水平
+2. **事业运**：事业发展的趋势和关键节点
+3. **财运**：财务状况和投资理财建议
+4. **感情运**：感情生活和婚姻运势
+5. **健康运**：健康状况和注意事项
+6. **关键事件**：该阶段可能遇到的重要人生转折点
+
+请按照以下人生阶段进行分析：
+${lifeStages.map(s => `- ${s.age}-${s.age + 9}岁（${s.year}-${s.year + 9}年）`).join('\n')}
+
+请以人生K线的概念，描述运势的起伏变化，包括高点、低点、震荡期等。
+
+请严格按照以下JSON格式返回结果：
+
+{
+  "success": true,
+  "data": {
+    "overallTrend": "整体运势趋势描述...",
+    "lifeStages": [
+      {
+        "age": "0-9",
+        "years": "2000-2009",
+        "fortune": 75,
+        "career": "事业运描述...",
+        "wealth": "财运描述...",
+        "love": "感情运描述...",
+        "health": "健康运描述...",
+        "keyEvents": "关键事件..."
+      }
+    ],
+    "advice": "综合建议和人生指导..."
+  }
+}`;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API 请求失败: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || '解读失败，请重试';
+
+      const result = this.parseInterpretation(content);
+      return JSON.stringify(result);
+    } catch (error) {
+      console.error('人生K线解读错误:', error);
+
+      // 生成默认的人生K线数据
+      const defaultStages = lifeStages.map((stage, index) => {
+        const baseFortune = 60 + Math.sin(index * 0.8) * 20;
+        return {
+          age: `${stage.age}-${stage.age + 9}`,
+          years: `${stage.year}-${stage.year + 9}`,
+          fortune: Math.round(baseFortune),
+          career: index < 2 ? '成长学习期，为未来打基础' : index < 5 ? '事业发展黄金期，努力拼搏' : '事业稳定期，享受成果',
+          wealth: index < 2 ? '积累知识技能最重要' : index < 5 ? '财运上升，投资理财正当时' : '财务稳健，注意资产保值',
+          love: index < 2 ? '纯真年华，享受青春美好' : index < 5 ? '恋爱婚姻关键期，把握良缘' : '家庭和睦，感情稳定',
+          health: index < 4 ? '身体素质良好，保持运动习惯' : '注重养生，定期体检',
+          keyEvents: index === 2 ? '可能遇到重要的人生转折点' : index === 5 ? '事业或家庭可能有重大变化' : '平稳发展，循序渐进',
+        };
+      });
+
+      return JSON.stringify({
+        overallTrend: `人生运势呈现波浪式上升趋势，${zodiacSign}的特质让你在不同阶段都能展现出独特的优势。`,
+        lifeStages: defaultStages,
+        advice: '把握人生节奏，在上升期全力以赴，在调整期积蓄力量。保持积极心态，顺应时势变化。',
+      });
     }
   }
 }

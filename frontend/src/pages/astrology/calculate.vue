@@ -30,6 +30,14 @@
         <text class="tab-icon">☯️</text>
         <text class="tab-text">八字</text>
       </view>
+      <view
+        class="tab-item"
+        :class="{ active: currentTab === 'kline' }"
+        @click="currentTab = 'kline'"
+      >
+        <text class="tab-icon">📈</text>
+        <text class="tab-text">人生K线</text>
+      </view>
     </view>
 
     <!-- 星座 Tab -->
@@ -187,6 +195,124 @@
       </view>
     </view>
 
+    <!-- 人生K线 Tab -->
+    <view class="tab-content" v-if="currentTab === 'kline' && hasBasicData">
+      <!-- K线图表 -->
+      <view class="card kline-card">
+        <view class="card-header">
+          <text class="card-icon">📈</text>
+          <text class="card-title">人生运势K线图</text>
+        </view>
+
+        <!-- K线图表展示 -->
+        <view class="kline-chart" v-if="klineInterpretation?.lifeStages">
+          <view class="chart-container">
+            <!-- Y轴刻度 -->
+            <view class="y-axis">
+              <view class="y-label" v-for="i in 5" :key="i">
+                <text class="y-text">{{ 100 - (i - 1) * 25 }}</text>
+              </view>
+            </view>
+
+            <!-- 图表区域 -->
+            <view class="chart-area">
+              <!-- 网格线 -->
+              <view class="grid-lines">
+                <view class="grid-line" v-for="i in 5" :key="'grid-' + i" :style="{ bottom: `${(i - 1) * 25}%` }"></view>
+              </view>
+
+              <!-- K线柱状图 -->
+              <view class="kline-bars">
+                <view
+                  class="kline-bar-group"
+                  v-for="(stage, index) in klineInterpretation.lifeStages"
+                  :key="index"
+                  @click="showStageDetail(stage)"
+                >
+                  <!-- K线柱 -->
+                  <view class="kline-bar-wrapper" :style="{ height: `${stage.fortune}%` }">
+                    <view class="kline-bar" :class="getFortuneClass(stage.fortune)"></view>
+                  </view>
+                  <!-- 阶段标签 -->
+                  <view class="stage-label">
+                    <text class="stage-age">{{ stage.age }}岁</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 整体趋势 -->
+        <view class="overall-trend" v-if="klineInterpretation?.overallTrend">
+          <view class="trend-title">📊 整体运势趋势</view>
+          <text class="trend-text">{{ klineInterpretation.overallTrend }}</text>
+        </view>
+      </view>
+
+      <!-- 人生阶段详情 -->
+      <view class="card stages-card" v-if="klineInterpretation?.lifeStages">
+        <view class="card-header">
+          <text class="card-icon">📅</text>
+          <text class="card-title">人生阶段详情</text>
+        </view>
+        <view class="stages-list">
+          <view
+            class="stage-item"
+            v-for="(stage, index) in klineInterpretation.lifeStages"
+            :key="index"
+          >
+            <view class="stage-header">
+              <view class="stage-info">
+                <text class="stage-age-large">{{ stage.age }}岁</text>
+                <text class="stage-years">{{ stage.years }}</text>
+              </view>
+              <view class="fortune-badge" :class="getFortuneClass(stage.fortune)">
+                <text class="fortune-value">{{ stage.fortune }}</text>
+                <text class="fortune-text">运势指数</text>
+              </view>
+            </view>
+            <view class="stage-details">
+              <view class="stage-detail-row" v-if="stage.career">
+                <text class="detail-icon">💼</text>
+                <text class="detail-text">{{ stage.career }}</text>
+              </view>
+              <view class="stage-detail-row" v-if="stage.wealth">
+                <text class="detail-icon">💰</text>
+                <text class="detail-text">{{ stage.wealth }}</text>
+              </view>
+              <view class="stage-detail-row" v-if="stage.love">
+                <text class="detail-icon">💕</text>
+                <text class="detail-text">{{ stage.love }}</text>
+              </view>
+              <view class="stage-detail-row" v-if="stage.health">
+                <text class="detail-icon">🏥</text>
+                <text class="detail-text">{{ stage.health }}</text>
+              </view>
+              <view class="stage-detail-row key-event" v-if="stage.keyEvents">
+                <text class="detail-icon">⚡</text>
+                <text class="detail-text">{{ stage.keyEvents }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 综合建议 -->
+      <view class="card advice-card" v-if="klineInterpretation?.advice">
+        <view class="card-header">
+          <text class="card-icon">💡</text>
+          <text class="card-title">人生建议</text>
+        </view>
+        <text class="advice-text">{{ klineInterpretation.advice }}</text>
+      </view>
+
+      <!-- AI 解读提示 -->
+      <view class="card hint-card" v-else>
+        <text class="hint-text">点击"生成AI解读"获取人生K线分析</text>
+      </view>
+    </view>
+
     <!-- 初始状态提示 -->
     <view class="empty-state" v-if="!hasBasicData && !calculating">
       <text class="empty-icon">🌙</text>
@@ -203,7 +329,7 @@ import { useUserStore } from '@/store/user'
 const userStore = useUserStore()
 
 // 状态
-const currentTab = ref<'zodiac' | 'bazi'>('zodiac')
+const currentTab = ref<'zodiac' | 'bazi' | 'kline'>('zodiac')
 const calculating = ref(false)
 const interpreting = ref(false)
 
@@ -244,6 +370,14 @@ const baziInterpretation = computed(() => {
     return null
   }
 })
+const klineInterpretation = computed(() => {
+  if (!readingData.value?.klineInterpretation) return null
+  try {
+    return JSON.parse(readingData.value.klineInterpretation)
+  } catch {
+    return null
+  }
+})
 
 // 获取五行名称
 function getElementName(element: string): string {
@@ -255,6 +389,20 @@ function getElementName(element: string): string {
     water: '水'
   }
   return names[element] || element
+}
+
+// 获取运势等级样式类
+function getFortuneClass(fortune: number): string {
+  if (fortune >= 80) return 'fortune-excellent'
+  if (fortune >= 65) return 'fortune-good'
+  if (fortune >= 50) return 'fortune-medium'
+  return fortune >= 35 ? 'fortune-low' : 'fortune-poor'
+}
+
+// 显示阶段详情（可扩展为弹窗）
+function showStageDetail(stage: any) {
+  console.log('Show stage detail:', stage)
+  // 可以在这里添加弹窗显示更详细的信息
 }
 
 // 计算星盘基础数据
@@ -589,6 +737,253 @@ init()
   .empty-text {
     font-size: 28rpx;
     color: rgba(255, 255, 255, 0.6);
+  }
+}
+
+// 人生K线图表
+.kline-card {
+  .kline-chart {
+    margin-bottom: 32rpx;
+
+    .chart-container {
+      display: flex;
+      height: 400rpx;
+      position: relative;
+    }
+
+    .y-axis {
+      width: 60rpx;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-right: 16rpx;
+
+      .y-label {
+        .y-text {
+          font-size: 20rpx;
+          color: #999;
+        }
+      }
+    }
+
+    .chart-area {
+      flex: 1;
+      position: relative;
+      border-left: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+    }
+
+    .grid-lines {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+
+      .grid-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: #f0f0f0;
+      }
+    }
+
+    .kline-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 100%;
+      padding: 0 8rpx;
+
+      .kline-bar-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100%;
+        justify-content: flex-end;
+        cursor: pointer;
+
+        .kline-bar-wrapper {
+          width: 100%;
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          max-height: 100%;
+          min-height: 20rpx;
+          transition: height 0.5s ease;
+        }
+
+        .kline-bar {
+          width: 70%;
+          border-radius: 8rpx 8rpx 0 0;
+          transition: all 0.3s ease;
+
+          &.fortune-excellent {
+            background: linear-gradient(180deg, #4ade80, #22c55e);
+          }
+          &.fortune-good {
+            background: linear-gradient(180deg, #60a5fa, #3b82f6);
+          }
+          &.fortune-medium {
+            background: linear-gradient(180deg, #fcd34d, #f59e0b);
+          }
+          &.fortune-low {
+            background: linear-gradient(180deg, #fb923c, #f97316);
+          }
+          &.fortune-poor {
+            background: linear-gradient(180deg, #f87171, #ef4444);
+          }
+        }
+
+        .stage-label {
+          margin-top: 8rpx;
+
+          .stage-age {
+            font-size: 20rpx;
+            color: #666;
+          }
+        }
+      }
+    }
+  }
+
+  .overall-trend {
+    padding: 24rpx;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 16rpx;
+
+    .trend-title {
+      font-size: 28rpx;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 12rpx;
+    }
+
+    .trend-text {
+      font-size: 26rpx;
+      color: #666;
+      line-height: 1.8;
+    }
+  }
+}
+
+// 人生阶段列表
+.stages-card {
+  .stages-list {
+    .stage-item {
+      padding: 24rpx;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 16rpx;
+      margin-bottom: 20rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .stage-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20rpx;
+
+        .stage-info {
+          display: flex;
+          flex-direction: column;
+
+          .stage-age-large {
+            font-size: 36rpx;
+            font-weight: bold;
+            color: #667eea;
+          }
+
+          .stage-years {
+            font-size: 24rpx;
+            color: #999;
+          }
+        }
+
+        .fortune-badge {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 12rpx 20rpx;
+          border-radius: 12rpx;
+
+          &.fortune-excellent {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+          }
+          &.fortune-good {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+          }
+          &.fortune-medium {
+            background: linear-gradient(135deg, #fcd34d, #f59e0b);
+          }
+          &.fortune-low {
+            background: linear-gradient(135deg, #fb923c, #f97316);
+          }
+          &.fortune-poor {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+          }
+
+          .fortune-value {
+            font-size: 32rpx;
+            font-weight: bold;
+            color: white;
+          }
+
+          .fortune-text {
+            font-size: 20rpx;
+            color: rgba(255, 255, 255, 0.9);
+          }
+        }
+      }
+
+      .stage-details {
+        .stage-detail-row {
+          display: flex;
+          align-items: flex-start;
+          margin-bottom: 12rpx;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          &.key-event {
+            padding: 12rpx;
+            background: rgba(255, 193, 7, 0.1);
+            border-radius: 8rpx;
+            border-left: 4rpx solid #ffc107;
+          }
+
+          .detail-icon {
+            font-size: 28rpx;
+            margin-right: 12rpx;
+            flex-shrink: 0;
+          }
+
+          .detail-text {
+            flex: 1;
+            font-size: 26rpx;
+            color: #555;
+            line-height: 1.6;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 综合建议卡片
+.advice-card {
+  .advice-text {
+    font-size: 28rpx;
+    color: #555;
+    line-height: 1.8;
+    padding: 24rpx;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 16rpx;
   }
 }
 </style>
