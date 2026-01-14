@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     port: 8080,
     host: '0.0.0.0',
-    strictPort: false,
+    strictPort: true,
     // 完全禁用 HMR 以防止自动刷新
     hmr: false,
     proxy: {

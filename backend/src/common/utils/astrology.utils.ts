@@ -3,8 +3,33 @@ import { Lunar, Solar } from 'lunar-javascript';
 
 @Injectable()
 export class AstrologyService {
+  /**
+   * 创建东八区（UTC+8）的Solar对象
+   * 用户输入的时间都是东八区时间，需要明确指定时区以确保八字计算正确
+   */
+  private createSolarFromEast8(year: number, month: number, day: number, hour: number): Solar {
+    // 使用 lunar-javascript 的 fromYmdHms 创建时，需要考虑时区偏移
+    // 东八区是 UTC+8，比UTC快8小时
+    // lunar-javascript 默认使用本地时区，但我们需要确保使用东八区
+
+    // 方法：先创建一个东八区的日期对象，然后转换为 Solar
+    const date = new Date(year, month - 1, day, hour, 0, 0);
+
+    // 如果服务器不在东八区，需要调整时区差
+    const serverOffset = date.getTimezoneOffset(); // 服务器时区偏移（分钟）
+    const east8Offset = -480; // 东八区偏移（UTC+8 = -480分钟）
+    const offsetDiff = serverOffset - east8Offset; // 时区差（分钟）
+
+    // 调整时间：如果服务器在东八区以西，需要加上时间差
+    const adjustedDate = new Date(date.getTime() + offsetDiff * 60 * 1000);
+
+    const solar = Solar.fromDate(adjustedDate);
+
+    return solar;
+  }
+
   solarToLunar(year: number, month: number, day: number, hour: number) {
-    const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
+    const solar = this.createSolarFromEast8(year, month, day, hour);
     const lunar = solar.getLunar();
 
     return {
@@ -54,7 +79,7 @@ export class AstrologyService {
   }
 
   getFiveElements(year: number, month: number, day: number, hour: number) {
-    const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
+    const solar = this.createSolarFromEast8(year, month, day, hour);
     const lunar = solar.getLunar();
     const eightChar = lunar.getEightChar();
 
@@ -91,15 +116,20 @@ export class AstrologyService {
    * 获取八字四柱
    */
   getBaZiPillars(year: number, month: number, day: number, hour: number) {
-    const solar = Solar.fromYmdHms(year, month, day, hour, 0, 0);
+    const solar = this.createSolarFromEast8(year, month, day, hour);
     const lunar = solar.getLunar();
     const eightChar = lunar.getEightChar();
 
+    const yearPillar = eightChar.getYear();
+    const monthPillar = eightChar.getMonth();
+    const dayPillar = eightChar.getDay();
+    const hourPillar = eightChar.getTime();
+
     return {
-      yearPillar: eightChar.getYear(),   // 年柱，如：甲辰
-      monthPillar: eightChar.getMonth(),  // 月柱，如：丙寅
-      dayPillar: eightChar.getDay(),      // 日柱，如：戊子
-      hourPillar: eightChar.getTime(),   // 时柱，如：壬子
+      yearPillar,   // 年柱，如：甲辰
+      monthPillar,  // 月柱，如：丙寅
+      dayPillar,    // 日柱，如：戊子
+      hourPillar,   // 时柱，如：壬子
     };
   }
 

@@ -108,13 +108,17 @@ export class AstrologyServiceModule {
    * 生成AI解读
    */
   async generateInterpretation(userId: string) {
+    console.log('[AstrologyService] generateInterpretation start for userId:', userId);
+
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
     if (!user) {
+      console.error('[AstrologyService] User not found:', userId);
       throw new BadRequestException('用户不存在');
     }
+    console.log('[AstrologyService] User found:', user.nickname || user.id, 'province:', user.birthProvince);
 
     // 获取或创建星盘记录
     let reading = await this.prisma.astrologyReading.findUnique({
@@ -122,7 +126,7 @@ export class AstrologyServiceModule {
     });
 
     if (!reading) {
-      // 先计算基础数据
+      console.log('[AstrologyService] No reading found, calculating...');
       await this.calculateAstrology(userId);
       reading = await this.prisma.astrologyReading.findUnique({
         where: { userId },
@@ -130,16 +134,25 @@ export class AstrologyServiceModule {
     }
 
     if (!reading) {
+      console.error('[AstrologyService] Still no reading after calculate');
       throw new BadRequestException('无法获取星盘数据');
     }
+    console.log('[AstrologyService] Reading found, starting AI interpretations...');
+
+    // 获取出生省份，默认为"山西"（历史用户）
+    const birthProvince = user.birthProvince || '山西';
 
     // 生成星座解读
+    console.log('[AstrologyService] Starting zodiac interpretation...');
     const zodiacInterpretation = await this.generateZodiacInterpretation(
       reading.zodiacSign,
       user.gender,
+      birthProvince,
     );
+    console.log('[AstrologyService] Zodiac interpretation completed');
 
     // 生成八字解读
+    console.log('[AstrologyService] Starting bazi interpretation...');
     const baziInterpretation = await this.generateBaZiInterpretation(
       reading.yearPillar,
       reading.monthPillar,
@@ -147,9 +160,12 @@ export class AstrologyServiceModule {
       reading.hourPillar,
       reading.fiveElements,
       user.gender,
+      birthProvince,
     );
+    console.log('[AstrologyService] Bazi interpretation completed');
 
     // 生成人生K线解读
+    console.log('[AstrologyService] Starting kline interpretation...');
     const klineInterpretation = await this.generateKlineInterpretation(
       user.birthYear,
       user.birthMonth,
@@ -159,9 +175,12 @@ export class AstrologyServiceModule {
       reading.yearPillar,
       reading.dayPillar,
       user.gender,
+      birthProvince,
     );
+    console.log('[AstrologyService] Kline interpretation completed');
 
     // 更新解读结果
+    console.log('[AstrologyService] Updating database...');
     const updatedReading = await this.prisma.astrologyReading.update({
       where: { userId },
       data: {
@@ -170,6 +189,7 @@ export class AstrologyServiceModule {
         klineInterpretation,
       },
     });
+    console.log('[AstrologyService] All completed successfully');
 
     return updatedReading;
   }
@@ -193,15 +213,39 @@ export class AstrologyServiceModule {
   }
 
   /**
+   * 带超时的 fetch 请求（默认10分钟超时）
+   */
+  private async fetchWithTimeout(url: string, options: RequestInit, timeout = 600000): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`请求超时（${timeout / 1000}秒）`);
+      }
+      throw error;
+    }
+  }
+
+  /**
    * 生成星座AI解读
    */
-  private async generateZodiacInterpretation(zodiacSign: string, gender?: string) {
+  private async generateZodiacInterpretation(zodiacSign: string, gender?: string, birthProvince?: string) {
     const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
+    const provinceText = birthProvince ? `出生于${birthProvince}` : '';
 
-    const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}进行详细的性格分析和运势解读。
+    const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}${provinceText}进行详细的性格分析和运势解读。
 
 请从以下几个方面进行分析：
-1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方
+1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方${provinceText ? `，结合${birthProvince}的地域文化特色分析性格特质` : ''}
 2. 爱情感情：分析该星座在爱情中的表现和配对建议
 3. 事业发展：分析适合的职业方向和事业发展建议
 4. 守护星：说明该星座的守护星及其象征意义
@@ -225,22 +269,26 @@ export class AstrologyServiceModule {
 }`;
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+      const response = await this.fetchWithTimeout(
+        `${this.baseUrl}/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+          }),
         },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-        }),
-      });
+        600000, // 10分钟超时
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -277,9 +325,11 @@ export class AstrologyServiceModule {
     hourPillar: string,
     fiveElementsJson: string,
     gender?: string,
+    birthProvince?: string,
   ) {
     const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
     const fiveElements = JSON.parse(fiveElementsJson || '{}');
+    const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
 
     // 找出最强的五行
     const maxElement = Object.entries(fiveElements).reduce((a, b) =>
@@ -296,6 +346,7 @@ export class AstrologyServiceModule {
     const prompt = `请作为专业的八字命理师，对以下八字进行详细分析：
 
 出生者性别：${genderText || '未知'}
+${provinceText}
 八字四柱：
 年柱：${yearPillar}
 月柱：${monthPillar}
@@ -312,7 +363,7 @@ export class AstrologyServiceModule {
 命主五行：${elementNames[maxElement[0]]}
 
 请从以下几个方面进行分析：
-1. 命局分析：分析日主强弱、格局高低
+1. 命局分析：分析日主强弱、格局高低${birthProvince ? `，结合${birthProvince}的地域命理特色` : ''}
 2. 五行喜忌：分析命主喜用神和忌神
 3. 性格特质：根据八字分析性格特点
 4. 事业财运：分析适合的行业和财运运势
@@ -340,22 +391,26 @@ export class AstrologyServiceModule {
 }`;
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+      const response = await this.fetchWithTimeout(
+        `${this.baseUrl}/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+          }),
         },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-        }),
-      });
+        600000, // 10分钟超时
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -476,10 +531,12 @@ export class AstrologyServiceModule {
     yearPillar: string,
     dayPillar: string,
     gender?: string,
+    birthProvince?: string,
   ) {
     const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
     const currentYear = new Date().getFullYear();
     const age = currentYear - birthYear;
+    const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
 
     // 计算人生阶段
     const lifeStages = [];
@@ -495,10 +552,11 @@ export class AstrologyServiceModule {
 - 出生日期：${birthYear}年${birthMonth}月${birthDay}日${birthHour}时
 - 星座：${zodiacSign}
 - 年柱：${yearPillar}（日主：${dayPillar[0]}）
+${provinceText ? `- ${provinceText}` : ''}
 
 请分析人生运势走势，按照人生每10年为一个阶段，生成类似股票K线的分析数据。包括：
 1. **运势指数**：0-100的数值，表示该阶段的整体运势水平
-2. **事业运**：事业发展的趋势和关键节点
+2. **事业运**：事业发展的趋势和关键节点${birthProvince ? `，结合${birthProvince}的地域发展机遇` : ''}
 3. **财运**：财务状况和投资理财建议
 4. **感情运**：感情生活和婚姻运势
 5. **健康运**：健康状况和注意事项
@@ -532,22 +590,26 @@ ${lifeStages.map(s => `- ${s.age}-${s.age + 9}岁（${s.year}-${s.year + 9}年�
 }`;
 
     try {
-      const response = await fetch(`${this.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
+      const response = await this.fetchWithTimeout(
+        `${this.baseUrl}/chat/completions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify({
+            model: this.model,
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+          }),
         },
-        body: JSON.stringify({
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content: prompt,
-            },
-          ],
-        }),
-      });
+        600000, // 10分钟超时
+      );
 
       if (!response.ok) {
         const errorText = await response.text();

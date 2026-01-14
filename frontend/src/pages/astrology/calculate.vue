@@ -6,10 +6,15 @@
         <text v-if="!calculating">✨ 重新计算星盘</text>
         <text v-else>计算中...</text>
       </button>
-      <button class="btn-interpret" @click="handleGenerateInterpretation" :loading="interpreting" :disabled="!hasBasicData">
-        <text v-if="!interpreting">🔮 生成AI解读</text>
-        <text v-else>解读中...</text>
-      </button>
+      <view class="btn-interpret-wrapper">
+        <button class="btn-interpret" @click="handleGenerateInterpretation" :disabled="!hasBasicData || interpreting">
+          <text v-if="!interpreting">🔮 生成AI解读</text>
+          <text v-else>解读中... {{ formatProgress() }}%</text>
+        </button>
+        <view v-if="interpreting" class="progress-bar">
+          <view class="progress-fill" :style="{ width: `${interpretProgress}%` }"></view>
+        </view>
+      </view>
     </view>
 
     <!-- Tab 切换 -->
@@ -221,6 +226,61 @@
                 <view class="grid-line" v-for="i in 5" :key="'grid-' + i" :style="{ bottom: `${(i - 1) * 25}%` }"></view>
               </view>
 
+              <!-- K线曲线 (SVG) -->
+              <view class="kline-curve-container">
+                <svg class="kline-curve-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+                  <!-- 填充渐变区域 -->
+                  <defs>
+                    <linearGradient id="curveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color:rgba(102, 126, 234, 0.3);stop-opacity:1" />
+                      <stop offset="100%" style="stop-color:rgba(102, 126, 234, 0.05);stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                    </linearGradient>
+                  </defs>
+                  <!-- 填充区域 -->
+                  <path
+                    :d="getCurvePath(klineInterpretation.lifeStages, true)"
+                    fill="url(#curveGradient)"
+                    stroke="none"
+                  />
+                  <!-- 曲线 -->
+                  <path
+                    :d="getCurvePath(klineInterpretation.lifeStages, false)"
+                    fill="none"
+                    stroke="url(#lineGradient)"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <!-- 数据点 -->
+                  <circle
+                    v-for="(stage, index) in klineInterpretation.lifeStages"
+                    :key="'point-' + index"
+                    :cx="getPointX(index, klineInterpretation.lifeStages.length)"
+                    :cy="getPointY(stage.fortune)"
+                    r="6"
+                    fill="#667eea"
+                    stroke="white"
+                    stroke-width="2"
+                  />
+                  <!-- 数值标签 -->
+                  <text
+                    v-for="(stage, index) in klineInterpretation.lifeStages"
+                    :key="'label-' + index"
+                    :x="getPointX(index, klineInterpretation.lifeStages.length)"
+                    :y="getPointY(stage.fortune) - 15"
+                    text-anchor="middle"
+                    class="fortune-label"
+                    fill="#667eea"
+                    font-size="14"
+                    font-weight="bold"
+                  >{{ stage.fortune }}</text>
+                </svg>
+              </view>
+
               <!-- K线柱状图 -->
               <view class="kline-bars">
                 <view
@@ -332,6 +392,7 @@ const userStore = useUserStore()
 const currentTab = ref<'zodiac' | 'bazi' | 'kline'>('zodiac')
 const calculating = ref(false)
 const interpreting = ref(false)
+const interpretProgress = ref(0)
 
 // 数据
 const basicData = ref<any>(null)
@@ -405,6 +466,64 @@ function showStageDetail(stage: any) {
   // 可以在这里添加弹窗显示更详细的信息
 }
 
+// K线曲线相关函数
+// SVG viewBox 宽度800，高度400
+// 需要将数据映射到这个坐标系
+function getPointX(index: number, total: number): number {
+  // 在 800 宽度内均匀分布，留出边距
+  const padding = 60
+  const availableWidth = 800 - padding * 2
+  const step = availableWidth / Math.max(1, total - 1)
+  return padding + step * index
+}
+
+function getPointY(fortune: number): number {
+  // fortune 是 0-100，需要映射到 400-0 (SVG坐标系y向下)
+  const padding = 40
+  const availableHeight = 400 - padding * 2
+  return 400 - padding - (fortune / 100) * availableHeight
+}
+
+// 生成平滑曲线路径（使用贝塞尔曲线）
+function getCurvePath(stages: any[], filled: boolean): string {
+  if (!stages || stages.length === 0) return ''
+
+  const points = stages.map((stage, index) => ({
+    x: getPointX(index, stages.length),
+    y: getPointY(stage.fortune || 50)
+  }))
+
+  if (points.length === 1) {
+    return `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`
+  }
+
+  // 使用三次贝塞尔曲线创建平滑路径
+  let path = `M ${points[0].x} ${points[0].y}`
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i]
+    const p1 = points[i + 1]
+
+    // 控制点：使用两点之间的中点，使得曲线平滑
+    const midX = (p0.x + p1.x) / 2
+    const cp1x = midX
+    const cp1y = p0.y
+    const cp2x = midX
+    const cp2y = p1.y
+
+    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x} ${p1.y}`
+  }
+
+  // 如果需要填充区域，闭合路径到底部
+  if (filled) {
+    const lastPoint = points[points.length - 1]
+    const firstPoint = points[0]
+    path += ` L ${lastPoint.x} 400 L ${firstPoint.x} 400 Z`
+  }
+
+  return path
+}
+
 // 计算星盘基础数据
 async function handleCalculate() {
   if (!userStore.userInfo?.id) {
@@ -432,15 +551,40 @@ async function handleGenerateInterpretation() {
   }
 
   interpreting.value = true
+  interpretProgress.value = 0
+
+  // 启动进度模拟
+  const progressInterval = setInterval(() => {
+    if (interpretProgress.value < 90) {
+      interpretProgress.value = Math.min(90, interpretProgress.value + Math.random() * 15)
+    }
+  }, 2000)
+
   try {
+    console.log('[Frontend] Calling API...')
     const res: any = await api.astrology.generateInterpretation()
+    console.log('[Frontend] API response received:', res)
+    console.log('[Frontend] Response has zodiacInterpretation:', !!res?.zodiacInterpretation)
+    console.log('[Frontend] Response has baziInterpretation:', !!res?.baziInterpretation)
+    console.log('[Frontend] Response has klineInterpretation:', !!res?.klineInterpretation)
     readingData.value = res
+    interpretProgress.value = 100
     uni.showToast({ title: '解读生成成功', icon: 'success' })
   } catch (error: any) {
-    uni.showToast({ title: error.message || '生成失败', icon: 'none' })
+    console.error('[Frontend] API error:', error)
+    uni.showToast({ title: error.message || '生成失败，请稍后重试', icon: 'none' })
   } finally {
-    interpreting.value = false
+    clearInterval(progressInterval)
+    setTimeout(() => {
+      interpreting.value = false
+      interpretProgress.value = 0
+    }, 500)
   }
+}
+
+// 格式化进度显示（保留1位小数）
+const formatProgress = () => {
+  return interpretProgress.value.toFixed(1)
 }
 
 // 页面加载时获取已有的解读记录
@@ -495,13 +639,44 @@ init()
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
     }
+  }
 
-    &.btn-interpret {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
+  .btn-interpret-wrapper {
+    flex: 1;
+    position: relative;
 
-      &[disabled] {
-        opacity: 0.5;
+    button {
+      width: 100%;
+      height: 88rpx;
+      border-radius: 16rpx;
+      font-size: 28rpx;
+      border: none;
+
+      &.btn-interpret {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+
+        &[disabled] {
+          opacity: 0.5;
+        }
+      }
+    }
+
+    .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 6rpx;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 0 0 16rpx 16rpx;
+      overflow: hidden;
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
+        transition: width 0.3s ease;
+        box-shadow: 0 0 10rpx rgba(255, 215, 0, 0.8);
       }
     }
   }
@@ -771,6 +946,28 @@ init()
       position: relative;
       border-left: 1px solid #eee;
       border-bottom: 1px solid #eee;
+    }
+
+    .kline-curve-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2;
+      pointer-events: none;
+
+      .kline-curve-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+
+      .fortune-label {
+        font-family: sans-serif;
+        font-weight: 600;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+      }
     }
 
     .grid-lines {

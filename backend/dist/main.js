@@ -56,6 +56,55 @@ exports.AppModule = AppModule = __decorate([
 
 /***/ }),
 
+/***/ "./src/common/filters/all-exceptions.filter.ts":
+/*!*****************************************************!*\
+  !*** ./src/common/filters/all-exceptions.filter.ts ***!
+  \*****************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AllExceptionsFilter = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+let AllExceptionsFilter = class AllExceptionsFilter {
+    catch(exception, host) {
+        const ctx = host.switchToHttp();
+        const response = ctx.getResponse();
+        const request = ctx.getRequest();
+        console.error('[GlobalExceptionFilter] Exception caught:', {
+            path: request.url,
+            method: request.method,
+            exception: exception,
+            stack: exception instanceof Error ? exception.stack : undefined,
+        });
+        const status = exception instanceof common_1.HttpException
+            ? exception.getStatus()
+            : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+        const message = exception instanceof common_1.HttpException
+            ? exception.getResponse()
+            : 'Internal server error';
+        response.status(status).json({
+            statusCode: status,
+            timestamp: new Date().toISOString(),
+            path: request.url,
+            message,
+        });
+    }
+};
+exports.AllExceptionsFilter = AllExceptionsFilter;
+exports.AllExceptionsFilter = AllExceptionsFilter = __decorate([
+    (0, common_1.Catch)()
+], AllExceptionsFilter);
+
+
+/***/ }),
+
 /***/ "./src/common/guards/jwt-auth.guard.ts":
 /*!*********************************************!*\
   !*** ./src/common/guards/jwt-auth.guard.ts ***!
@@ -374,8 +423,17 @@ exports.AstrologyService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const lunar_javascript_1 = __webpack_require__(/*! lunar-javascript */ "lunar-javascript");
 let AstrologyService = class AstrologyService {
+    createSolarFromEast8(year, month, day, hour) {
+        const date = new Date(year, month - 1, day, hour, 0, 0);
+        const serverOffset = date.getTimezoneOffset();
+        const east8Offset = -480;
+        const offsetDiff = serverOffset - east8Offset;
+        const adjustedDate = new Date(date.getTime() + offsetDiff * 60 * 1000);
+        const solar = lunar_javascript_1.Solar.fromDate(adjustedDate);
+        return solar;
+    }
     solarToLunar(year, month, day, hour) {
-        const solar = lunar_javascript_1.Solar.fromYmdHms(year, month, day, hour, 0, 0);
+        const solar = this.createSolarFromEast8(year, month, day, hour);
         const lunar = solar.getLunar();
         return {
             lunarYear: lunar.getYear(),
@@ -417,7 +475,7 @@ let AstrologyService = class AstrologyService {
         return '未知';
     }
     getFiveElements(year, month, day, hour) {
-        const solar = lunar_javascript_1.Solar.fromYmdHms(year, month, day, hour, 0, 0);
+        const solar = this.createSolarFromEast8(year, month, day, hour);
         const lunar = solar.getLunar();
         const eightChar = lunar.getEightChar();
         const elements = {
@@ -446,14 +504,18 @@ let AstrologyService = class AstrologyService {
         return elements;
     }
     getBaZiPillars(year, month, day, hour) {
-        const solar = lunar_javascript_1.Solar.fromYmdHms(year, month, day, hour, 0, 0);
+        const solar = this.createSolarFromEast8(year, month, day, hour);
         const lunar = solar.getLunar();
         const eightChar = lunar.getEightChar();
+        const yearPillar = eightChar.getYear();
+        const monthPillar = eightChar.getMonth();
+        const dayPillar = eightChar.getDay();
+        const hourPillar = eightChar.getTime();
         return {
-            yearPillar: eightChar.getYear(),
-            monthPillar: eightChar.getMonth(),
-            dayPillar: eightChar.getDay(),
-            hourPillar: eightChar.getTime(),
+            yearPillar,
+            monthPillar,
+            dayPillar,
+            hourPillar,
         };
     }
     getElementByGan(gan) {
@@ -531,7 +593,23 @@ let AstrologyController = class AstrologyController {
     }
     async generateInterpretation(req) {
         const userId = req.user.sub;
-        return this.astrologyService.generateInterpretation(userId);
+        console.log('[Astrology] generateInterpretation called for userId:', userId);
+        try {
+            const result = await this.astrologyService.generateInterpretation(userId);
+            console.log('[Astrology] generateInterpretation success');
+            console.log('[Astrology] Returning data structure:', {
+                hasResult: !!result,
+                keys: result ? Object.keys(result) : [],
+                hasZodiac: !!result?.zodiacInterpretation,
+                hasBazi: !!result?.baziInterpretation,
+                hasKline: !!result?.klineInterpretation,
+            });
+            return result;
+        }
+        catch (error) {
+            console.error('[Astrology] generateInterpretation error:', error);
+            throw error;
+        }
     }
     async getReading(req) {
         const userId = req.user.sub;
@@ -692,27 +770,41 @@ let AstrologyServiceModule = class AstrologyServiceModule {
         };
     }
     async generateInterpretation(userId) {
+        console.log('[AstrologyService] generateInterpretation start for userId:', userId);
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
         });
         if (!user) {
+            console.error('[AstrologyService] User not found:', userId);
             throw new common_1.BadRequestException('用户不存在');
         }
+        console.log('[AstrologyService] User found:', user.nickname || user.id, 'province:', user.birthProvince);
         let reading = await this.prisma.astrologyReading.findUnique({
             where: { userId },
         });
         if (!reading) {
+            console.log('[AstrologyService] No reading found, calculating...');
             await this.calculateAstrology(userId);
             reading = await this.prisma.astrologyReading.findUnique({
                 where: { userId },
             });
         }
         if (!reading) {
+            console.error('[AstrologyService] Still no reading after calculate');
             throw new common_1.BadRequestException('无法获取星盘数据');
         }
-        const zodiacInterpretation = await this.generateZodiacInterpretation(reading.zodiacSign, user.gender);
-        const baziInterpretation = await this.generateBaZiInterpretation(reading.yearPillar, reading.monthPillar, reading.dayPillar, reading.hourPillar, reading.fiveElements, user.gender);
-        const klineInterpretation = await this.generateKlineInterpretation(user.birthYear, user.birthMonth, user.birthDay, user.birthHour, reading.zodiacSign, reading.yearPillar, reading.dayPillar, user.gender);
+        console.log('[AstrologyService] Reading found, starting AI interpretations...');
+        const birthProvince = user.birthProvince || '山西';
+        console.log('[AstrologyService] Starting zodiac interpretation...');
+        const zodiacInterpretation = await this.generateZodiacInterpretation(reading.zodiacSign, user.gender, birthProvince);
+        console.log('[AstrologyService] Zodiac interpretation completed');
+        console.log('[AstrologyService] Starting bazi interpretation...');
+        const baziInterpretation = await this.generateBaZiInterpretation(reading.yearPillar, reading.monthPillar, reading.dayPillar, reading.hourPillar, reading.fiveElements, user.gender, birthProvince);
+        console.log('[AstrologyService] Bazi interpretation completed');
+        console.log('[AstrologyService] Starting kline interpretation...');
+        const klineInterpretation = await this.generateKlineInterpretation(user.birthYear, user.birthMonth, user.birthDay, user.birthHour, reading.zodiacSign, reading.yearPillar, reading.dayPillar, user.gender, birthProvince);
+        console.log('[AstrologyService] Kline interpretation completed');
+        console.log('[AstrologyService] Updating database...');
         const updatedReading = await this.prisma.astrologyReading.update({
             where: { userId },
             data: {
@@ -721,6 +813,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
                 klineInterpretation,
             },
         });
+        console.log('[AstrologyService] All completed successfully');
         return updatedReading;
     }
     async getReading(userId) {
@@ -735,12 +828,32 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             fiveElements: JSON.parse(reading.fiveElements || '{}'),
         };
     }
-    async generateZodiacInterpretation(zodiacSign, gender) {
+    async fetchWithTimeout(url, options, timeout = 600000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            return response;
+        }
+        catch (error) {
+            clearTimeout(timeoutId);
+            if (error instanceof Error && error.name === 'AbortError') {
+                throw new Error(`请求超时（${timeout / 1000}秒）`);
+            }
+            throw error;
+        }
+    }
+    async generateZodiacInterpretation(zodiacSign, gender, birthProvince) {
         const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
-        const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}进行详细的性格分析和运势解读。
+        const provinceText = birthProvince ? `出生于${birthProvince}` : '';
+        const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}${provinceText}进行详细的性格分析和运势解读。
 
 请从以下几个方面进行分析：
-1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方
+1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方${provinceText ? `，结合${birthProvince}的地域文化特色分析性格特质` : ''}
 2. 爱情感情：分析该星座在爱情中的表现和配对建议
 3. 事业发展：分析适合的职业方向和事业发展建议
 4. 守护星：说明该星座的守护星及其象征意义
@@ -763,7 +876,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
   }
 }`;
         try {
-            const response = await fetch(`${this.baseUrl}/chat/completions`, {
+            const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -778,7 +891,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
                         },
                     ],
                 }),
-            });
+            }, 600000);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`API 请求失败: ${response.status} - ${errorText}`);
@@ -800,9 +913,10 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             });
         }
     }
-    async generateBaZiInterpretation(yearPillar, monthPillar, dayPillar, hourPillar, fiveElementsJson, gender) {
+    async generateBaZiInterpretation(yearPillar, monthPillar, dayPillar, hourPillar, fiveElementsJson, gender, birthProvince) {
         const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
         const fiveElements = JSON.parse(fiveElementsJson || '{}');
+        const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
         const maxElement = Object.entries(fiveElements).reduce((a, b) => b[1] > a[1] ? b : a);
         const elementNames = {
             wood: '木',
@@ -814,6 +928,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
         const prompt = `请作为专业的八字命理师，对以下八字进行详细分析：
 
 出生者性别：${genderText || '未知'}
+${provinceText}
 八字四柱：
 年柱：${yearPillar}
 月柱：${monthPillar}
@@ -830,7 +945,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
 命主五行：${elementNames[maxElement[0]]}
 
 请从以下几个方面进行分析：
-1. 命局分析：分析日主强弱、格局高低
+1. 命局分析：分析日主强弱、格局高低${birthProvince ? `，结合${birthProvince}的地域命理特色` : ''}
 2. 五行喜忌：分析命主喜用神和忌神
 3. 性格特质：根据八字分析性格特点
 4. 事业财运：分析适合的行业和财运运势
@@ -857,7 +972,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
   }
 }`;
         try {
-            const response = await fetch(`${this.baseUrl}/chat/completions`, {
+            const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -872,7 +987,7 @@ let AstrologyServiceModule = class AstrologyServiceModule {
                         },
                     ],
                 }),
-            });
+            }, 600000);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`API 请求失败: ${response.status} - ${errorText}`);
@@ -949,10 +1064,11 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             throw error;
         }
     }
-    async generateKlineInterpretation(birthYear, birthMonth, birthDay, birthHour, zodiacSign, yearPillar, dayPillar, gender) {
+    async generateKlineInterpretation(birthYear, birthMonth, birthDay, birthHour, zodiacSign, yearPillar, dayPillar, gender, birthProvince) {
         const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
         const currentYear = new Date().getFullYear();
         const age = currentYear - birthYear;
+        const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
         const lifeStages = [];
         for (let i = 0; i <= 80; i += 10) {
             const year = birthYear + i;
@@ -965,10 +1081,11 @@ let AstrologyServiceModule = class AstrologyServiceModule {
 - 出生日期：${birthYear}年${birthMonth}月${birthDay}日${birthHour}时
 - 星座：${zodiacSign}
 - 年柱：${yearPillar}（日主：${dayPillar[0]}）
+${provinceText ? `- ${provinceText}` : ''}
 
 请分析人生运势走势，按照人生每10年为一个阶段，生成类似股票K线的分析数据。包括：
 1. **运势指数**：0-100的数值，表示该阶段的整体运势水平
-2. **事业运**：事业发展的趋势和关键节点
+2. **事业运**：事业发展的趋势和关键节点${birthProvince ? `，结合${birthProvince}的地域发展机遇` : ''}
 3. **财运**：财务状况和投资理财建议
 4. **感情运**：感情生活和婚姻运势
 5. **健康运**：健康状况和注意事项
@@ -1001,7 +1118,7 @@ ${lifeStages.map(s => `- ${s.age}-${s.age + 9}岁（${s.year}-${s.year + 9}年�
   }
 }`;
         try {
-            const response = await fetch(`${this.baseUrl}/chat/completions`, {
+            const response = await this.fetchWithTimeout(`${this.baseUrl}/chat/completions`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1016,7 +1133,7 @@ ${lifeStages.map(s => `- ${s.age}-${s.age + 9}岁（${s.year}-${s.year + 9}年�
                         },
                     ],
                 }),
-            });
+            }, 600000);
             if (!response.ok) {
                 const errorText = await response.text();
                 throw new Error(`API 请求失败: ${response.status} - ${errorText}`);
@@ -3153,6 +3270,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(/*! @nestjs/core */ "@nestjs/core");
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
 const app_module_1 = __webpack_require__(/*! ./app.module */ "./src/app.module.ts");
+const all_exceptions_filter_1 = __webpack_require__(/*! ./common/filters/all-exceptions.filter */ "./src/common/filters/all-exceptions.filter.ts");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
@@ -3165,6 +3283,7 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
         transform: true,
     }));
+    app.useGlobalFilters(new all_exceptions_filter_1.AllExceptionsFilter());
     app.setGlobalPrefix('api');
     const port = process.env.PORT || 3000;
     const host = '0.0.0.0';

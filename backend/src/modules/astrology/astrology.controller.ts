@@ -22,7 +22,22 @@ export class AstrologyController {
   @UseGuards(JwtAuthGuard)
   async generateInterpretation(@Request() req) {
     const userId = req.user.sub;
-    return this.astrologyService.generateInterpretation(userId);
+    console.log('[Astrology] generateInterpretation called for userId:', userId);
+    try {
+      const result = await this.astrologyService.generateInterpretation(userId);
+      console.log('[Astrology] generateInterpretation success');
+      console.log('[Astrology] Returning data structure:', {
+        hasResult: !!result,
+        keys: result ? Object.keys(result) : [],
+        hasZodiac: !!result?.zodiacInterpretation,
+        hasBazi: !!result?.baziInterpretation,
+        hasKline: !!result?.klineInterpretation,
+      });
+      return result;
+    } catch (error) {
+      console.error('[Astrology] generateInterpretation error:', error);
+      throw error;
+    }
   }
 
   /**

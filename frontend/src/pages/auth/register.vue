@@ -44,6 +44,13 @@
         </picker>
       </view>
 
+      <view class="form-item">
+        <text class="label">出生省份</text>
+        <picker mode="selector" :range="provinces" @change="onProvinceChange">
+          <view class="picker">{{ birthProvince || '请选择出生省份' }}</view>
+        </picker>
+      </view>
+
       <button class="btn" @click="handleRegister" :loading="loading">注册</button>
 
       <view class="links">
@@ -67,6 +74,7 @@ const birthYear = ref(0)
 const birthMonth = ref(0)
 const birthDay = ref(0)
 const birthHour = ref<number | null>(null)
+const birthProvince = ref('')
 const loading = ref(false)
 const userStore = useUserStore()
 
@@ -85,6 +93,17 @@ const hours = [
   '亥时 (21:00-23:00)'
 ]
 
+// 中国省级行政区
+const provinces = [
+  '北京', '天津', '上海', '重庆',
+  '河北', '山西', '辽宁', '吉林', '黑龙江',
+  '江苏', '浙江', '安徽', '福建', '江西', '山东',
+  '河南', '湖北', '湖南', '广东', '海南',
+  '四川', '贵州', '云南', '陕西', '甘肃', '青海',
+  '台湾', '内蒙古', '广西', '西藏', '宁夏', '新疆',
+  '香港', '澳门'
+]
+
 function onGenderChange(e: any) {
   gender.value = e.detail.value
 }
@@ -99,6 +118,10 @@ function onDateChange(e: any) {
 
 function onHourChange(e: any) {
   birthHour.value = e.detail.value
+}
+
+function onProvinceChange(e: any) {
+  birthProvince.value = provinces[e.detail.value]
 }
 
 function goToLogin() {
@@ -139,6 +162,11 @@ async function handleRegister() {
     return
   }
 
+  if (!birthProvince.value) {
+    uni.showToast({ title: '请选择出生省份', icon: 'none' })
+    return
+  }
+
   loading.value = true
   try {
     const res: any = await api.auth.register({
@@ -149,24 +177,14 @@ async function handleRegister() {
       birthYear: birthYear.value,
       birthMonth: birthMonth.value,
       birthDay: birthDay.value,
-      birthHour: birthHour.value
+      birthHour: birthHour.value,
+      birthProvince: birthProvince.value
     })
 
     console.log('注册成功，响应数据:', res)
 
-    // 注册成功后自动计算星盘
-    if (res.user?.id) {
-      try {
-        const astrologyResult: any = await api.astrology.calculate(res.user.id)
-        console.log('星盘计算成功:', astrologyResult)
-      } catch (astroError) {
-        console.error('星盘计算失败:', astroError)
-        // 星盘计算失败不影响注册流程
-      }
-    }
-
     // 显示成功提示
-    uni.showToast({ title: '注册成功', icon: 'success' })
+    uni.showToast({ title: '注册成功，请登录', icon: 'success' })
 
     // 延迟跳转到登录页面，让用户看到成功提示
     setTimeout(() => {

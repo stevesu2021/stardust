@@ -51,16 +51,52 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
       method,
       data,
       header: headers,
+      timeout: 600000, // 设置10分钟超时（AI解读可能需要较长时间）
       success: (res: any) => {
         // 200 OK 和 201 Created 都视为成功
         if (res.statusCode === 200 || res.statusCode === 201) {
           resolve(res.data)
         } else {
-          reject(new Error(res.data.message || '请求失败'))
+          // 调试日志
+          console.log('[API] Non-200 response:', {
+            url,
+            statusCode: res.statusCode,
+            dataType: typeof res.data,
+            data: res.data,
+            dataKeys: res.data ? Object.keys(res.data) : null,
+          })
+
+          // 尝试从响应中提取错误消息
+          let errorMessage = '请求失败'
+          if (typeof res.data === 'string') {
+            errorMessage = res.data
+          } else if (res.data && res.data.message) {
+            errorMessage = res.data.message
+          } else if (res.data && res.data.error) {
+            errorMessage = res.data.error
+          } else if (res.data) {
+            errorMessage = JSON.stringify(res.data)
+          }
+
+          console.log('[API] Extracted error message:', errorMessage)
+
+          const error = new Error(errorMessage) as any
+          error.statusCode = res.statusCode
+          error.data = res.data
+          reject(error)
         }
       },
       fail: (err) => {
-        reject(err)
+        // uni.request 的 fail 回调
+        console.log('[API] Request failed:', err)
+
+        let errorMessage = '网络请求失败'
+        if (err.errMsg) {
+          errorMessage = err.errMsg
+        }
+        const error = new Error(errorMessage) as any
+        error.originalError = err
+        reject(error)
       }
     })
   })
