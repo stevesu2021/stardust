@@ -40,7 +40,7 @@
       <view class="form-item">
         <text class="label">出生时辰</text>
         <picker mode="selector" :range="hours" @change="onHourChange">
-          <view class="picker">{{ birthHour !== null ? hours[birthHour] : '请选择出生时辰' }}</view>
+          <view class="picker">{{ birthHourIndex !== null ? hours[birthHourIndex] : '请选择出生时辰' }}</view>
         </picker>
       </view>
 
@@ -48,6 +48,13 @@
         <text class="label">出生省份</text>
         <picker mode="selector" :range="provinces" @change="onProvinceChange">
           <view class="picker">{{ birthProvince || '请选择出生省份' }}</view>
+        </picker>
+      </view>
+
+      <view class="form-item">
+        <text class="label">现居地省份</text>
+        <picker mode="selector" :range="provinces" @change="onCurrentProvinceChange">
+          <view class="picker">{{ currentProvince || '请选择现居地省份' }}</view>
         </picker>
       </view>
 
@@ -74,7 +81,9 @@ const birthYear = ref(0)
 const birthMonth = ref(0)
 const birthDay = ref(0)
 const birthHour = ref<number | null>(null)
+const birthHourIndex = ref<number | null>(null)
 const birthProvince = ref('')
+const currentProvince = ref('北京')  // 默认北京
 const loading = ref(false)
 const userStore = useUserStore()
 
@@ -117,11 +126,20 @@ function onDateChange(e: any) {
 }
 
 function onHourChange(e: any) {
-  birthHour.value = e.detail.value
+  // 存储选中的索引
+  birthHourIndex.value = e.detail.value
+  // 将时辰索引转换为实际小时数
+  // 子时0→23, 丑时1→1, 寅时2→3, 卯时3→5, 辰时4→7, 巳时5→9, 午时6→11, 未时7→13, 申时8→15, 酉时9→17, 戌时10→19, 亥时11→21
+  const hourMap = [23, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
+  birthHour.value = hourMap[e.detail.value]
 }
 
 function onProvinceChange(e: any) {
   birthProvince.value = provinces[e.detail.value]
+}
+
+function onCurrentProvinceChange(e: any) {
+  currentProvince.value = provinces[e.detail.value]
 }
 
 function goToLogin() {
@@ -167,6 +185,11 @@ async function handleRegister() {
     return
   }
 
+  if (!currentProvince.value) {
+    uni.showToast({ title: '请选择现居地省份', icon: 'none' })
+    return
+  }
+
   loading.value = true
   try {
     const res: any = await api.auth.register({
@@ -178,7 +201,8 @@ async function handleRegister() {
       birthMonth: birthMonth.value,
       birthDay: birthDay.value,
       birthHour: birthHour.value,
-      birthProvince: birthProvince.value
+      birthProvince: birthProvince.value,
+      currentProvince: currentProvince.value
     })
 
     console.log('注册成功，响应数据:', res)

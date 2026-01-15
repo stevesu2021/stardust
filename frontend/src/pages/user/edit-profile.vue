@@ -34,8 +34,22 @@
 
       <view class="form-item">
         <text class="label">出生时辰</text>
-        <picker mode="selector" :range="hours" :value="birthHour !== null ? birthHour : 0" @change="onHourChange">
-          <view class="picker">{{ birthHour !== null ? hours[birthHour] : '请选择出生时辰' }}</view>
+        <picker mode="selector" :range="hours" @change="onHourChange">
+          <view class="picker">{{ birthHourIndex !== null ? hours[birthHourIndex] : '请选择出生时辰' }}</view>
+        </picker>
+      </view>
+
+      <view class="form-item">
+        <text class="label">出生省份</text>
+        <picker mode="selector" :range="provinces" @change="onBirthProvinceChange">
+          <view class="picker">{{ birthProvince || '请选择出生省份' }}</view>
+        </picker>
+      </view>
+
+      <view class="form-item">
+        <text class="label">现居地省份</text>
+        <picker mode="selector" :range="provinces" @change="onCurrentProvinceChange">
+          <view class="picker">{{ currentProvince || '请选择现居地省份' }}</view>
         </picker>
       </view>
 
@@ -58,6 +72,9 @@ const birthYear = ref(0)
 const birthMonth = ref(0)
 const birthDay = ref(0)
 const birthHour = ref<number | null>(null)
+const birthHourIndex = ref<number | null>(null)
+const birthProvince = ref('')
+const currentProvince = ref('')
 const loading = ref(false)
 
 const hours = [
@@ -75,6 +92,17 @@ const hours = [
   '亥时 (21:00-23:00)'
 ]
 
+// 中国省级行政区
+const provinces = [
+  '北京', '天津', '上海', '重庆',
+  '河北', '山西', '辽宁', '吉林', '黑龙江',
+  '江苏', '浙江', '安徽', '福建', '江西', '山东',
+  '河南', '湖北', '湖南', '广东', '海南',
+  '四川', '贵州', '云南', '陕西', '甘肃', '青海',
+  '台湾', '内蒙古', '广西', '西藏', '宁夏', '新疆',
+  '香港', '澳门'
+]
+
 onMounted(() => {
   // 加载当前用户信息
   if (userStore.userInfo) {
@@ -90,10 +118,19 @@ onMounted(() => {
       birthDay.value = user.birthDay
       birthDate.value = `${user.birthYear}-${String(user.birthMonth).padStart(2, '0')}-${String(user.birthDay).padStart(2, '0')}`
     }
-    // 如果用户已有时辰信息
+    // 如果用户已有时辰信息，需要将小时值转换为索引
     if (user.birthHour !== undefined && user.birthHour !== null) {
       birthHour.value = user.birthHour
+      // 将小时值转换为索引（与注册页面保持一致）
+      const hourMap = [23, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
+      const index = hourMap.indexOf(user.birthHour)
+      if (index !== -1) {
+        birthHourIndex.value = index
+      }
     }
+    // 加载省份信息
+    birthProvince.value = user.birthProvince || ''
+    currentProvince.value = user.currentProvince || '北京'
   }
 })
 
@@ -110,7 +147,19 @@ function onDateChange(e: any) {
 }
 
 function onHourChange(e: any) {
-  birthHour.value = parseInt(e.detail.value)
+  // 存储选中的索引
+  birthHourIndex.value = e.detail.value
+  // 将时辰索引转换为实际小时数
+  const hourMap = [23, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21]
+  birthHour.value = hourMap[e.detail.value]
+}
+
+function onBirthProvinceChange(e: any) {
+  birthProvince.value = provinces[e.detail.value]
+}
+
+function onCurrentProvinceChange(e: any) {
+  currentProvince.value = provinces[e.detail.value]
 }
 
 async function handleSave() {
@@ -129,6 +178,16 @@ async function handleSave() {
     return
   }
 
+  if (!birthProvince.value) {
+    uni.showToast({ title: '请选择出生省份', icon: 'none' })
+    return
+  }
+
+  if (!currentProvince.value) {
+    uni.showToast({ title: '请选择现居地省份', icon: 'none' })
+    return
+  }
+
   loading.value = true
   try {
     const updateData: any = {
@@ -138,7 +197,9 @@ async function handleSave() {
       birthYear: birthYear.value,
       birthMonth: birthMonth.value,
       birthDay: birthDay.value,
-      birthHour: birthHour.value
+      birthHour: birthHour.value,
+      birthProvince: birthProvince.value,
+      currentProvince: currentProvince.value
     }
 
     const res: any = await api.user.update(userStore.userInfo!.id, updateData)

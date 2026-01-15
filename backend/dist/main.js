@@ -450,7 +450,7 @@ let AstrologyService = class AstrologyService {
     }
     getZodiacSign(month, day) {
         const zodiacSigns = [
-            { name: '摩羯座', start: [1, 1], end: [1, 19] },
+            { name: '摩羯座', start: [12, 22], end: [1, 19] },
             { name: '水瓶座', start: [1, 20], end: [2, 18] },
             { name: '双鱼座', start: [2, 19], end: [3, 20] },
             { name: '白羊座', start: [3, 21], end: [4, 19] },
@@ -462,14 +462,22 @@ let AstrologyService = class AstrologyService {
             { name: '天秤座', start: [9, 23], end: [10, 23] },
             { name: '天蝎座', start: [10, 24], end: [11, 22] },
             { name: '射手座', start: [11, 23], end: [12, 21] },
-            { name: '摩羯座', start: [12, 22], end: [12, 31] },
         ];
         for (const sign of zodiacSigns) {
             const [startMonth, startDay] = sign.start;
             const [endMonth, endDay] = sign.end;
-            if ((month === startMonth && day >= startDay) ||
-                (month === endMonth && day <= endDay)) {
-                return sign.name;
+            if (startMonth > endMonth) {
+                if ((month === startMonth && day >= startDay) ||
+                    (month === endMonth && day <= endDay) ||
+                    (month === 1 && day <= endDay)) {
+                    return sign.name;
+                }
+            }
+            else {
+                if ((month === startMonth && day >= startDay) ||
+                    (month === endMonth && day <= endDay)) {
+                    return sign.name;
+                }
             }
         }
         return '未知';
@@ -485,12 +493,11 @@ let AstrologyService = class AstrologyService {
             metal: 0,
             water: 0,
         };
-        const ganzhi = [
-            eightChar.getYear(),
-            eightChar.getMonth(),
-            eightChar.getDay(),
-            eightChar.getTime(),
-        ];
+        const yearPillar = eightChar.getYear();
+        const monthPillar = eightChar.getMonth();
+        const dayPillar = this.calculateDayPillar(year, month, day);
+        const hourPillar = this.calculateHourPillar(dayPillar, hour);
+        const ganzhi = [yearPillar, monthPillar, dayPillar, hourPillar];
         ganzhi.forEach((gz) => {
             const gan = gz.substring(0, 1);
             const zhi = gz.substring(1);
@@ -509,14 +516,95 @@ let AstrologyService = class AstrologyService {
         const eightChar = lunar.getEightChar();
         const yearPillar = eightChar.getYear();
         const monthPillar = eightChar.getMonth();
-        const dayPillar = eightChar.getDay();
-        const hourPillar = eightChar.getTime();
+        const dayPillar = this.calculateDayPillar(year, month, day);
+        const hourPillar = this.calculateHourPillar(dayPillar, hour);
+        console.log('[AstrologyUtils] BaZi pillars calculated:', {
+            input: { year, month, day, hour },
+            pillars: {
+                yearPillar,
+                monthPillar,
+                dayPillar,
+                hourPillar,
+            },
+            lunar: {
+                lunarYear: lunar.getYearInChinese(),
+                lunarMonth: lunar.getMonthInChinese(),
+                lunarDay: lunar.getDayInChinese(),
+            },
+        });
         return {
             yearPillar,
             monthPillar,
             dayPillar,
             hourPillar,
         };
+    }
+    calculateDayPillar(year, month, day) {
+        const ganList = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const zhiList = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        const referenceYear = 1900;
+        const referenceMonth = 1;
+        const referenceDay = 1;
+        let totalDays = 0;
+        for (let y = referenceYear; y < year; y++) {
+            totalDays += this.isLeapYear(y) ? 366 : 365;
+        }
+        const daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        for (let m = 1; m < month; m++) {
+            if (m === 2 && this.isLeapYear(year)) {
+                totalDays += 29;
+            }
+            else {
+                totalDays += daysInMonth[m];
+            }
+        }
+        totalDays += day - 1;
+        const ganIndex = (totalDays + 0) % 10;
+        const zhiIndex = (totalDays + 4) % 12;
+        const dayGan = ganList[ganIndex];
+        const dayZhi = zhiList[zhiIndex];
+        const dayPillar = dayGan + dayZhi;
+        console.log('[AstrologyUtils] Day pillar calculation:', {
+            input: { year, month, day },
+            totalDays,
+            ganIndex,
+            zhiIndex,
+            dayPillar,
+        });
+        return dayPillar;
+    }
+    isLeapYear(year) {
+        return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    }
+    calculateHourPillar(dayPillar, hour) {
+        const zhiList = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+        let zhiIndex;
+        if (hour === 23 || hour === 0) {
+            zhiIndex = 0;
+        }
+        else {
+            zhiIndex = Math.floor((hour + 1) / 2) % 12;
+        }
+        const timeZhi = zhiList[zhiIndex];
+        const ganList = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const dayGan = dayPillar[0];
+        const dayGanIndex = ganList.indexOf(dayGan);
+        const timeGanStartMap = {
+            '甲': 0,
+            '乙': 2,
+            '丙': 4,
+            '丁': 6,
+            '戊': 8,
+            '己': 0,
+            '庚': 2,
+            '辛': 4,
+            '壬': 6,
+            '癸': 8,
+        };
+        const timeGanStartIndex = timeGanStartMap[dayGan];
+        const timeGanIndex = (timeGanStartIndex + zhiIndex) % 10;
+        const timeGan = ganList[timeGanIndex];
+        return timeGan + timeZhi;
     }
     getElementByGan(gan) {
         const elements = {
@@ -759,6 +847,9 @@ let AstrologyServiceModule = class AstrologyServiceModule {
                 dayPillar: baZiPillars.dayPillar,
                 hourPillar: baZiPillars.hourPillar,
                 fiveElements: JSON.stringify(fiveElements),
+                zodiacInterpretation: '',
+                baziInterpretation: '',
+                klineInterpretation: '',
             },
         });
         return {
@@ -795,14 +886,15 @@ let AstrologyServiceModule = class AstrologyServiceModule {
         }
         console.log('[AstrologyService] Reading found, starting AI interpretations...');
         const birthProvince = user.birthProvince || '山西';
+        const currentProvince = user.currentProvince || '北京';
         console.log('[AstrologyService] Starting zodiac interpretation...');
-        const zodiacInterpretation = await this.generateZodiacInterpretation(reading.zodiacSign, user.gender, birthProvince);
+        const zodiacInterpretation = await this.generateZodiacInterpretation(reading.zodiacSign, user.gender, birthProvince, currentProvince);
         console.log('[AstrologyService] Zodiac interpretation completed');
         console.log('[AstrologyService] Starting bazi interpretation...');
-        const baziInterpretation = await this.generateBaZiInterpretation(reading.yearPillar, reading.monthPillar, reading.dayPillar, reading.hourPillar, reading.fiveElements, user.gender, birthProvince);
+        const baziInterpretation = await this.generateBaZiInterpretation(reading.yearPillar, reading.monthPillar, reading.dayPillar, reading.hourPillar, reading.fiveElements, user.gender, birthProvince, currentProvince);
         console.log('[AstrologyService] Bazi interpretation completed');
         console.log('[AstrologyService] Starting kline interpretation...');
-        const klineInterpretation = await this.generateKlineInterpretation(user.birthYear, user.birthMonth, user.birthDay, user.birthHour, reading.zodiacSign, reading.yearPillar, reading.dayPillar, user.gender, birthProvince);
+        const klineInterpretation = await this.generateKlineInterpretation(user.birthYear, user.birthMonth, user.birthDay, user.birthHour, reading.zodiacSign, reading.yearPillar, reading.dayPillar, user.gender, birthProvince, currentProvince);
         console.log('[AstrologyService] Kline interpretation completed');
         console.log('[AstrologyService] Updating database...');
         const updatedReading = await this.prisma.astrologyReading.update({
@@ -847,15 +939,16 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             throw error;
         }
     }
-    async generateZodiacInterpretation(zodiacSign, gender, birthProvince) {
+    async generateZodiacInterpretation(zodiacSign, gender, birthProvince, currentProvince) {
         const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
-        const provinceText = birthProvince ? `出生于${birthProvince}` : '';
-        const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}${provinceText}进行详细的性格分析和运势解读。
+        const birthProvinceText = birthProvince ? `出生于${birthProvince}` : '';
+        const currentProvinceText = currentProvince ? `目前居住在${currentProvince}` : '';
+        const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}${birthProvinceText}${currentProvinceText}进行详细的性格分析和运势解读。
 
 请从以下几个方面进行分析：
-1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方${provinceText ? `，结合${birthProvince}的地域文化特色分析性格特质` : ''}
+1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方${birthProvinceText ? `，结合${birthProvince}的地域文化特色分析性格特质` : ''}${currentProvinceText ? `，考虑在${currentProvince}的生活环境对性格的影响` : ''}
 2. 爱情感情：分析该星座在爱情中的表现和配对建议
-3. 事业发展：分析适合的职业方向和事业发展建议
+3. 事业发展：分析适合的职业方向和事业发展建议${currentProvinceText ? `，结合${currentProvince}的就业环境和机会` : ''}
 4. 守护星：说明该星座的守护星及其象征意义
 5. 幸运元素：幸运颜色、幸运数字、幸运日期等
 6. 综合运势：整体运势分析和建议
@@ -913,10 +1006,11 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             });
         }
     }
-    async generateBaZiInterpretation(yearPillar, monthPillar, dayPillar, hourPillar, fiveElementsJson, gender, birthProvince) {
+    async generateBaZiInterpretation(yearPillar, monthPillar, dayPillar, hourPillar, fiveElementsJson, gender, birthProvince, currentProvince) {
         const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
         const fiveElements = JSON.parse(fiveElementsJson || '{}');
-        const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
+        const birthProvinceText = birthProvince ? `出生地：${birthProvince}` : '';
+        const currentProvinceText = currentProvince ? `现居地：${currentProvince}` : '';
         const maxElement = Object.entries(fiveElements).reduce((a, b) => b[1] > a[1] ? b : a);
         const elementNames = {
             wood: '木',
@@ -928,7 +1022,8 @@ let AstrologyServiceModule = class AstrologyServiceModule {
         const prompt = `请作为专业的八字命理师，对以下八字进行详细分析：
 
 出生者性别：${genderText || '未知'}
-${provinceText}
+${birthProvinceText}
+${currentProvinceText}
 八字四柱：
 年柱：${yearPillar}
 月柱：${monthPillar}
@@ -1064,11 +1159,12 @@ ${provinceText}
             throw error;
         }
     }
-    async generateKlineInterpretation(birthYear, birthMonth, birthDay, birthHour, zodiacSign, yearPillar, dayPillar, gender, birthProvince) {
+    async generateKlineInterpretation(birthYear, birthMonth, birthDay, birthHour, zodiacSign, yearPillar, dayPillar, gender, birthProvince, currentProvince) {
         const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
         const currentYear = new Date().getFullYear();
         const age = currentYear - birthYear;
-        const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
+        const birthProvinceText = birthProvince ? `出生地：${birthProvince}` : '';
+        const currentProvinceText = currentProvince ? `现居地：${currentProvince}` : '';
         const lifeStages = [];
         for (let i = 0; i <= 80; i += 10) {
             const year = birthYear + i;
@@ -1081,11 +1177,12 @@ ${provinceText}
 - 出生日期：${birthYear}年${birthMonth}月${birthDay}日${birthHour}时
 - 星座：${zodiacSign}
 - 年柱：${yearPillar}（日主：${dayPillar[0]}）
-${provinceText ? `- ${provinceText}` : ''}
+${birthProvinceText ? `- ${birthProvinceText}` : ''}
+${currentProvinceText ? `- ${currentProvinceText}` : ''}
 
 请分析人生运势走势，按照人生每10年为一个阶段，生成类似股票K线的分析数据。包括：
 1. **运势指数**：0-100的数值，表示该阶段的整体运势水平
-2. **事业运**：事业发展的趋势和关键节点${birthProvince ? `，结合${birthProvince}的地域发展机遇` : ''}
+2. **事业运**：事业发展的趋势和关键节点${birthProvince ? `，结合${birthProvince}的地域文化背景` : ''}${currentProvince ? `，考虑在${currentProvince}的发展机会和资源` : ''}
 3. **财运**：财务状况和投资理财建议
 4. **感情运**：感情生活和婚姻运势
 5. **健康运**：健康状况和注意事项

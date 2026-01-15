@@ -92,6 +92,10 @@ export class AstrologyServiceModule {
         dayPillar: baZiPillars.dayPillar,
         hourPillar: baZiPillars.hourPillar,
         fiveElements: JSON.stringify(fiveElements),
+        // 重新计算时清空旧的AI解读，需要重新生成
+        zodiacInterpretation: '',
+        baziInterpretation: '',
+        klineInterpretation: '',
       },
     });
 
@@ -142,12 +146,16 @@ export class AstrologyServiceModule {
     // 获取出生省份，默认为"山西"（历史用户）
     const birthProvince = user.birthProvince || '山西';
 
+    // 获取现居地省份，默认为"北京"（历史用户）
+    const currentProvince = user.currentProvince || '北京';
+
     // 生成星座解读
     console.log('[AstrologyService] Starting zodiac interpretation...');
     const zodiacInterpretation = await this.generateZodiacInterpretation(
       reading.zodiacSign,
       user.gender,
       birthProvince,
+      currentProvince,
     );
     console.log('[AstrologyService] Zodiac interpretation completed');
 
@@ -161,6 +169,7 @@ export class AstrologyServiceModule {
       reading.fiveElements,
       user.gender,
       birthProvince,
+      currentProvince,
     );
     console.log('[AstrologyService] Bazi interpretation completed');
 
@@ -176,6 +185,7 @@ export class AstrologyServiceModule {
       reading.dayPillar,
       user.gender,
       birthProvince,
+      currentProvince,
     );
     console.log('[AstrologyService] Kline interpretation completed');
 
@@ -238,16 +248,22 @@ export class AstrologyServiceModule {
   /**
    * 生成星座AI解读
    */
-  private async generateZodiacInterpretation(zodiacSign: string, gender?: string, birthProvince?: string) {
+  private async generateZodiacInterpretation(
+    zodiacSign: string,
+    gender?: string,
+    birthProvince?: string,
+    currentProvince?: string
+  ) {
     const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
-    const provinceText = birthProvince ? `出生于${birthProvince}` : '';
+    const birthProvinceText = birthProvince ? `出生于${birthProvince}` : '';
+    const currentProvinceText = currentProvince ? `目前居住在${currentProvince}` : '';
 
-    const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}${provinceText}进行详细的性格分析和运势解读。
+    const prompt = `请作为专业的星座占星师，为${zodiacSign}${genderText}${birthProvinceText}${currentProvinceText}进行详细的性格分析和运势解读。
 
 请从以下几个方面进行分析：
-1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方${provinceText ? `，结合${birthProvince}的地域文化特色分析性格特质` : ''}
+1. 性格特点：分析该星座的核心性格特征、优点和需要注意的地方${birthProvinceText ? `，结合${birthProvince}的地域文化特色分析性格特质` : ''}${currentProvinceText ? `，考虑在${currentProvince}的生活环境对性格的影响` : ''}
 2. 爱情感情：分析该星座在爱情中的表现和配对建议
-3. 事业发展：分析适合的职业方向和事业发展建议
+3. 事业发展：分析适合的职业方向和事业发展建议${currentProvinceText ? `，结合${currentProvince}的就业环境和机会` : ''}
 4. 守护星：说明该星座的守护星及其象征意义
 5. 幸运元素：幸运颜色、幸运数字、幸运日期等
 6. 综合运势：整体运势分析和建议
@@ -326,10 +342,12 @@ export class AstrologyServiceModule {
     fiveElementsJson: string,
     gender?: string,
     birthProvince?: string,
+    currentProvince?: string,
   ) {
     const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
     const fiveElements = JSON.parse(fiveElementsJson || '{}');
-    const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
+    const birthProvinceText = birthProvince ? `出生地：${birthProvince}` : '';
+    const currentProvinceText = currentProvince ? `现居地：${currentProvince}` : '';
 
     // 找出最强的五行
     const maxElement = Object.entries(fiveElements).reduce((a, b) =>
@@ -346,7 +364,8 @@ export class AstrologyServiceModule {
     const prompt = `请作为专业的八字命理师，对以下八字进行详细分析：
 
 出生者性别：${genderText || '未知'}
-${provinceText}
+${birthProvinceText}
+${currentProvinceText}
 八字四柱：
 年柱：${yearPillar}
 月柱：${monthPillar}
@@ -532,11 +551,13 @@ ${provinceText}
     dayPillar: string,
     gender?: string,
     birthProvince?: string,
+    currentProvince?: string,
   ) {
     const genderText = gender === 'male' ? '男性' : gender === 'female' ? '女性' : '';
     const currentYear = new Date().getFullYear();
     const age = currentYear - birthYear;
-    const provinceText = birthProvince ? `出生地：${birthProvince}` : '';
+    const birthProvinceText = birthProvince ? `出生地：${birthProvince}` : '';
+    const currentProvinceText = currentProvince ? `现居地：${currentProvince}` : '';
 
     // 计算人生阶段
     const lifeStages = [];
@@ -552,11 +573,12 @@ ${provinceText}
 - 出生日期：${birthYear}年${birthMonth}月${birthDay}日${birthHour}时
 - 星座：${zodiacSign}
 - 年柱：${yearPillar}（日主：${dayPillar[0]}）
-${provinceText ? `- ${provinceText}` : ''}
+${birthProvinceText ? `- ${birthProvinceText}` : ''}
+${currentProvinceText ? `- ${currentProvinceText}` : ''}
 
 请分析人生运势走势，按照人生每10年为一个阶段，生成类似股票K线的分析数据。包括：
 1. **运势指数**：0-100的数值，表示该阶段的整体运势水平
-2. **事业运**：事业发展的趋势和关键节点${birthProvince ? `，结合${birthProvince}的地域发展机遇` : ''}
+2. **事业运**：事业发展的趋势和关键节点${birthProvince ? `，结合${birthProvince}的地域文化背景` : ''}${currentProvince ? `，考虑在${currentProvince}的发展机会和资源` : ''}
 3. **财运**：财务状况和投资理财建议
 4. **感情运**：感情生活和婚姻运势
 5. **健康运**：健康状况和注意事项

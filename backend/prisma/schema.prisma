@@ -19,6 +19,7 @@ model User {
   birthDay      Int
   birthHour     Int
   birthProvince String    @default("山西")  // 出生省份
+  currentProvince String  @default("北京")  // 现居地省份
   lunarDate     String?
   zodiacSign    String?
   fiveElements  String?

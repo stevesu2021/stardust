@@ -47,8 +47,10 @@ export class AstrologyService {
   }
 
   getZodiacSign(month: number, day: number): string {
+    // 星座日期范围（按照太阳历）
+    // 摩羯座: 12月22日 - 1月19日（跨年）
     const zodiacSigns = [
-      { name: '摩羯座', start: [1, 1], end: [1, 19] },
+      { name: '摩羯座', start: [12, 22], end: [1, 19] },
       { name: '水瓶座', start: [1, 20], end: [2, 18] },
       { name: '双鱼座', start: [2, 19], end: [3, 20] },
       { name: '白羊座', start: [3, 21], end: [4, 19] },
@@ -60,18 +62,26 @@ export class AstrologyService {
       { name: '天秤座', start: [9, 23], end: [10, 23] },
       { name: '天蝎座', start: [10, 24], end: [11, 22] },
       { name: '射手座', start: [11, 23], end: [12, 21] },
-      { name: '摩羯座', start: [12, 22], end: [12, 31] },
     ];
 
     for (const sign of zodiacSigns) {
       const [startMonth, startDay] = sign.start;
       const [endMonth, endDay] = sign.end;
 
-      if (
-        (month === startMonth && day >= startDay) ||
-        (month === endMonth && day <= endDay)
-      ) {
-        return sign.name;
+      // 处理跨年星座（摩羯座：12月22日-1月19日）
+      if (startMonth > endMonth) {
+        // 跨年：12月22日-1月19日
+        if ((month === startMonth && day >= startDay) ||  // 12月22日-12月31日
+            (month === endMonth && day <= endDay) ||      // 1月1日-1月19日
+            (month === 1 && day <= endDay)) {              // 1月1日-1月19日
+          return sign.name;
+        }
+      } else {
+        // 非跨年：正常判断
+        if ((month === startMonth && day >= startDay) ||
+            (month === endMonth && day <= endDay)) {
+          return sign.name;
+        }
       }
     }
 
@@ -91,12 +101,13 @@ export class AstrologyService {
       water: 0,
     };
 
-    const ganzhi = [
-      eightChar.getYear(),
-      eightChar.getMonth(),
-      eightChar.getDay(),
-      eightChar.getTime(),
-    ];
+    // 使用年柱、月柱（来自库）和手动计算的日柱、时柱
+    const yearPillar = eightChar.getYear();
+    const monthPillar = eightChar.getMonth();
+    const dayPillar = this.calculateDayPillar(year, month, day);
+    const hourPillar = this.calculateHourPillar(dayPillar, hour);
+
+    const ganzhi = [yearPillar, monthPillar, dayPillar, hourPillar];
 
     ganzhi.forEach((gz) => {
       const gan = gz.substring(0, 1);
@@ -120,10 +131,29 @@ export class AstrologyService {
     const lunar = solar.getLunar();
     const eightChar = lunar.getEightChar();
 
+    // 获取年柱、月柱
     const yearPillar = eightChar.getYear();
     const monthPillar = eightChar.getMonth();
-    const dayPillar = eightChar.getDay();
-    const hourPillar = eightChar.getTime();
+
+    // 手动计算日柱和时柱
+    const dayPillar = this.calculateDayPillar(year, month, day);
+    const hourPillar = this.calculateHourPillar(dayPillar, hour);
+
+    // 调试日志
+    console.log('[AstrologyUtils] BaZi pillars calculated:', {
+      input: { year, month, day, hour },
+      pillars: {
+        yearPillar,
+        monthPillar,
+        dayPillar,
+        hourPillar,
+      },
+      lunar: {
+        lunarYear: lunar.getYearInChinese(),
+        lunarMonth: lunar.getMonthInChinese(),
+        lunarDay: lunar.getDayInChinese(),
+      },
+    });
 
     return {
       yearPillar,   // 年柱，如：甲辰
@@ -131,6 +161,129 @@ export class AstrologyService {
       dayPillar,    // 日柱，如：戊子
       hourPillar,   // 时柱，如：壬子
     };
+  }
+
+  /**
+   * 计算日柱
+   * 使用公式计算日柱干支
+   * 参考：1900年1月1日为甲辰日
+   */
+  private calculateDayPillar(year: number, month: number, day: number): string {
+    // 天干和地支列表
+    const ganList = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+    const zhiList = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+    // 参考日期：1900年1月1日为甲辰日
+    // 甲=0, 辰=4，即参考日柱索引为：0 * 12 + 4 = 4（在60甲子周期中）
+    // 但更准确的计算方式是：
+    // 天干索引 = 0 (甲)
+    // 地支索引 = 4 (辰)
+
+    // 计算从1900年1月1日到目标日期的总天数
+    const referenceYear = 1900;
+    const referenceMonth = 1;
+    const referenceDay = 1;
+
+    let totalDays = 0;
+
+    // 计算整年天数
+    for (let y = referenceYear; y < year; y++) {
+      totalDays += this.isLeapYear(y) ? 366 : 365;
+    }
+
+    // 计算当年已过天数
+    const daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    for (let m = 1; m < month; m++) {
+      if (m === 2 && this.isLeapYear(year)) {
+        totalDays += 29;
+      } else {
+        totalDays += daysInMonth[m];
+      }
+    }
+
+    // 加上当月天数
+    totalDays += day - 1;
+
+    // 计算日柱
+    // 1900年1月1日：甲辰日
+    // 甲(0), 辰(4)
+    // 天干偏移：(totalDays + 0) % 10
+    // 地支偏移：(totalDays + 4) % 12
+
+    const ganIndex = (totalDays + 0) % 10;
+    const zhiIndex = (totalDays + 4) % 12;
+
+    const dayGan = ganList[ganIndex];
+    const dayZhi = zhiList[zhiIndex];
+
+    const dayPillar = dayGan + dayZhi;
+
+    // 调试日志
+    console.log('[AstrologyUtils] Day pillar calculation:', {
+      input: { year, month, day },
+      totalDays,
+      ganIndex,
+      zhiIndex,
+      dayPillar,
+    });
+
+    return dayPillar;
+  }
+
+  /**
+   * 判断是否为闰年
+   */
+  private isLeapYear(year: number): boolean {
+    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  }
+
+  /**
+   * 计算时柱（根据日干使用"五鼠遁"口诀）
+   * @param dayPillar 日柱，如"己未"
+   * @param hour 小时（0-23）
+   * @returns 时柱，如"壬申"
+   */
+  private calculateHourPillar(dayPillar: string, hour: number): string {
+    // 时支（地支）根据小时确定
+    const zhiList = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+    let zhiIndex: number;
+
+    // 计算时支索引
+    if (hour === 23 || hour === 0) {
+      zhiIndex = 0; // 子时
+    } else {
+      zhiIndex = Math.floor((hour + 1) / 2) % 12;
+    }
+
+    const timeZhi = zhiList[zhiIndex];
+
+    // 天干列表
+    const ganList = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+
+    // 获取日干
+    const dayGan = dayPillar[0];
+    const dayGanIndex = ganList.indexOf(dayGan);
+
+    // "五鼠遁"口诀：根据日干确定时干起始
+    // 甲己还加甲、乙庚丙作初、丙辛从戊起、丁壬庚子居、戊癸何方觅、壬子是真途
+    const timeGanStartMap: { [key: string]: number } = {
+      '甲': 0, // 甲日/己日：甲子起
+      '乙': 2, // 乙日/庚日：丙子起
+      '丙': 4, // 丙日/辛日：戊子起
+      '丁': 6, // 丁日/壬日：庚子起
+      '戊': 8, // 戊日/癸日：壬子起
+      '己': 0, // 甲日/己日：甲子起
+      '庚': 2, // 乙日/庚日：丙子起
+      '辛': 4, // 丙日/辛日：戊子起
+      '壬': 6, // 丁日/壬日：庚子起
+      '癸': 8, // 戊日/癸日：壬子起
+    };
+
+    const timeGanStartIndex = timeGanStartMap[dayGan];
+    const timeGanIndex = (timeGanStartIndex + zhiIndex) % 10;
+    const timeGan = ganList[timeGanIndex];
+
+    return timeGan + timeZhi;
   }
 
   private getElementByGan(gan: string): string {

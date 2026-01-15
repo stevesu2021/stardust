@@ -28,6 +28,7 @@ export class AuthService {
     birthDay: number;
     birthHour: number;
     birthProvince?: string;
+    currentProvince?: string;
     gender?: string;
   }) {
     // 验证必填字段

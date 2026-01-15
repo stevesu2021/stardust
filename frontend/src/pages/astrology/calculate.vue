@@ -535,7 +535,9 @@ async function handleCalculate() {
   try {
     const res: any = await api.astrology.calculate(userStore.userInfo.id)
     basicData.value = res
-    uni.showToast({ title: '计算成功', icon: 'success' })
+    // 重新计算后清空旧的AI解读数据，需要重新生成
+    readingData.value = null
+    uni.showToast({ title: '计算成功，请重新生成AI解读', icon: 'success' })
   } catch (error: any) {
     uni.showToast({ title: error.message || '计算失败', icon: 'none' })
   } finally {
