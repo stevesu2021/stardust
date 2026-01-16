@@ -34,7 +34,11 @@ model User {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
+  // 保留旧的关系（兼容性）
   prayers          Prayer[]
+  // 新的关系
+  devoutPrayers    DevoutPrayer[]
+  reunitePrayers   ReunitePrayer[]
   confessions      Confession[]
   treeholes        Treehole[]
   sentMessages     Message[]     @relation("SentMessages")
@@ -48,17 +52,54 @@ model User {
 }
 
 model Prayer {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  content     String
-  targetName  String?
-  image       String?
-  prayerCount Int      @default(1)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content       String   @db.LongText
+  targetName    String?  // 旧字段，保留兼容
+  image         String?
+  prayerCount   Int      @default(1)
+  category      String?  // 分类名称
+  deities       String?  @db.LongText  // 祈祷的神职（JSON 数组）
+  isAnonymous   Boolean  @default(false)  // 是否匿名祈祷
+  supports      Int      @default(0)  // 支持数（点赞）
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("prayers")
+}
+
+// 虔诚祈祷表
+model DevoutPrayer {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content       String   @db.LongText      // 祈祷内容
+  category      String?                     // 分类ID（如 category_1, category_2...）
+  categoryName  String?                     // 分类名称（如"综合护佑 / 万能型"）
+  deities       String?  @db.LongText      // 祈祷的神职列表（JSON 数组）
+  supports      Int      @default(0)       // 支持数（点赞）
+  isAnonymous   Boolean  @default(false)   // 是否匿名祈祷
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("devout_prayers")
+}
+
+// 复合祈愿表
+model ReunitePrayer {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content       String   @db.LongText      // 祈愿内容
+  targetName    String?                     // 对方名字
+  image         String?                     // 图片URL
+  prayerCount   Int      @default(1)       // 祈祷次数
+  isAnonymous   Boolean  @default(false)   // 是否匿名祈祷
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("reunite_prayers")
 }
 
 model Confession {

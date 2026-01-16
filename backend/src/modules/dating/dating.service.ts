@@ -5,6 +5,75 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 export class DatingService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * 随机挑选100个异性用户，返回匹配度最高的3位
+   */
+  async findTopMatches(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    if (!user.gender) {
+      throw new Error('请先设置性别信息');
+    }
+
+    const oppositeGender = user.gender === 'male' ? 'female' : 'male';
+
+    // 获取所有异性用户
+    const allUsers = await this.prisma.user.findMany({
+      where: {
+        id: { not: userId },
+        gender: oppositeGender,
+      },
+      select: {
+        id: true,
+        nickname: true,
+        avatar: true,
+        zodiacSign: true,
+        fiveElements: true,
+        gender: true,
+        bio: true,
+      },
+    });
+
+    // 如果异性用户不足3人，直接返回所有用户
+    if (allUsers.length <= 3) {
+      const matches = allUsers.map((potentialMatch) => {
+        const score = this.calculateMatchScore(user, potentialMatch);
+        return {
+          user: potentialMatch,
+          score,
+        };
+      });
+      matches.sort((a, b) => b.score - a.score);
+      return matches;
+    }
+
+    // 随机选择100个异性用户
+    const sampleSize = Math.min(100, allUsers.length);
+    const sampledUsers = this.shuffleArray(allUsers).slice(0, sampleSize);
+
+    // 计算匹配分数
+    const matches = sampledUsers.map((potentialMatch) => {
+      const score = this.calculateMatchScore(user, potentialMatch);
+      return {
+        user: potentialMatch,
+        score,
+      };
+    });
+
+    // 按分数排序并返回Top 3
+    matches.sort((a, b) => b.score - a.score);
+    return matches.slice(0, 3);
+  }
+
+  /**
+   * 原有的匹配方法（保留兼容）
+   */
   async findMatches(userId: string, limit: number = 10) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -82,6 +151,18 @@ export class DatingService {
     });
 
     return score;
+  }
+
+  /**
+   * Fisher-Yates 洗牌算法，随机打乱数组
+   */
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   }
 
   async sendMessage(data: {

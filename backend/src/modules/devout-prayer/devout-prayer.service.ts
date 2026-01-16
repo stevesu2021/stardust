@@ -1,10 +1,10 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { DEITY_CATEGORIES } from './deity-categories';
+import { DEITY_CATEGORIES } from '../prayer/deity-categories';
 
 @Injectable()
-export class PrayerService {
+export class DevoutPrayerService {
   private readonly aiApiKey: string;
   private readonly aiBaseUrl: string;
   private readonly aiModel: string;
@@ -26,7 +26,6 @@ export class PrayerService {
     const category = Object.values(DEITY_CATEGORIES).find(cat => cat.id === categoryId);
 
     if (!category) {
-      // 如果找不到分类，返回默认分类
       const defaultCategory = DEITY_CATEGORIES.CATEGORY_1;
       return {
         categoryId: defaultCategory.id,
@@ -84,20 +83,17 @@ ${categoryNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}
       });
 
       if (!response.ok) {
-        console.error('[PrayerService] AI classification failed:', response.status);
-        // 失败时返回默认分类
+        console.error('[DevoutPrayerService] AI classification failed:', response.status);
         return 'category_1';
       }
 
       const data = await response.json();
       const result = data.choices?.[0]?.message?.content?.trim() || '综合护佑 / 万能型';
 
-      // 根据类别名称匹配类别ID
       const category = Object.values(DEITY_CATEGORIES).find(cat => cat.name === result);
       return category?.id || 'category_1';
     } catch (error) {
-      console.error('[PrayerService] AI classification error:', error);
-      // 出错时返回默认分类
+      console.error('[DevoutPrayerService] AI classification error:', error);
       return 'category_1';
     }
   }
@@ -108,23 +104,30 @@ ${categoryNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}
   async createPrayer(userId: string, data: {
     content: string;
     category?: string;
+    categoryName?: string;
     deities?: string[];
     isAnonymous?: boolean;
   }) {
-    // 如果没有提供分类，使用 AI 分类
     let category = data.category;
+    let categoryName = data.categoryName;
+    let deities = data.deities;
+
+    // 如果没有提供分类，使用 AI 分类
     if (!category) {
-      category = await this.classifyPrayerContent(data.content);
+      const classification = await this.classifyContent(data.content);
+      category = classification.categoryId;
+      categoryName = classification.categoryName;
+      deities = [...classification.deities];
     }
 
-    // 将神职数组转换为 JSON 字符串存储
-    const deitiesJson = data.deities ? JSON.stringify(data.deities) : null;
+    const deitiesJson = deities ? JSON.stringify(deities) : null;
 
-    return this.prisma.prayer.create({
+    return this.prisma.devoutPrayer.create({
       data: {
         userId,
         content: data.content,
         category,
+        categoryName,
         deities: deitiesJson,
         isAnonymous: data.isAnonymous ?? false,
       },
@@ -135,10 +138,10 @@ ${categoryNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}
   }
 
   /**
-   * 获取用户的祈祷列表（用于个人中心）
+   * 获取用户的虔诚祈祷列表
    */
   async getUserPrayers(userId: string) {
-    return this.prisma.prayer.findMany({
+    return this.prisma.devoutPrayer.findMany({
       where: { userId },
       include: {
         user: true,
@@ -150,10 +153,10 @@ ${categoryNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}
   }
 
   /**
-   * 获取所有祈祷列表（虔诚祈祷列表，最多100条）
+   * 获取所有虔诚祈祷列表（最多100条）
    */
   async getPrayers() {
-    return this.prisma.prayer.findMany({
+    return this.prisma.devoutPrayer.findMany({
       take: 100,
       include: {
         user: {
@@ -172,33 +175,10 @@ ${categoryNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}
   }
 
   /**
-   * 获取公开的祈祷列表（带分页）
-   */
-  async getPublicPrayers(skip: number = 0, take: number = 20) {
-    return this.prisma.prayer.findMany({
-      skip,
-      take,
-      include: {
-        user: {
-          select: {
-            id: true,
-            nickname: true,
-            anonymousNickname: true,
-            avatar: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  /**
-   * 支持祈祷（点赞）
+   * 支持虔诚祈祷（点赞）
    */
   async supportPrayer(prayerId: string) {
-    return this.prisma.prayer.update({
+    return this.prisma.devoutPrayer.update({
       where: { id: prayerId },
       data: {
         supports: {
@@ -209,7 +189,7 @@ ${categoryNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}
   }
 
   /**
-   * 获取分类列表
+   * 获取所有分类
    */
   getCategories() {
     return Object.values(DEITY_CATEGORIES).map(cat => ({

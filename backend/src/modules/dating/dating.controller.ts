@@ -7,6 +7,16 @@ import { Request } from 'express';
 export class DatingController {
   constructor(private datingService: DatingService) {}
 
+  /**
+   * 缘分匹配Top3 - 从100个随机异性用户中选出匹配度最高的3位
+   */
+  @Post('top-matches')
+  @UseGuards(JwtAuthGuard)
+  async findTopMatches(@Req() req: Request) {
+    const userId = (req as any).user.sub;
+    return this.datingService.findTopMatches(userId);
+  }
+
   @Post('matches/:userId')
   @UseGuards(JwtAuthGuard)
   async findMatches(@Param('userId') userId: string, @Body() data: { limit?: number }) {

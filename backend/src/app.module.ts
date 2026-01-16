@@ -6,6 +6,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { AstrologyModule } from './modules/astrology/astrology.module';
 import { PrayerModule } from './modules/prayer/prayer.module';
+import { DevoutPrayerModule } from './modules/devout-prayer/devout-prayer.module';
+import { ReunitePrayerModule } from './modules/reunite-prayer/reunite-prayer.module';
 import { ConfessionModule } from './modules/confession/confession.module';
 import { TreeholeModule } from './modules/treehole/treehole.module';
 import { DatingModule } from './modules/dating/dating.module';
@@ -24,6 +26,8 @@ import { AvatarModule } from './modules/avatar/avatar.module';
     UserModule,
     AstrologyModule,
     PrayerModule,
+    DevoutPrayerModule,
+    ReunitePrayerModule,
     ConfessionModule,
     TreeholeModule,
     DatingModule,
