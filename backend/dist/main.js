@@ -752,9 +752,6 @@ let AstrologyServiceModule = class AstrologyServiceModule {
                 dayPillar: baZiPillars.dayPillar,
                 hourPillar: baZiPillars.hourPillar,
                 fiveElements: JSON.stringify(fiveElements),
-                zodiacInterpretation: '',
-                baziInterpretation: '',
-                klineInterpretation: '',
             },
         });
         return {
@@ -789,7 +786,24 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             console.error('[AstrologyService] Still no reading after calculate');
             throw new common_1.BadRequestException('无法获取星盘数据');
         }
-        console.log('[AstrologyService] Reading found, starting AI interpretations...');
+        const hasCachedInterpretation = reading.zodiacInterpretation &&
+            reading.zodiacInterpretation.trim() !== '' &&
+            reading.baziInterpretation &&
+            reading.baziInterpretation.trim() !== '' &&
+            reading.klineInterpretation &&
+            reading.klineInterpretation.trim() !== '';
+        if (hasCachedInterpretation) {
+            console.log('[AstrologyService] Found cached interpretation, returning directly');
+            return {
+                ...reading,
+                fiveElements: JSON.parse(reading.fiveElements || '{}'),
+                zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
+                baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
+                klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
+                _cached: true,
+            };
+        }
+        console.log('[AstrologyService] No cached interpretation, starting AI generation...');
         const birthProvince = user.birthProvince || '山西';
         const currentProvince = user.currentProvince || '北京';
         console.log('[AstrologyService] Starting zodiac interpretation...');
@@ -811,7 +825,13 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             },
         });
         console.log('[AstrologyService] All completed successfully');
-        return updatedReading;
+        return {
+            ...updatedReading,
+            fiveElements: JSON.parse(updatedReading.fiveElements || '{}'),
+            zodiacInterpretation: this.safeParseJSON(updatedReading.zodiacInterpretation),
+            baziInterpretation: this.safeParseJSON(updatedReading.baziInterpretation),
+            klineInterpretation: this.safeParseJSON(updatedReading.klineInterpretation),
+        };
     }
     async getReading(userId) {
         const reading = await this.prisma.astrologyReading.findUnique({
@@ -823,7 +843,21 @@ let AstrologyServiceModule = class AstrologyServiceModule {
         return {
             ...reading,
             fiveElements: JSON.parse(reading.fiveElements || '{}'),
+            zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
+            baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
+            klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
         };
+    }
+    safeParseJSON(jsonString) {
+        if (!jsonString || jsonString.trim() === '') {
+            return null;
+        }
+        try {
+            return JSON.parse(jsonString);
+        }
+        catch (e) {
+            return jsonString;
+        }
     }
     async fetchWithTimeout(url, options, timeout = 600000) {
         const controller = new AbortController();

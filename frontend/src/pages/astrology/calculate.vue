@@ -417,27 +417,24 @@ const luckyElement = computed(() => {
 })
 const zodiacInterpretation = computed(() => {
   if (!readingData.value?.zodiacInterpretation) return null
-  try {
-    return JSON.parse(readingData.value.zodiacInterpretation)
-  } catch {
-    return null
-  }
+  // 后端已经解析为对象，直接返回
+  return typeof readingData.value.zodiacInterpretation === 'object'
+    ? readingData.value.zodiacInterpretation
+    : null
 })
 const baziInterpretation = computed(() => {
   if (!readingData.value?.baziInterpretation) return null
-  try {
-    return JSON.parse(readingData.value.baziInterpretation)
-  } catch {
-    return null
-  }
+  // 后端已经解析为对象，直接返回
+  return typeof readingData.value.baziInterpretation === 'object'
+    ? readingData.value.baziInterpretation
+    : null
 })
 const klineInterpretation = computed(() => {
   if (!readingData.value?.klineInterpretation) return null
-  try {
-    return JSON.parse(readingData.value.klineInterpretation)
-  } catch {
-    return null
-  }
+  // 后端已经解析为对象，直接返回
+  return typeof readingData.value.klineInterpretation === 'object'
+    ? readingData.value.klineInterpretation
+    : null
 })
 
 // 获取五行名称
@@ -525,7 +522,7 @@ function getCurvePath(stages: any[], filled: boolean): string {
 }
 
 // 计算星盘基础数据
-async function handleCalculate() {
+async function handleCalculate(clearReading = true) {
   if (!userStore.userInfo?.id) {
     uni.showToast({ title: '请先登录', icon: 'none' })
     return
@@ -535,9 +532,13 @@ async function handleCalculate() {
   try {
     const res: any = await api.astrology.calculate(userStore.userInfo.id)
     basicData.value = res
-    // 重新计算后清空旧的AI解读数据，需要重新生成
-    readingData.value = null
-    uni.showToast({ title: '计算成功，请重新生成AI解读', icon: 'success' })
+    // 只有主动点击"重新计算"时才清空AI解读数据
+    if (clearReading) {
+      readingData.value = null
+    }
+    if (clearReading) {
+      uni.showToast({ title: '计算成功，请重新生成AI解读', icon: 'success' })
+    }
   } catch (error: any) {
     uni.showToast({ title: error.message || '计算失败', icon: 'none' })
   } finally {
@@ -597,21 +598,21 @@ async function loadExistingReading() {
     const reading: any = await api.astrology.getReading()
     if (reading) {
       readingData.value = reading
-      // 如果有解读记录但没有基础数据，重新计算基础数据
-      if (!basicData.value) {
-        await handleCalculate()
-      }
     }
   } catch (error) {
     // 忽略错误，可能还没有记录
   }
 }
 
-// 页面加载时先计算基础数据
+// 页面加载时先加载已有数据，再计算基础数据（如果需要）
 async function init() {
   if (!userStore.userInfo?.id) return
-  await handleCalculate()
+  // 先加载已有的解读数据（静默加载，不显示弹窗）
   await loadExistingReading()
+  // 如果没有基础数据，静默计算（不显示弹窗）
+  if (!basicData.value) {
+    await handleCalculate(false)
+  }
 }
 
 init()

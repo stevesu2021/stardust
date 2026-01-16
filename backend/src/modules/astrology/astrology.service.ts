@@ -92,10 +92,7 @@ export class AstrologyServiceModule {
         dayPillar: baZiPillars.dayPillar,
         hourPillar: baZiPillars.hourPillar,
         fiveElements: JSON.stringify(fiveElements),
-        // 重新计算时清空旧的AI解读，需要重新生成
-        zodiacInterpretation: '',
-        baziInterpretation: '',
-        klineInterpretation: '',
+        // 注意：不要清空已有的AI解读，只更新基础数据
       },
     });
 
@@ -109,7 +106,7 @@ export class AstrologyServiceModule {
   }
 
   /**
-   * 生成AI解读
+   * 生成AI解读（带缓存：如果数据库已有完整解读则直接返回）
    */
   async generateInterpretation(userId: string) {
     console.log('[AstrologyService] generateInterpretation start for userId:', userId);
@@ -141,7 +138,29 @@ export class AstrologyServiceModule {
       console.error('[AstrologyService] Still no reading after calculate');
       throw new BadRequestException('无法获取星盘数据');
     }
-    console.log('[AstrologyService] Reading found, starting AI interpretations...');
+
+    // 检查是否已有完整的AI解读结果（缓存）
+    const hasCachedInterpretation =
+      reading.zodiacInterpretation &&
+      reading.zodiacInterpretation.trim() !== '' &&
+      reading.baziInterpretation &&
+      reading.baziInterpretation.trim() !== '' &&
+      reading.klineInterpretation &&
+      reading.klineInterpretation.trim() !== '';
+
+    if (hasCachedInterpretation) {
+      console.log('[AstrologyService] Found cached interpretation, returning directly');
+      return {
+        ...reading,
+        fiveElements: JSON.parse(reading.fiveElements || '{}'),
+        zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
+        baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
+        klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
+        _cached: true, // 标记为缓存数据
+      };
+    }
+
+    console.log('[AstrologyService] No cached interpretation, starting AI generation...');
 
     // 获取出生省份，默认为"山西"（历史用户）
     const birthProvince = user.birthProvince || '山西';
@@ -201,7 +220,14 @@ export class AstrologyServiceModule {
     });
     console.log('[AstrologyService] All completed successfully');
 
-    return updatedReading;
+    // 返回解析后的数据
+    return {
+      ...updatedReading,
+      fiveElements: JSON.parse(updatedReading.fiveElements || '{}'),
+      zodiacInterpretation: this.safeParseJSON(updatedReading.zodiacInterpretation),
+      baziInterpretation: this.safeParseJSON(updatedReading.baziInterpretation),
+      klineInterpretation: this.safeParseJSON(updatedReading.klineInterpretation),
+    };
   }
 
   /**
@@ -219,7 +245,25 @@ export class AstrologyServiceModule {
     return {
       ...reading,
       fiveElements: JSON.parse(reading.fiveElements || '{}'),
+      zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
+      baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
+      klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
     };
+  }
+
+  /**
+   * 安全解析JSON，如果解析失败则返回原始字符串
+   */
+  private safeParseJSON(jsonString: string | null): any {
+    if (!jsonString || jsonString.trim() === '') {
+      return null;
+    }
+    try {
+      return JSON.parse(jsonString);
+    } catch (e) {
+      // 如果解析失败，返回原始字符串
+      return jsonString;
+    }
   }
 
   /**
