@@ -421,71 +421,38 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AstrologyService = void 0;
 const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
-const lunar_javascript_1 = __webpack_require__(/*! lunar-javascript */ "lunar-javascript");
+const lunar = __webpack_require__(/*! @tony801015/chinese-lunar */ "@tony801015/chinese-lunar");
 let AstrologyService = class AstrologyService {
-    createSolarFromEast8(year, month, day, hour) {
-        const date = new Date(year, month - 1, day, hour, 0, 0);
-        const serverOffset = date.getTimezoneOffset();
-        const east8Offset = -480;
-        const offsetDiff = serverOffset - east8Offset;
-        const adjustedDate = new Date(date.getTime() + offsetDiff * 60 * 1000);
-        const solar = lunar_javascript_1.Solar.fromDate(adjustedDate);
-        return solar;
-    }
     solarToLunar(year, month, day, hour) {
-        const solar = this.createSolarFromEast8(year, month, day, hour);
-        const lunar = solar.getLunar();
+        const monthStr = month.toString().padStart(2, '0');
+        const dayStr = day.toString().padStart(2, '0');
+        const data = lunar(year.toString(), monthStr, dayStr)
+            .setTime(hour.toString())
+            .getJson();
+        const lunarYearText = data.chineseYear || '';
         return {
-            lunarYear: lunar.getYear(),
-            lunarMonth: lunar.getMonth(),
-            lunarDay: lunar.getDay(),
-            lunarMonthText: lunar.getMonthInChinese(),
-            lunarDayText: lunar.getDayInChinese(),
-            lunarYearText: lunar.getYearInChinese(),
-            ganzhiYear: lunar.getYearInGanZhi(),
-            ganzhiMonth: lunar.getMonthInGanZhi(),
-            ganzhiDay: lunar.getDayInGanZhi(),
-            ganzhiHour: lunar.getTimeZhi(),
+            lunarYear: parseInt(data.year),
+            lunarMonth: data.lunarMonthDigit || 0,
+            lunarDay: data.lunarDayDigit || 0,
+            lunarMonthText: data.lunarMonth || '',
+            lunarDayText: data.lunarDay || '',
+            lunarYearText,
+            ganzhiYear: data.chineseYear || '',
+            ganzhiMonth: data.chineseMonth || '',
+            ganzhiDay: data.chineseDay || '',
+            ganzhiHour: data.chineseTime || '',
+            animal: data.animal || '',
+            constellation: data.constellation || '',
         };
     }
     getZodiacSign(month, day) {
-        const zodiacSigns = [
-            { name: '摩羯座', start: [12, 22], end: [1, 19] },
-            { name: '水瓶座', start: [1, 20], end: [2, 18] },
-            { name: '双鱼座', start: [2, 19], end: [3, 20] },
-            { name: '白羊座', start: [3, 21], end: [4, 19] },
-            { name: '金牛座', start: [4, 20], end: [5, 20] },
-            { name: '双子座', start: [5, 21], end: [6, 21] },
-            { name: '巨蟹座', start: [6, 22], end: [7, 22] },
-            { name: '狮子座', start: [7, 23], end: [8, 22] },
-            { name: '处女座', start: [8, 23], end: [9, 22] },
-            { name: '天秤座', start: [9, 23], end: [10, 23] },
-            { name: '天蝎座', start: [10, 24], end: [11, 22] },
-            { name: '射手座', start: [11, 23], end: [12, 21] },
-        ];
-        for (const sign of zodiacSigns) {
-            const [startMonth, startDay] = sign.start;
-            const [endMonth, endDay] = sign.end;
-            if (startMonth > endMonth) {
-                if ((month === startMonth && day >= startDay) ||
-                    (month === endMonth && day <= endDay) ||
-                    (month === 1 && day <= endDay)) {
-                    return sign.name;
-                }
-            }
-            else {
-                if ((month === startMonth && day >= startDay) ||
-                    (month === endMonth && day <= endDay)) {
-                    return sign.name;
-                }
-            }
-        }
-        return '未知';
+        const monthStr = month.toString().padStart(2, '0');
+        const dayStr = day.toString().padStart(2, '0');
+        const data = lunar(new Date().getFullYear().toString(), monthStr, dayStr).getJson();
+        return data.constellation || '未知';
     }
     getFiveElements(year, month, day, hour) {
-        const solar = this.createSolarFromEast8(year, month, day, hour);
-        const lunar = solar.getLunar();
-        const eightChar = lunar.getEightChar();
+        const baZiPillars = this.getBaZiPillars(year, month, day, hour);
         const elements = {
             wood: 0,
             fire: 0,
@@ -493,14 +460,15 @@ let AstrologyService = class AstrologyService {
             metal: 0,
             water: 0,
         };
-        const yearPillar = eightChar.getYear();
-        const monthPillar = eightChar.getMonth();
-        const dayPillar = this.calculateDayPillar(year, month, day);
-        const hourPillar = this.calculateHourPillar(dayPillar, hour);
-        const ganzhi = [yearPillar, monthPillar, dayPillar, hourPillar];
-        ganzhi.forEach((gz) => {
-            const gan = gz.substring(0, 1);
-            const zhi = gz.substring(1);
+        const pillars = [
+            baZiPillars.yearPillar,
+            baZiPillars.monthPillar,
+            baZiPillars.dayPillar,
+            baZiPillars.hourPillar,
+        ];
+        pillars.forEach((pillar) => {
+            const gan = pillar[0];
+            const zhi = pillar.substring(1);
             const ganElement = this.getElementByGan(gan);
             const zhiElement = this.getElementByZhi(zhi);
             if (ganElement)
@@ -511,13 +479,15 @@ let AstrologyService = class AstrologyService {
         return elements;
     }
     getBaZiPillars(year, month, day, hour) {
-        const solar = this.createSolarFromEast8(year, month, day, hour);
-        const lunar = solar.getLunar();
-        const eightChar = lunar.getEightChar();
-        const yearPillar = eightChar.getYear();
-        const monthPillar = eightChar.getMonth();
-        const dayPillar = this.calculateDayPillar(year, month, day);
-        const hourPillar = this.calculateHourPillar(dayPillar, hour);
+        const monthStr = month.toString().padStart(2, '0');
+        const dayStr = day.toString().padStart(2, '0');
+        const data = lunar(year.toString(), monthStr, dayStr)
+            .setTime(hour.toString())
+            .getJson();
+        const yearPillar = data.chineseYear || '';
+        const monthPillar = data.chineseMonth || '';
+        const dayPillar = data.chineseDay || '';
+        const hourPillar = data.chineseTime || '';
         console.log('[AstrologyUtils] BaZi pillars calculated:', {
             input: { year, month, day, hour },
             pillars: {
@@ -527,9 +497,11 @@ let AstrologyService = class AstrologyService {
                 hourPillar,
             },
             lunar: {
-                lunarYear: lunar.getYearInChinese(),
-                lunarMonth: lunar.getMonthInChinese(),
-                lunarDay: lunar.getDayInChinese(),
+                lunarYear: data.lunarYearText,
+                lunarMonth: data.lunarMonth,
+                lunarDay: data.lunarDay,
+                animal: data.animal,
+                constellation: data.constellation,
             },
         });
         return {
@@ -538,73 +510,6 @@ let AstrologyService = class AstrologyService {
             dayPillar,
             hourPillar,
         };
-    }
-    calculateDayPillar(year, month, day) {
-        const ganList = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-        const zhiList = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-        const referenceYear = 1900;
-        const referenceMonth = 1;
-        const referenceDay = 1;
-        let totalDays = 0;
-        for (let y = referenceYear; y < year; y++) {
-            totalDays += this.isLeapYear(y) ? 366 : 365;
-        }
-        const daysInMonth = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        for (let m = 1; m < month; m++) {
-            if (m === 2 && this.isLeapYear(year)) {
-                totalDays += 29;
-            }
-            else {
-                totalDays += daysInMonth[m];
-            }
-        }
-        totalDays += day - 1;
-        const ganIndex = (totalDays + 0) % 10;
-        const zhiIndex = (totalDays + 4) % 12;
-        const dayGan = ganList[ganIndex];
-        const dayZhi = zhiList[zhiIndex];
-        const dayPillar = dayGan + dayZhi;
-        console.log('[AstrologyUtils] Day pillar calculation:', {
-            input: { year, month, day },
-            totalDays,
-            ganIndex,
-            zhiIndex,
-            dayPillar,
-        });
-        return dayPillar;
-    }
-    isLeapYear(year) {
-        return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-    }
-    calculateHourPillar(dayPillar, hour) {
-        const zhiList = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-        let zhiIndex;
-        if (hour === 23 || hour === 0) {
-            zhiIndex = 0;
-        }
-        else {
-            zhiIndex = Math.floor((hour + 1) / 2) % 12;
-        }
-        const timeZhi = zhiList[zhiIndex];
-        const ganList = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-        const dayGan = dayPillar[0];
-        const dayGanIndex = ganList.indexOf(dayGan);
-        const timeGanStartMap = {
-            '甲': 0,
-            '乙': 2,
-            '丙': 4,
-            '丁': 6,
-            '戊': 8,
-            '己': 0,
-            '庚': 2,
-            '辛': 4,
-            '壬': 6,
-            '癸': 8,
-        };
-        const timeGanStartIndex = timeGanStartMap[dayGan];
-        const timeGanIndex = (timeGanStartIndex + zhiIndex) % 10;
-        const timeGan = ganList[timeGanIndex];
-        return timeGan + timeZhi;
     }
     getElementByGan(gan) {
         const elements = {
@@ -3288,6 +3193,16 @@ module.exports = require("@prisma/client");
 
 /***/ }),
 
+/***/ "@tony801015/chinese-lunar":
+/*!********************************************!*\
+  !*** external "@tony801015/chinese-lunar" ***!
+  \********************************************/
+/***/ ((module) => {
+
+module.exports = require("@tony801015/chinese-lunar");
+
+/***/ }),
+
 /***/ "bcrypt":
 /*!*************************!*\
   !*** external "bcrypt" ***!
@@ -3305,16 +3220,6 @@ module.exports = require("bcrypt");
 /***/ ((module) => {
 
 module.exports = require("express");
-
-/***/ }),
-
-/***/ "lunar-javascript":
-/*!***********************************!*\
-  !*** external "lunar-javascript" ***!
-  \***********************************/
-/***/ ((module) => {
-
-module.exports = require("lunar-javascript");
 
 /***/ }),
 
