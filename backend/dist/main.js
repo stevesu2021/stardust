@@ -29,6 +29,7 @@ const confession_module_1 = __webpack_require__(/*! ./modules/confession/confess
 const treehole_module_1 = __webpack_require__(/*! ./modules/treehole/treehole.module */ "./src/modules/treehole/treehole.module.ts");
 const dating_module_1 = __webpack_require__(/*! ./modules/dating/dating.module */ "./src/modules/dating/dating.module.ts");
 const palm_module_1 = __webpack_require__(/*! ./modules/palm/palm.module */ "./src/modules/palm/palm.module.ts");
+const avatar_module_1 = __webpack_require__(/*! ./modules/avatar/avatar.module */ "./src/modules/avatar/avatar.module.ts");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -49,6 +50,7 @@ exports.AppModule = AppModule = __decorate([
             treehole_module_1.TreeholeModule,
             dating_module_1.DatingModule,
             palm_module_1.PalmModule,
+            avatar_module_1.AvatarModule,
         ],
     })
 ], AppModule);
@@ -303,14 +305,18 @@ let MinioService = class MinioService {
     }
     async onModuleDestroy() {
     }
-    async uploadFile(fileBuffer, fileName, mimeType) {
+    async uploadFile(fileBuffer, fileName, mimeType, folder = 'palm-readings') {
         if (!this.client || !this.isEnabled) {
             throw new Error('MinIO 未启用，无法上传文件');
         }
-        const objectName = `palm-readings/${Date.now()}-${fileName}`;
+        const objectName = `${folder}/${Date.now()}-${fileName}`;
         await this.client.putObject(this.bucketName, objectName, fileBuffer, fileBuffer.length, {
             'Content-Type': mimeType,
         });
+        const publicUrl = this.configService.get('MINIO_PUBLIC_URL');
+        if (publicUrl) {
+            return `${publicUrl}/${this.bucketName}/${objectName}`;
+        }
         const port = this.configService.get('MINIO_PORT');
         const useSSL = this.configService.get('MINIO_USE_SSL') === 'true';
         const protocol = useSSL ? 'https' : 'http';
@@ -325,8 +331,8 @@ let MinioService = class MinioService {
         await this.client.removeObject(this.bucketName, objectName);
     }
     extractObjectNameFromUrl(url) {
-        const match = url.match(/\/palm-readings\/(.+)$/);
-        return match ? `palm-readings/${match[1]}` : '';
+        const match = url.match(/\/stardust\/(.+)$/);
+        return match ? match[1] : '';
     }
     isMinioEnabled() {
         return this.isEnabled && this.client !== null;
@@ -1654,6 +1660,393 @@ exports.AuthService = AuthService = __decorate([
 
 /***/ }),
 
+/***/ "./src/modules/avatar/avatar.controller.ts":
+/*!*************************************************!*\
+  !*** ./src/modules/avatar/avatar.controller.ts ***!
+  \*************************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AvatarController = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const platform_express_1 = __webpack_require__(/*! @nestjs/platform-express */ "@nestjs/platform-express");
+const avatar_service_1 = __webpack_require__(/*! ./avatar.service */ "./src/modules/avatar/avatar.service.ts");
+const jwt_auth_guard_1 = __webpack_require__(/*! ../../common/guards/jwt-auth.guard */ "./src/common/guards/jwt-auth.guard.ts");
+let AvatarController = class AvatarController {
+    constructor(avatarService) {
+        this.avatarService = avatarService;
+    }
+    async uploadAvatar(req, file) {
+        if (!file) {
+            throw new common_1.BadRequestException('请选择要上传的头像文件');
+        }
+        return this.avatarService.uploadAvatar(req.user.sub, file);
+    }
+    async generateAvatar(req) {
+        return this.avatarService.generateAvatar(req.user.sub);
+    }
+    async getAvatarInfo(req) {
+        return this.avatarService.getAvatarInfo(req.user.sub);
+    }
+};
+exports.AvatarController = AvatarController;
+__decorate([
+    (0, common_1.Post)('upload'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, typeof (_c = typeof Express !== "undefined" && (_b = Express.Multer) !== void 0 && _b.File) === "function" ? _c : Object]),
+    __metadata("design:returntype", Promise)
+], AvatarController.prototype, "uploadAvatar", null);
+__decorate([
+    (0, common_1.Post)('generate'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AvatarController.prototype, "generateAvatar", null);
+__decorate([
+    (0, common_1.Get)('info'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AvatarController.prototype, "getAvatarInfo", null);
+exports.AvatarController = AvatarController = __decorate([
+    (0, common_1.Controller)('avatar'),
+    __metadata("design:paramtypes", [typeof (_a = typeof avatar_service_1.AvatarService !== "undefined" && avatar_service_1.AvatarService) === "function" ? _a : Object])
+], AvatarController);
+
+
+/***/ }),
+
+/***/ "./src/modules/avatar/avatar.module.ts":
+/*!*********************************************!*\
+  !*** ./src/modules/avatar/avatar.module.ts ***!
+  \*********************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AvatarModule = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const platform_express_1 = __webpack_require__(/*! @nestjs/platform-express */ "@nestjs/platform-express");
+const avatar_controller_1 = __webpack_require__(/*! ./avatar.controller */ "./src/modules/avatar/avatar.controller.ts");
+const avatar_service_1 = __webpack_require__(/*! ./avatar.service */ "./src/modules/avatar/avatar.service.ts");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
+const minio_module_1 = __webpack_require__(/*! ../../common/minio/minio.module */ "./src/common/minio/minio.module.ts");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+let AvatarModule = class AvatarModule {
+};
+exports.AvatarModule = AvatarModule;
+exports.AvatarModule = AvatarModule = __decorate([
+    (0, common_1.Module)({
+        imports: [
+            config_1.ConfigModule,
+            minio_module_1.MinioModule,
+            platform_express_1.MulterModule.register({
+                limits: {
+                    fileSize: 5 * 1024 * 1024,
+                },
+            }),
+        ],
+        controllers: [avatar_controller_1.AvatarController],
+        providers: [avatar_service_1.AvatarService, prisma_service_1.PrismaService],
+        exports: [avatar_service_1.AvatarService],
+    })
+], AvatarModule);
+
+
+/***/ }),
+
+/***/ "./src/modules/avatar/avatar.service.ts":
+/*!**********************************************!*\
+  !*** ./src/modules/avatar/avatar.service.ts ***!
+  \**********************************************/
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AvatarService = void 0;
+const common_1 = __webpack_require__(/*! @nestjs/common */ "@nestjs/common");
+const prisma_service_1 = __webpack_require__(/*! ../../common/prisma/prisma.service */ "./src/common/prisma/prisma.service.ts");
+const minio_service_1 = __webpack_require__(/*! ../../common/minio/minio.service */ "./src/common/minio/minio.service.ts");
+const config_1 = __webpack_require__(/*! @nestjs/config */ "@nestjs/config");
+let AvatarService = class AvatarService {
+    constructor(prisma, minio, configService) {
+        this.prisma = prisma;
+        this.minio = minio;
+        this.configService = configService;
+        this.dashscopeApiKey = this.configService.get('DASHSCOPE_API_KEY') || '';
+        this.dashscopeBaseUrl = this.configService.get('DASHSCOPE_BASE_URL') || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    }
+    async uploadAvatar(userId, file) {
+        console.log('[AvatarService] Uploading avatar for user:', userId);
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        if (!allowedTypes.includes(file.mimetype)) {
+            throw new common_1.BadRequestException('仅支持 JPG、PNG、WebP 格式的图片');
+        }
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            throw new common_1.BadRequestException('图片大小不能超过 5MB');
+        }
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { avatar: true },
+        });
+        if (user?.avatar) {
+            const objectName = this.minio.extractObjectNameFromUrl(user.avatar);
+            if (objectName) {
+                try {
+                    await this.minio.deleteFile(objectName);
+                }
+                catch (error) {
+                    console.warn('[AvatarService] Failed to delete old avatar:', error);
+                }
+            }
+        }
+        const fileName = `${userId}-${Date.now()}.${file.mimetype.split('/')[1]}`;
+        const avatarUrl = await this.minio.uploadFile(file.buffer, fileName, file.mimetype, 'avatars');
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                avatar: avatarUrl,
+                avatarType: 'upload',
+                avatarUpdatedAt: new Date(),
+            },
+        });
+        console.log('[AvatarService] Avatar uploaded successfully:', avatarUrl);
+        return {
+            avatar: avatarUrl,
+            avatarType: 'upload',
+            avatarUpdatedAt: new Date(),
+        };
+    }
+    async generateAvatar(userId) {
+        console.log('[AvatarService] Generating AI avatar for user:', userId);
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!user) {
+            throw new common_1.BadRequestException('用户不存在');
+        }
+        const astrologyReading = await this.prisma.astrologyReading.findUnique({
+            where: { userId },
+        });
+        const prompt = this.generatePrompt(user, astrologyReading);
+        console.log('[AvatarService] Generated prompt:', prompt);
+        console.log('[AvatarService] Prompt length:', prompt.length);
+        try {
+            console.log('[AvatarService] Step 1: Creating async task...');
+            const createTaskResponse = await this.fetchWithTimeout('https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.dashscopeApiKey}`,
+                    'X-DashScope-Async': 'enable',
+                },
+                body: JSON.stringify({
+                    model: 'wanx-v1',
+                    input: {
+                        prompt: prompt,
+                    },
+                    parameters: {
+                        size: '1024*1024',
+                        n: 1,
+                        style: '<photography>',
+                    },
+                }),
+            }, 30000);
+            if (!createTaskResponse.ok) {
+                const errorText = await createTaskResponse.text();
+                console.error('[AvatarService] Create task failed:', errorText);
+                throw new common_1.BadRequestException(`AI生成失败: HTTP ${createTaskResponse.status}`);
+            }
+            const taskData = await createTaskResponse.json();
+            const taskId = taskData?.output?.task_id;
+            if (!taskId) {
+                console.error('[AvatarService] Invalid task response:', JSON.stringify(taskData));
+                throw new common_1.BadRequestException('AI生成失败，无法获取任务ID');
+            }
+            console.log('[AvatarService] Task created:', taskId);
+            console.log('[AvatarService] Step 2: Polling task result...');
+            let imageUrl = null;
+            const maxAttempts = 30;
+            const pollInterval = 2000;
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, pollInterval));
+                const queryResponse = await this.fetchWithTimeout(`https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${this.dashscopeApiKey}`,
+                    },
+                }, 10000);
+                if (!queryResponse.ok) {
+                    console.error('[AvatarService] Query task failed:', await queryResponse.text());
+                    continue;
+                }
+                const queryData = await queryResponse.json();
+                const taskStatus = queryData?.output?.task_status;
+                console.log(`[AvatarService] Task status (attempt ${attempt + 1}):`, taskStatus);
+                if (taskStatus === 'SUCCEEDED') {
+                    imageUrl = queryData?.output?.results?.[0]?.url;
+                    break;
+                }
+                else if (taskStatus === 'FAILED' || taskStatus === 'CANCELED') {
+                    const code = queryData?.output?.code;
+                    const message = queryData?.output?.message;
+                    console.error('[AvatarService] Task failed:', { code, message });
+                    throw new common_1.BadRequestException(`AI生成失败: ${message || '未知错误'}`);
+                }
+            }
+            if (!imageUrl) {
+                throw new common_1.BadRequestException('AI生成超时，请稍后重试');
+            }
+            console.log('[AvatarService] Image generated:', imageUrl);
+            const imageResponse = await this.fetchWithTimeout(imageUrl, {
+                method: 'GET',
+            }, 30000);
+            if (!imageResponse.ok) {
+                throw new common_1.BadRequestException('图片下载失败');
+            }
+            const arrayBuffer = await imageResponse.arrayBuffer();
+            const imageBuffer = Buffer.from(arrayBuffer);
+            const fileName = `${userId}-ai-${Date.now()}.png`;
+            if (user.avatar) {
+                const objectName = this.minio.extractObjectNameFromUrl(user.avatar);
+                if (objectName) {
+                    try {
+                        await this.minio.deleteFile(objectName);
+                    }
+                    catch (error) {
+                        console.warn('[AvatarService] Failed to delete old avatar:', error);
+                    }
+                }
+            }
+            const avatarUrl = await this.minio.uploadFile(imageBuffer, fileName, 'image/png', 'avatars');
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    avatar: avatarUrl,
+                    avatarType: 'ai_generated',
+                    avatarUpdatedAt: new Date(),
+                    lastAiAvatarDate: new Date(),
+                },
+            });
+            console.log('[AvatarService] AI avatar generated successfully:', avatarUrl);
+            return {
+                avatar: avatarUrl,
+                avatarType: 'ai_generated',
+                avatarUpdatedAt: new Date(),
+                lastAiAvatarDate: new Date(),
+            };
+        }
+        catch (error) {
+            console.error('[AvatarService] AI generation error:', error);
+            if (error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            throw new common_1.BadRequestException(`AI生成失败: ${error.message || '未知错误'}`);
+        }
+    }
+    async fetchWithTimeout(url, options = {}, timeout = 60000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
+            return response;
+        }
+        catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new common_1.BadRequestException('请求超时');
+            }
+            throw error;
+        }
+    }
+    generatePrompt(user, astrology) {
+        const genderText = user.gender === 'male' ? '男性' : user.gender === 'female' ? '女性' : '中性风格';
+        const age = new Date().getFullYear() - user.birthYear;
+        const prompt = `一个${age}岁左右的${genderText}人物头像，专业摄影风格，正面面容，表情自然友善，背景简洁干净，高质量摄影，光线柔和自然。`;
+        return prompt;
+    }
+    async getAvatarInfo(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                avatar: true,
+                avatarType: true,
+                avatarUpdatedAt: true,
+                lastAiAvatarDate: true,
+            },
+        });
+        if (!user) {
+            throw new common_1.BadRequestException('用户不存在');
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let canUseAiToday = true;
+        if (user.lastAiAvatarDate) {
+            const lastDate = new Date(user.lastAiAvatarDate);
+            lastDate.setHours(0, 0, 0, 0);
+            canUseAiToday = lastDate.getTime() !== today.getTime();
+        }
+        return {
+            avatar: user.avatar,
+            avatarType: user.avatarType,
+            avatarUpdatedAt: user.avatarUpdatedAt,
+            lastAiAvatarDate: user.lastAiAvatarDate,
+            canUseAiToday,
+        };
+    }
+};
+exports.AvatarService = AvatarService;
+exports.AvatarService = AvatarService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof minio_service_1.MinioService !== "undefined" && minio_service_1.MinioService) === "function" ? _b : Object, typeof (_c = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _c : Object])
+], AvatarService);
+
+
+/***/ }),
+
 /***/ "./src/modules/confession/confession.controller.ts":
 /*!*********************************************************!*\
   !*** ./src/modules/confession/confession.controller.ts ***!
@@ -2937,6 +3330,7 @@ let TreeholeService = class TreeholeService {
                     select: {
                         id: true,
                         nickname: true,
+                        anonymousNickname: true,
                         avatar: true,
                     },
                 },

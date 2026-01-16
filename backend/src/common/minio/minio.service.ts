@@ -70,18 +70,24 @@ export class MinioService implements OnModuleInit, OnModuleDestroy {
     fileBuffer: Buffer,
     fileName: string,
     mimeType: string,
+    folder: string = 'palm-readings',
   ): Promise<string> {
     if (!this.client || !this.isEnabled) {
       throw new Error('MinIO 未启用，无法上传文件');
     }
 
-    const objectName = `palm-readings/${Date.now()}-${fileName}`;
+    const objectName = `${folder}/${Date.now()}-${fileName}`;
 
     await this.client.putObject(this.bucketName, objectName, fileBuffer, fileBuffer.length, {
       'Content-Type': mimeType,
     });
 
-    // 返回公开访问的 URL
+    // 返回公开访问的 URL，优先使用 MINIO_PUBLIC_URL 配置
+    const publicUrl = this.configService.get<string>('MINIO_PUBLIC_URL');
+    if (publicUrl) {
+      return `${publicUrl}/${this.bucketName}/${objectName}`;
+    }
+
     const port = this.configService.get<string>('MINIO_PORT');
     const useSSL = this.configService.get<string>('MINIO_USE_SSL') === 'true';
     const protocol = useSSL ? 'https' : 'http';
@@ -100,9 +106,9 @@ export class MinioService implements OnModuleInit, OnModuleDestroy {
 
   extractObjectNameFromUrl(url: string): string {
     // 从完整 URL 中提取对象名称
-    // 例如: http://localhost:9000/stardust/palm-readings/123456-image.jpg
-    const match = url.match(/\/palm-readings\/(.+)$/);
-    return match ? `palm-readings/${match[1]}` : '';
+    // 支持多种路径格式
+    const match = url.match(/\/stardust\/(.+)$/);
+    return match ? match[1] : '';
   }
 
   isMinioEnabled(): boolean {

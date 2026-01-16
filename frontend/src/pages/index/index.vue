@@ -209,7 +209,12 @@ async function calculateAstrology() {
 }
 
 function goToPage(url: string) {
-  uni.navigateTo({ url })
+  // 商城页面在底部导航栏中，需要使用 switchTab
+  if (url === '/pages/shop/list') {
+    uni.switchTab({ url })
+  } else {
+    uni.navigateTo({ url })
+  }
 }
 
 function goToProfile() {

@@ -8,27 +8,31 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String?   @unique
-  phone         String?   @unique
-  password      String?
-  nickname      String?
-  avatar        String?
-  birthYear     Int
-  birthMonth    Int
-  birthDay      Int
-  birthHour     Int
-  birthProvince String    @default("山西")  // 出生省份
-  currentProvince String  @default("北京")  // 现居地省份
-  lunarDate     String?
-  zodiacSign    String?
-  fiveElements  String?
-  gender        String?
-  bio           String?
-  wechatOpenId  String?   @unique  // 微信OpenID
-  wechatUnionId String?   @unique  // 微信UnionID
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String    @id @default(uuid())
+  email               String?   @unique
+  phone               String?   @unique
+  password            String?
+  nickname            String?
+  anonymousNickname   String?   // 匿名昵称（用于树洞等场景）
+  avatar              String?   // 头像URL
+  avatarType          String?   // 头像类型: upload(用户上传) | ai_generated(AI生成)
+  avatarUpdatedAt     DateTime? // 头像更新时间
+  lastAiAvatarDate    DateTime? // 上次AI生成头像的日期（用于每日限制）
+  birthYear           Int
+  birthMonth          Int
+  birthDay            Int
+  birthHour           Int
+  birthProvince       String    @default("山西")  // 出生省份
+  currentProvince     String    @default("北京")  // 现居地省份
+  lunarDate           String?
+  zodiacSign          String?
+  fiveElements        String?
+  gender              String?
+  bio                 String?
+  wechatOpenId        String?   @unique  // 微信OpenID
+  wechatUnionId       String?   @unique  // 微信UnionID
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   prayers          Prayer[]
   confessions      Confession[]
@@ -147,9 +151,9 @@ model AstrologyReading {
   fiveElements String   @db.LongText  // {"wood":2,"fire":1,"earth":2,"metal":1,"water":2}
 
   // AI 解读结果
-  zodiacInterpretation   String   @default("") @db.LongText  // 星座解读
-  baziInterpretation     String   @default("") @db.LongText  // 八字解读
-  klineInterpretation    String   @default("") @db.LongText  // 人生K线解读
+  zodiacInterpretation   String   @db.LongText  // 星座解读
+  baziInterpretation     String   @db.LongText  // 八字解读
+  klineInterpretation    String   @db.LongText  // 人生K线解读
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

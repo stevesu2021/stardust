@@ -3,7 +3,7 @@
     <view class="list">
       <view class="item" v-for="item in list" :key="item.id">
         <view class="item-header">
-          <text class="nickname">{{ item.user?.nickname || '匿名' }}</text>
+          <text class="nickname">{{ item.user?.anonymousNickname || item.user?.nickname || '匿名' }}</text>
           <text class="time">{{ formatTime(item.createdAt) }}</text>
         </view>
         <view class="item-content">
@@ -24,11 +24,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { api } from '@/api'
 
 const list = ref<any[]>([])
 
 onMounted(() => {
+  loadList()
+})
+
+// 每次页面显示时刷新数据（包括从创建页面返回时）
+onShow(() => {
   loadList()
 })
 

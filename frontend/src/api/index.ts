@@ -149,5 +149,55 @@ export const api = {
     get: (id: string) => request({ url: `/user/${id}`, method: 'GET' }),
     update: (id: string, data: any) => request({ url: `/user/${id}`, method: 'PUT', data }),
     delete: (id: string) => request({ url: `/user/${id}`, method: 'DELETE' })
+  },
+  avatar: {
+    upload: (filePath: string) => {
+      return new Promise((resolve, reject) => {
+        // 获取 token
+        let token = ''
+        try {
+          if (isBrowser) {
+            token = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}').token : ''
+          } else {
+            token = uni.getStorageSync('user')?.token || ''
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        uni.uploadFile({
+          url: BASE_URL + '/avatar/upload',
+          filePath,
+          name: 'file',
+          header: {
+            'Authorization': `Bearer ${token}`
+          },
+          success: (res: any) => {
+            if (res.statusCode === 200 || res.statusCode === 201) {
+              try {
+                const data = JSON.parse(res.data)
+                resolve(data)
+              } catch (e) {
+                resolve(res.data)
+              }
+            } else {
+              let errorMessage = '上传失败'
+              try {
+                const data = JSON.parse(res.data)
+                errorMessage = data.message || data.error || errorMessage
+              } catch (e) {
+                // ignore
+              }
+              reject(new Error(errorMessage))
+            }
+          },
+          fail: (err) => {
+            reject(new Error(err.errMsg || '上传失败'))
+          }
+        })
+      })
+    },
+    generate: () => request({ url: '/avatar/generate', method: 'POST' }),
+    getInfo: () => request({ url: '/avatar/info', method: 'GET' })
   }
 }

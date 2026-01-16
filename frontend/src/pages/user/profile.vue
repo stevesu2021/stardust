@@ -33,9 +33,10 @@
     <!-- 已登录状态 -->
     <view v-else class="logged-in">
       <view class="profile">
-        <view class="avatar">
+        <view class="avatar" @click="showAvatarOptions">
           <image v-if="userInfo?.avatar" :src="userInfo.avatar" class="avatar-image" mode="aspectFill" />
           <text v-else class="avatar-text">{{ userInfo?.nickname?.charAt(0) || 'U' }}</text>
+          <view class="avatar-edit-icon">📷</view>
         </view>
         <text class="nickname">{{ userInfo?.nickname || '未设置' }}</text>
         <text class="user-id" v-if="userInfo?.wechatOpenId">💬 已绑定微信</text>
@@ -265,6 +266,116 @@ function goToRegister() {
 function goToSettings() {
   uni.navigateTo({ url: '/pages/user/edit-profile' })
 }
+
+// 显示头像选项
+function showAvatarOptions() {
+  const items = ['从相册选择', 'AI 生成头像']
+  if (userInfo.value?.avatar) {
+    items.push('删除头像')
+  }
+
+  uni.showActionSheet({
+    itemList: items,
+    success: (res) => {
+      if (res.tapIndex === 0) {
+        // 从相册选择
+        chooseFromAlbum()
+      } else if (res.tapIndex === 1) {
+        // AI 生成头像
+        generateAiAvatar()
+      } else if (res.tapIndex === 2) {
+        // 删除头像
+        deleteAvatar()
+      }
+    }
+  })
+}
+
+// 从相册选择头像
+function chooseFromAlbum() {
+  uni.chooseImage({
+    count: 1,
+    sizeType: ['compressed'],
+    sourceType: ['album'],
+    success: (res) => {
+      const tempFilePath = res.tempFilePaths[0]
+      uploadAvatar(tempFilePath)
+    }
+  })
+}
+
+// 上传头像
+async function uploadAvatar(filePath: string) {
+  uni.showLoading({ title: '上传中...' })
+
+  try {
+    const res: any = await api.avatar.upload(filePath)
+    // 添加时间戳防止缓存，确保头像立即更新
+    const avatarUrl = res.avatar.includes('?') ? `${res.avatar}&t=${Date.now()}` : `${res.avatar}?t=${Date.now()}`
+    // 创建新对象避免响应式问题
+    const updatedUser = { ...userInfo.value, avatar: avatarUrl }
+    userInfo.value = updatedUser
+    userStore.setUserInfo(updatedUser)
+    uni.showToast({ title: '上传成功', icon: 'success' })
+  } catch (error: any) {
+    uni.showToast({ title: error.message || '上传失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
+}
+
+// AI 生成头像
+async function generateAiAvatar() {
+  uni.showModal({
+    title: 'AI 生成头像',
+    content: 'AI 将根据您的生日、星座等信息为您生成专属头像，生成过程可能需要 10-30 秒，是否继续？',
+    success: (res) => {
+      if (res.confirm) {
+        doGenerateAiAvatar()
+      }
+    }
+  })
+}
+
+// 执行 AI 生成
+async function doGenerateAiAvatar() {
+  uni.showLoading({ title: 'AI 生成中...', mask: true })
+
+  try {
+    const res: any = await api.avatar.generate()
+    // 添加时间戳防止缓存，确保头像立即更新
+    const avatarUrl = res.avatar.includes('?') ? `${res.avatar}&t=${Date.now()}` : `${res.avatar}?t=${Date.now()}`
+    // 创建新对象避免响应式问题
+    const updatedUser = { ...userInfo.value, avatar: avatarUrl }
+    userInfo.value = updatedUser
+    userStore.setUserInfo(updatedUser)
+    uni.showToast({ title: '生成成功', icon: 'success' })
+  } catch (error: any) {
+    uni.showToast({ title: error.message || '生成失败，可以重试', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
+}
+
+// 删除头像
+function deleteAvatar() {
+  uni.showModal({
+    title: '提示',
+    content: '确定要删除头像吗？',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await api.user.update(userInfo.value.id, { avatar: null })
+          userInfo.value.avatar = null
+          userStore.setUserInfo(userInfo.value)
+          uni.showToast({ title: '删除成功', icon: 'success' })
+        } catch (error: any) {
+          uni.showToast({ title: error.message || '删除失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -388,6 +499,7 @@ function goToSettings() {
       overflow: hidden;
       border: 4rpx solid white;
       box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+      position: relative;
 
       .avatar-image {
         width: 100%;
@@ -398,6 +510,21 @@ function goToSettings() {
         font-size: 80rpx;
         color: white;
         font-weight: bold;
+      }
+
+      .avatar-edit-icon {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 48rpx;
+        height: 48rpx;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24rpx;
+        backdrop-filter: blur(4rpx);
       }
     }
 

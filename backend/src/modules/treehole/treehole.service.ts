@@ -41,6 +41,7 @@ export class TreeholeService {
           select: {
             id: true,
             nickname: true,
+            anonymousNickname: true,  // 添加匿名昵称
             avatar: true,
           },
         },

@@ -10,6 +10,7 @@ import { ConfessionModule } from './modules/confession/confession.module';
 import { TreeholeModule } from './modules/treehole/treehole.module';
 import { DatingModule } from './modules/dating/dating.module';
 import { PalmModule } from './modules/palm/palm.module';
+import { AvatarModule } from './modules/avatar/avatar.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PalmModule } from './modules/palm/palm.module';
     TreeholeModule,
     DatingModule,
     PalmModule,
+    AvatarModule,
   ],
 })
 export class AppModule {}
