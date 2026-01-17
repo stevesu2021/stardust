@@ -122,6 +122,23 @@ export const api = {
     public: (skip = 0, take = 20) => request({ url: `/prayer/public?skip=${skip}&take=${take}`, method: 'GET' }),
     increment: (prayerId: string) => request({ url: `/prayer/increment/${prayerId}`, method: 'POST' })
   },
+  // 虔诚祈祷相关接口
+  devoutPrayer: {
+    create: (data: any) => request({ url: '/devout-prayer', method: 'POST', data }),
+    list: (userId: string) => request({ url: `/devout-prayer/user/${userId}`, method: 'GET' }),
+    getDevoutList: () => request({ url: '/devout-prayer/list', method: 'GET' }),
+    support: (prayerId: string) => request({ url: `/devout-prayer/support/${prayerId}`, method: 'POST' }),
+    classify: (content: string) => request({ url: '/devout-prayer/classify', method: 'POST', data: { content } }),
+    getCategories: () => request({ url: '/devout-prayer/categories', method: 'GET' }),
+    getDeitiesByCategory: (categoryId: string) => request({ url: `/devout-prayer/categories/${categoryId}/deities`, method: 'GET' })
+  },
+  // 复合祈愿相关接口
+  reunitePrayer: {
+    create: (data: any) => request({ url: '/reunite-prayer', method: 'POST', data }),
+    list: (userId: string) => request({ url: `/reunite-prayer/user/${userId}`, method: 'GET' }),
+    public: (skip = 0, take = 20) => request({ url: `/reunite-prayer/public?skip=${skip}&take=${take}`, method: 'GET' }),
+    increment: (prayerId: string) => request({ url: `/reunite-prayer/increment/${prayerId}`, method: 'POST' })
+  },
   confession: {
     create: (data: any) => request({ url: '/confession', method: 'POST', data }),
     list: (userId: string) => request({ url: `/confession/user/${userId}`, method: 'GET' }),
@@ -136,6 +153,8 @@ export const api = {
     delete: (treeholeId: string, userId: string) => request({ url: `/treehole/${treeholeId}`, method: 'DELETE', data: { userId } })
   },
   dating: {
+    // 从100个随机异性用户中选出匹配度最高的3位
+    topMatches: () => request({ url: '/dating/top-matches', method: 'POST' }),
     matches: (userId: string, limit = 10) => request({ url: `/dating/matches/${userId}`, method: 'POST', data: { limit } }),
     sendMessage: (data: any) => request({ url: '/dating/message', method: 'POST', data }),
     messages: (userId: string, otherUserId: string) => request({ url: `/dating/messages/${userId}/${otherUserId}`, method: 'GET' }),
@@ -199,5 +218,11 @@ export const api = {
     },
     generate: () => request({ url: '/avatar/generate', method: 'POST' }),
     getInfo: () => request({ url: '/avatar/info', method: 'GET' })
+  },
+  mbti: {
+    getQuestions: () => request({ url: '/mbti/questions', method: 'GET' }),
+    submit: (answers: string[]) => request({ url: '/mbti/submit', method: 'POST', data: { answers } }),
+    getResult: () => request({ url: '/mbti/result', method: 'GET' }),
+    getAllTypes: () => request({ url: '/mbti/types', method: 'GET' })
   }
 }

@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { api } from '@/api'
 
 const list = ref<any[]>([])
@@ -33,9 +34,13 @@ onMounted(() => {
   loadList()
 })
 
+onShow(() => {
+  loadList()
+})
+
 async function loadList() {
   try {
-    const res: any = await api.prayer.public()
+    const res: any = await api.reunitePrayer.public()
     list.value = res
   } catch (error: any) {
     uni.showToast({ title: error.message || '加载失败', icon: 'none' })
@@ -44,7 +49,7 @@ async function loadList() {
 
 async function increment(id: string) {
   try {
-    await api.prayer.increment(id)
+    await api.reunitePrayer.increment(id)
     uni.showToast({ title: '祈福成功', icon: 'success' })
     loadList()
   } catch (error: any) {

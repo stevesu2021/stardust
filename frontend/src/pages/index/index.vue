@@ -1,5 +1,11 @@
 <template>
   <view class="container">
+    <!-- 缘分匹配弹窗 -->
+    <DatingMatchModal
+      :visible="showMatchModal"
+      @close="showMatchModal = false"
+      @startChat="handleStartChat"
+    />
     <!-- 紧凑头部 -->
     <view class="header">
       <view class="header-content">
@@ -72,6 +78,12 @@
         <text class="feature-desc">为爱情祈福</text>
       </view>
 
+      <view class="feature-item" @click="goToPage('/pages/prayer/devout-list')">
+        <text class="feature-icon">🕯️</text>
+        <text class="feature-title">虔诚祈祷</text>
+        <text class="feature-desc">向神灵祈愿</text>
+      </view>
+
       <view class="feature-item" @click="goToPage('/pages/shop/list')">
         <text class="feature-icon">🛍️</text>
         <text class="feature-title">商城</text>
@@ -95,6 +107,12 @@
         <text class="feature-title">看手相</text>
         <text class="feature-desc">AI手相分析</text>
       </view>
+
+      <view class="feature-item" @click="goToPage('/pages/mbti/result')">
+        <text class="feature-icon">🧠</text>
+        <text class="feature-title">MBTI测试</text>
+        <text class="feature-desc">人格类型分析</text>
+      </view>
     </view>
   </view>
 </template>
@@ -103,9 +121,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/user'
 import { api } from '@/api'
+import DatingMatchModal from '@/components/DatingMatchModal.vue'
 
 const userStore = useUserStore()
 const userInfo = ref<any>(null)
+const showMatchModal = ref(false)
 
 // 五行配置
 const elementsConfig = [
@@ -212,6 +232,9 @@ function goToPage(url: string) {
   // 商城页面在底部导航栏中，需要使用 switchTab
   if (url === '/pages/shop/list') {
     uni.switchTab({ url })
+  } else if (url === '/pages/dating/matches') {
+    // 缘分匹配显示弹窗
+    showMatchModal.value = true
   } else {
     uni.navigateTo({ url })
   }
@@ -219,6 +242,13 @@ function goToPage(url: string) {
 
 function goToProfile() {
   uni.navigateTo({ url: '/pages/user/profile' })
+}
+
+// 处理开始聊天
+function handleStartChat(userId: string) {
+  uni.navigateTo({
+    url: `/pages/dating/chat?otherUserId=${userId}`
+  })
 }
 
 onMounted(() => {

@@ -43,6 +43,18 @@
       }
     },
     {
+      "path": "pages/prayer/devout-list",
+      "style": {
+        "navigationBarTitleText": "虔诚祈祷"
+      }
+    },
+    {
+      "path": "pages/prayer/devout-create",
+      "style": {
+        "navigationBarTitleText": "虔诚祈祷"
+      }
+    },
+    {
       "path": "pages/confession/list",
       "style": {
         "navigationBarTitleText": "月老红线"
@@ -94,6 +106,20 @@
       "path": "pages/user/edit-profile",
       "style": {
         "navigationBarTitleText": "编辑资料"
+      }
+    },
+    {
+      "path": "pages/mbti/test",
+      "style": {
+        "navigationBarTitleText": "MBTI测试",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/mbti/result",
+      "style": {
+        "navigationBarTitleText": "MBTI结果",
+        "navigationStyle": "custom"
       }
     },
     {

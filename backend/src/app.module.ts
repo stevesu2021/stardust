@@ -13,6 +13,7 @@ import { TreeholeModule } from './modules/treehole/treehole.module';
 import { DatingModule } from './modules/dating/dating.module';
 import { PalmModule } from './modules/palm/palm.module';
 import { AvatarModule } from './modules/avatar/avatar.module';
+import { MbtiModule } from './modules/mbti/mbti.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { AvatarModule } from './modules/avatar/avatar.module';
     DatingModule,
     PalmModule,
     AvatarModule,
+    MbtiModule,
   ],
 })
 export class AppModule {}

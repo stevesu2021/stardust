@@ -34,12 +34,11 @@ async function submit() {
 
   loading.value = true
   try {
-    await api.prayer.create({
-      userId: userStore.userInfo?.id,
+    await api.reunitePrayer.create({
       content: content.value,
       targetName: targetName.value
     })
-    
+
     uni.showToast({ title: '发布成功', icon: 'success' })
     setTimeout(() => {
       uni.navigateBack()
