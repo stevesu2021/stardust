@@ -123,6 +123,13 @@
       }
     },
     {
+      "path": "pages/daily-fortune/detail",
+      "style": {
+        "navigationBarTitleText": "今日运势",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/shop/list",
       "style": {
         "navigationBarTitleText": "商城"

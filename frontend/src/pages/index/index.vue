@@ -55,6 +55,9 @@
         </view>
       </view>
 
+      <!-- 今日运势卡片 -->
+      <DailyFortuneCard v-if="userInfo && hasAstrologyData" ref="fortuneCardRef" />
+
       <!-- 未登录或未计算星盘提示 -->
       <view class="calc-prompt" v-else-if="userInfo">
         <text class="prompt-text">点击计算星盘，解锁你的命理密码</text>
@@ -119,13 +122,16 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import { api } from '@/api'
 import DatingMatchModal from '@/components/DatingMatchModal.vue'
+import DailyFortuneCard from '@/components/DailyFortuneCard.vue'
 
 const userStore = useUserStore()
 const userInfo = ref<any>(null)
 const showMatchModal = ref(false)
+const fortuneCardRef = ref<any>(null)
 
 // 五行配置
 const elementsConfig = [
@@ -253,6 +259,13 @@ function handleStartChat(userId: string) {
 
 onMounted(() => {
   userInfo.value = userStore.userInfo
+})
+
+onShow(() => {
+  // 每次显示页面时刷新今日运势
+  if (fortuneCardRef.value?.refresh) {
+    fortuneCardRef.value.refresh()
+  }
 })
 </script>
 

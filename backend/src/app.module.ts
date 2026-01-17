@@ -14,6 +14,7 @@ import { DatingModule } from './modules/dating/dating.module';
 import { PalmModule } from './modules/palm/palm.module';
 import { AvatarModule } from './modules/avatar/avatar.module';
 import { MbtiModule } from './modules/mbti/mbti.module';
+import { DailyFortuneModule } from './modules/daily-fortune/daily-fortune.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { MbtiModule } from './modules/mbti/mbti.module';
     PalmModule,
     AvatarModule,
     MbtiModule,
+    DailyFortuneModule,
   ],
 })
 export class AppModule {}

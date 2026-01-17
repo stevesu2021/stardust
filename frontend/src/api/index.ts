@@ -224,5 +224,10 @@ export const api = {
     submit: (answers: string[]) => request({ url: '/mbti/submit', method: 'POST', data: { answers } }),
     getResult: () => request({ url: '/mbti/result', method: 'GET' }),
     getAllTypes: () => request({ url: '/mbti/types', method: 'GET' })
+  },
+  dailyFortune: {
+    getToday: () => request({ url: '/daily-fortune/today', method: 'GET' }),
+    refresh: () => request({ url: '/daily-fortune/refresh', method: 'POST' }),
+    getRecent: () => request({ url: '/daily-fortune/recent', method: 'GET' })
   }
 }

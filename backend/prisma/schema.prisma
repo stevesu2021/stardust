@@ -48,6 +48,7 @@ model User {
   palmReadings     PalmReading[]
   astrologyReadings AstrologyReading[]
   mbtiResults      MbtiResult[]
+  dailyFortunes    DailyFortune[]
 
   @@map("users")
 }
@@ -224,4 +225,28 @@ model MbtiResult {
 
   @@unique([userId]) // 每个用户只保留最新的一条记录
   @@map("mbti_results")
+}
+
+// 今日运势表
+model DailyFortune {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fortuneDate     String   // 运势日期 (YYYY-MM-DD)
+  overallScore    Int      // 总体得分 (0-100)
+  summary         String   // 简短摘要
+  precautions     String?  @db.LongText // 注意事项
+  career          String?  @db.LongText // 事业运势
+  love            String?  @db.LongText // 爱情运势
+  wealth          String?  @db.LongText // 财富运势
+  health          String?  @db.LongText // 健康运势
+  luckyColor      String?  // 幸运颜色
+  luckyNumber     Int?     // 幸运数字
+  luckyDirection  String?  // 幸运方位
+  advice          String?  @db.LongText // 建议
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, fortuneDate]) // 每个用户每天只有一条运势记录
+  @@map("daily_fortunes")
 }
