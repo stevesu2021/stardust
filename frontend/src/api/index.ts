@@ -229,5 +229,9 @@ export const api = {
     getToday: () => request({ url: '/daily-fortune/today', method: 'GET' }),
     refresh: () => request({ url: '/daily-fortune/refresh', method: 'POST' }),
     getRecent: () => request({ url: '/daily-fortune/recent', method: 'GET' })
+  },
+  famousPeople: {
+    getAllGrouped: () => request({ url: '/famous-people/grouped/all', method: 'GET' }),
+    getByZodiac: (zodiacSign: string) => request({ url: `/famous-people/${zodiacSign}`, method: 'GET' })
   }
 }

@@ -43,6 +43,7 @@ const palm_module_1 = __webpack_require__(46);
 const avatar_module_1 = __webpack_require__(50);
 const mbti_module_1 = __webpack_require__(53);
 const daily_fortune_module_1 = __webpack_require__(58);
+const famous_people_module_1 = __webpack_require__(61);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -68,6 +69,7 @@ exports.AppModule = AppModule = __decorate([
             avatar_module_1.AvatarModule,
             mbti_module_1.MbtiModule,
             daily_fortune_module_1.DailyFortuneModule,
+            famous_people_module_1.FamousPeopleModule,
         ],
     })
 ], AppModule);
@@ -5110,6 +5112,178 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FamousPeopleModule = void 0;
+const common_1 = __webpack_require__(2);
+const famous_people_controller_1 = __webpack_require__(62);
+const famous_people_service_1 = __webpack_require__(63);
+const prisma_module_1 = __webpack_require__(5);
+let FamousPeopleModule = class FamousPeopleModule {
+};
+exports.FamousPeopleModule = FamousPeopleModule;
+exports.FamousPeopleModule = FamousPeopleModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [famous_people_controller_1.FamousPeopleController],
+        providers: [famous_people_service_1.FamousPeopleService],
+        exports: [famous_people_service_1.FamousPeopleService],
+    })
+], FamousPeopleModule);
+
+
+/***/ }),
+/* 62 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FamousPeopleController = void 0;
+const common_1 = __webpack_require__(2);
+const famous_people_service_1 = __webpack_require__(63);
+let FamousPeopleController = class FamousPeopleController {
+    constructor(famousPeopleService) {
+        this.famousPeopleService = famousPeopleService;
+    }
+    async getByZodiac(zodiacSign) {
+        return this.famousPeopleService.getByZodiac(zodiacSign);
+    }
+    async getAllGroupedByZodiac() {
+        return this.famousPeopleService.getAllGroupedByZodiac();
+    }
+    async importPeople(data) {
+        return this.famousPeopleService.importPeople(data.people);
+    }
+    async getAll() {
+        return this.famousPeopleService.getAll();
+    }
+};
+exports.FamousPeopleController = FamousPeopleController;
+__decorate([
+    (0, common_1.Get)(':zodiacSign'),
+    __param(0, (0, common_1.Param)('zodiacSign')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], FamousPeopleController.prototype, "getByZodiac", null);
+__decorate([
+    (0, common_1.Get)('grouped/all'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], FamousPeopleController.prototype, "getAllGroupedByZodiac", null);
+__decorate([
+    (0, common_1.Post)('import'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], FamousPeopleController.prototype, "importPeople", null);
+__decorate([
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], FamousPeopleController.prototype, "getAll", null);
+exports.FamousPeopleController = FamousPeopleController = __decorate([
+    (0, common_1.Controller)('famous-people'),
+    __metadata("design:paramtypes", [typeof (_a = typeof famous_people_service_1.FamousPeopleService !== "undefined" && famous_people_service_1.FamousPeopleService) === "function" ? _a : Object])
+], FamousPeopleController);
+
+
+/***/ }),
+/* 63 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.FamousPeopleService = void 0;
+const common_1 = __webpack_require__(2);
+const prisma_service_1 = __webpack_require__(6);
+let FamousPeopleService = class FamousPeopleService {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async getByZodiac(zodiacSign) {
+        return this.prisma.famousPerson.findMany({
+            where: { zodiacSign },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+    async getAllGroupedByZodiac() {
+        const allPeople = await this.prisma.famousPerson.findMany({
+            orderBy: { createdAt: 'asc' },
+        });
+        const grouped = {};
+        const zodiacOrder = [
+            '白羊座', '金牛座', '双子座', '巨蟹座',
+            '狮子座', '处女座', '天秤座', '天蝎座',
+            '射手座', '摩羯座', '水瓶座', '双鱼座'
+        ];
+        zodiacOrder.forEach(sign => {
+            grouped[sign] = [];
+        });
+        allPeople.forEach(person => {
+            if (grouped[person.zodiacSign]) {
+                grouped[person.zodiacSign].push(person);
+            }
+        });
+        return grouped;
+    }
+    async importPeople(people) {
+        await this.prisma.famousPerson.deleteMany({});
+        const result = await this.prisma.famousPerson.createMany({
+            data: people,
+            skipDuplicates: true,
+        });
+        return { count: result.count };
+    }
+    async getAll() {
+        return this.prisma.famousPerson.findMany({
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+};
+exports.FamousPeopleService = FamousPeopleService;
+exports.FamousPeopleService = FamousPeopleService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
+], FamousPeopleService);
+
+
+/***/ }),
+/* 64 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AllExceptionsFilter = void 0;
 const common_1 = __webpack_require__(2);
 let AllExceptionsFilter = class AllExceptionsFilter {
@@ -5180,7 +5354,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(1);
 const common_1 = __webpack_require__(2);
 const app_module_1 = __webpack_require__(3);
-const all_exceptions_filter_1 = __webpack_require__(61);
+const all_exceptions_filter_1 = __webpack_require__(64);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({

@@ -31,6 +31,12 @@
       }
     },
     {
+      "path": "pages/astrology/celebrities",
+      "style": {
+        "navigationBarTitleText": "星座名人"
+      }
+    },
+    {
       "path": "pages/prayer/list",
       "style": {
         "navigationBarTitleText": "复合祈愿"

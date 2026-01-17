@@ -26,7 +26,7 @@
 
       <!-- 用户星座五行卡片 -->
       <view class="user-card" v-if="userInfo && hasAstrologyData">
-        <view class="zodiac-section">
+        <view class="zodiac-section" @click="goToCelebrities">
           <text class="zodiac-icon">{{ getZodiacIcon(userInfo.zodiacSign) }}</text>
           <view class="zodiac-info">
             <text class="zodiac-label">星座</text>
@@ -248,6 +248,12 @@ function goToPage(url: string) {
 
 function goToProfile() {
   uni.navigateTo({ url: '/pages/user/profile' })
+}
+
+function goToCelebrities() {
+  if (userInfo.value?.zodiacSign) {
+    uni.navigateTo({ url: `/pages/astrology/celebrities?zodiac=${userInfo.value.zodiacSign}` })
+  }
 }
 
 // 处理开始聊天

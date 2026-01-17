@@ -229,8 +229,10 @@ async function calculateAstrology() {
 
   try {
     const res: any = await api.astrology.calculate(userInfo.value.id)
-    userInfo.value = res.user
-    userStore.setUserInfo(res.user)
+    // 重新获取完整的用户信息，避免丢失 bio 等字段
+    const updatedUser: any = await api.auth.getProfile()
+    userInfo.value = updatedUser.user
+    userStore.setUserInfo(updatedUser.user)
     uni.showToast({ title: '计算成功', icon: 'success' })
   } catch (error: any) {
     uni.showToast({ title: error.message || '计算失败', icon: 'none' })

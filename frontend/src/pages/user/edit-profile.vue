@@ -260,8 +260,9 @@ async function handleSave() {
     // 保存成功后自动计算星盘
     try {
       const astrologyResult: any = await api.astrology.calculate(userStore.userInfo!.id)
-      // 更新store中的用户信息
-      userStore.setUserInfo(astrologyResult.user)
+      // 重新获取完整的用户信息，避免丢失 bio 等字段
+      const updatedUser: any = await api.auth.getProfile()
+      userStore.setUserInfo(updatedUser.user)
       console.log('星盘计算成功:', astrologyResult)
     } catch (astroError) {
       console.error('星盘计算失败:', astroError)
