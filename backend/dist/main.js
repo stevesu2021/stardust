@@ -44,6 +44,7 @@ const avatar_module_1 = __webpack_require__(50);
 const mbti_module_1 = __webpack_require__(53);
 const daily_fortune_module_1 = __webpack_require__(58);
 const famous_people_module_1 = __webpack_require__(61);
+const product_module_1 = __webpack_require__(64);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -70,6 +71,7 @@ exports.AppModule = AppModule = __decorate([
             mbti_module_1.MbtiModule,
             daily_fortune_module_1.DailyFortuneModule,
             famous_people_module_1.FamousPeopleModule,
+            product_module_1.ProductModule,
         ],
     })
 ], AppModule);
@@ -5284,6 +5286,217 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProductModule = void 0;
+const common_1 = __webpack_require__(2);
+const product_controller_1 = __webpack_require__(65);
+const product_service_1 = __webpack_require__(66);
+const prisma_module_1 = __webpack_require__(5);
+let ProductModule = class ProductModule {
+};
+exports.ProductModule = ProductModule;
+exports.ProductModule = ProductModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [product_controller_1.ProductController],
+        providers: [product_service_1.ProductService],
+        exports: [product_service_1.ProductService],
+    })
+], ProductModule);
+
+
+/***/ }),
+/* 65 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProductController = void 0;
+const common_1 = __webpack_require__(2);
+const product_service_1 = __webpack_require__(66);
+let ProductController = class ProductController {
+    constructor(productService) {
+        this.productService = productService;
+    }
+    async getList(skip = 0, take = 20, category) {
+        return this.productService.getList(Number(skip), Number(take), category);
+    }
+    async getById(id) {
+        return this.productService.getById(id);
+    }
+    async getCategories() {
+        return this.productService.getCategories();
+    }
+    async importProducts(data) {
+        return this.productService.importProducts(data.products);
+    }
+    async deleteAll() {
+        return this.productService.deleteAll();
+    }
+};
+exports.ProductController = ProductController;
+__decorate([
+    (0, common_1.Get)(),
+    __param(0, (0, common_1.Query)('skip')),
+    __param(1, (0, common_1.Query)('take')),
+    __param(2, (0, common_1.Query)('category')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Number, Number, String]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getList", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getById", null);
+__decorate([
+    (0, common_1.Get)('categories/list'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "getCategories", null);
+__decorate([
+    (0, common_1.Post)('import'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "importProducts", null);
+__decorate([
+    (0, common_1.Post)('delete-all'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], ProductController.prototype, "deleteAll", null);
+exports.ProductController = ProductController = __decorate([
+    (0, common_1.Controller)('products'),
+    __metadata("design:paramtypes", [typeof (_a = typeof product_service_1.ProductService !== "undefined" && product_service_1.ProductService) === "function" ? _a : Object])
+], ProductController);
+
+
+/***/ }),
+/* 66 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ProductService = void 0;
+const common_1 = __webpack_require__(2);
+const prisma_service_1 = __webpack_require__(6);
+let ProductService = class ProductService {
+    constructor(prisma) {
+        this.prisma = prisma;
+    }
+    async getList(skip = 0, take = 20, category) {
+        const where = category ? { category } : {};
+        const [products, total] = await Promise.all([
+            this.prisma.product.findMany({
+                where,
+                skip,
+                take,
+                orderBy: { createdAt: 'desc' },
+            }),
+            this.prisma.product.count({ where }),
+        ]);
+        return {
+            products,
+            total,
+            skip,
+            take,
+        };
+    }
+    async getById(id) {
+        return this.prisma.product.findUnique({
+            where: { id },
+        });
+    }
+    async getCategories() {
+        const products = await this.prisma.product.findMany({
+            select: { category: true },
+            distinct: ['category'],
+        });
+        return products.map(p => p.category);
+    }
+    async importProducts(products) {
+        let imported = 0;
+        let skipped = 0;
+        for (const product of products) {
+            try {
+                await this.prisma.product.upsert({
+                    where: {
+                        productId_platform: {
+                            productId: product.productId,
+                            platform: product.platform,
+                        },
+                    },
+                    update: {
+                        title: product.title,
+                        productUrl: product.productUrl,
+                        imageUrl: product.imageUrl,
+                        price: product.price,
+                        shopName: product.shopName,
+                        category: product.category,
+                        tags: product.tags,
+                        remark: product.remark,
+                    },
+                    create: product,
+                });
+                imported++;
+            }
+            catch (error) {
+                console.error(`Failed to import product ${product.productId}:`, error);
+                skipped++;
+            }
+        }
+        return { imported, skipped };
+    }
+    async deleteAll() {
+        return this.prisma.product.deleteMany({});
+    }
+};
+exports.ProductService = ProductService;
+exports.ProductService = ProductService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object])
+], ProductService);
+
+
+/***/ }),
+/* 67 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AllExceptionsFilter = void 0;
 const common_1 = __webpack_require__(2);
 let AllExceptionsFilter = class AllExceptionsFilter {
@@ -5354,7 +5567,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(1);
 const common_1 = __webpack_require__(2);
 const app_module_1 = __webpack_require__(3);
-const all_exceptions_filter_1 = __webpack_require__(64);
+const all_exceptions_filter_1 = __webpack_require__(67);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({

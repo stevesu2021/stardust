@@ -16,6 +16,7 @@ import { AvatarModule } from './modules/avatar/avatar.module';
 import { MbtiModule } from './modules/mbti/mbti.module';
 import { DailyFortuneModule } from './modules/daily-fortune/daily-fortune.module';
 import { FamousPeopleModule } from './modules/famous-people/famous-people.module';
+import { ProductModule } from './modules/product/product.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { FamousPeopleModule } from './modules/famous-people/famous-people.module
     MbtiModule,
     DailyFortuneModule,
     FamousPeopleModule,
+    ProductModule,
   ],
 })
 export class AppModule {}

@@ -7,145 +7,199 @@
     </view>
 
     <!-- 分类筛选 -->
-    <view class="categories">
-      <view
-        v-for="cat in categories"
-        :key="cat.id"
-        class="category-item"
-        :class="{ active: selectedCategory === cat.id }"
-        @click="selectCategory(cat.id)"
-      >
-        <text class="category-icon">{{ cat.icon }}</text>
-        <text class="category-name">{{ cat.name }}</text>
+    <scroll-view scroll-x class="categories">
+      <view class="categories-inner">
+        <view
+          v-for="cat in categoryList"
+          :key="cat.id"
+          class="category-item"
+          :class="{ active: selectedCategory === cat.id }"
+          @click="selectCategory(cat.id)"
+        >
+          <text class="category-icon">{{ cat.icon }}</text>
+          <text class="category-name">{{ cat.name }}</text>
+        </view>
       </view>
-    </view>
+    </scroll-view>
 
     <!-- 商品列表 -->
-    <view class="products">
+    <view v-if="loading" class="loading">
+      <text class="loading-text">加载中...</text>
+    </view>
+
+    <view v-else class="products">
       <view
-        v-for="product in filteredProducts"
+        v-for="product in productList"
         :key="product.id"
         class="product-item"
-        @click="goToDetail(product.id)"
+        @click="goToDetail(product)"
       >
         <view class="product-image">
-          <text class="product-placeholder">{{ product.icon }}</text>
+          <image
+            v-if="product.imageUrl"
+            :src="product.imageUrl"
+            class="product-img"
+            mode="aspectFill"
+          />
+          <text v-else class="product-placeholder">📦</text>
         </view>
         <view class="product-info">
-          <text class="product-name">{{ product.name }}</text>
-          <text class="product-desc">{{ product.description }}</text>
+          <text class="product-name">{{ product.title }}</text>
+          <text class="product-shop">{{ product.shopName }}</text>
           <view class="product-footer">
             <text class="product-price">¥{{ product.price }}</text>
-            <text class="product-sold">已售{{ product.sold }}+</text>
+            <text class="product-category">{{ product.category }}</text>
           </view>
         </view>
+      </view>
+
+      <view v-if="productList.length === 0" class="empty">
+        <text class="empty-icon">📦</text>
+        <text class="empty-text">暂无商品</text>
+      </view>
+
+      <view v-if="hasMore" class="load-more" @click="loadMore">
+        <text class="load-more-text">加载更多</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { api } from '@/api'
 
 const selectedCategory = ref('all')
+const loading = ref(false)
+const products = ref<any[]>([])
+const categories = ref<string[]>([])
+const skip = ref(0)
+const take = 20
+const hasMore = ref(true)
 
-const categories = [
-  { id: 'all', name: '全部', icon: '🏪' },
-  { id: 'crystal', name: '水晶', icon: '💎' },
-  { id: 'bracelet', name: '手串', icon: '⚪' },
-  { id: 'pendant', name: '吊坠', icon: '📿' },
-  { id: 'incense', name: '香薰', icon: '🕯️' }
-]
+// 分类配置（图标映射）
+const categoryIcons: Record<string, string> = {
+  '全部': '🏪',
+  '手串': '⚪',
+  '吊坠': '📿',
+  '香薰': '🕯️',
+  '水晶': '💎',
+  '星座手链': '⭐',
+  '玛瑙': '🔴',
+}
 
-const products = [
-  {
-    id: 1,
-    name: '紫水晶手串',
-    description: '招桃花、增进人缘',
-    price: '168',
-    sold: 520,
-    category: 'bracelet',
-    icon: '💜'
-  },
-  {
-    id: 2,
-    name: '白水晶项链',
-    description: '净化磁场、提升灵性',
-    price: '128',
-    sold: 340,
-    category: 'pendant',
-    icon: '⚪'
-  },
-  {
-    id: 3,
-    name: '粉水晶手链',
-    description: '招爱情、改善人际关系',
-    price: '188',
-    sold: 890,
-    category: 'bracelet',
-    icon: '🩷'
-  },
-  {
-    id: 4,
-    name: '黄水晶貔貅',
-    description: '招财、增强自信',
-    price: '298',
-    sold: 210,
-    category: 'crystal',
-    icon: '🟡'
-  },
-  {
-    id: 5,
-    name: '檀香线香',
-    description: '静心、助眠、祈福',
-    price: '68',
-    sold: 1200,
-    category: 'incense',
-    icon: '🪵'
-  },
-  {
-    id: 6,
-    name: '黑曜石手串',
-    description: '辟邪、化煞、保平安',
-    price: '158',
-    sold: 670,
-    category: 'bracelet',
-    icon: '⚫'
-  },
-  {
-    id: 7,
-    name: '月光石吊坠',
-    description: '柔和情感、舒缓压力',
-    price: '218',
-    sold: 180,
-    category: 'pendant',
-    icon: '🌙'
-  },
-  {
-    id: 8,
-    name: '鼠尾草香薰',
-    description: '净化空间、去除负能量',
-    price: '88',
-    sold: 560,
-    category: 'incense',
-    icon: '🌿'
-  }
-]
+// 分类列表（包含动态加载的分类）
+const categoryList = computed(() => {
+  const baseCategories = [
+    { id: 'all', name: '全部', icon: '🏪' }
+  ]
 
-const filteredProducts = computed(() => {
-  if (selectedCategory.value === 'all') {
-    return products
-  }
-  return products.filter(p => p.category === selectedCategory.value)
+  // 添加从后端获取的分类
+  const dynamicCategories = categories.value.map(cat => ({
+    id: cat,
+    name: cat,
+    icon: categoryIcons[cat] || '📦'
+  }))
+
+  return [...baseCategories, ...dynamicCategories]
 })
 
+// 当前商品列表
+const productList = computed(() => {
+  return products.value
+})
+
+// 选择分类
 function selectCategory(id: string) {
   selectedCategory.value = id
+  skip.value = 0
+  products.value = []
+  hasMore.value = true
+  loadProducts()
 }
 
-function goToDetail(id: number) {
-  uni.showToast({ title: '商品详情开发中', icon: 'none' })
+// 加载商品
+async function loadProducts() {
+  if (loading.value) return
+  loading.value = true
+
+  try {
+    const category = selectedCategory.value === 'all' ? undefined : selectedCategory.value
+    const res: any = await api.products.getList(skip.value, take, category)
+
+    if (skip.value === 0) {
+      products.value = res.products
+    } else {
+      products.value = [...products.value, ...res.products]
+    }
+
+    // 判断是否还有更多
+    hasMore.value = res.products.length === take
+
+    // 如果是第一次加载且没有分类，加载分类列表
+    if (categories.value.length === 0) {
+      loadCategories()
+    }
+  } catch (error: any) {
+    uni.showToast({ title: error.message || '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
 }
+
+// 加载更多
+function loadMore() {
+  if (!hasMore.value || loading.value) return
+  skip.value += take
+  loadProducts()
+}
+
+// 加载分类
+async function loadCategories() {
+  try {
+    const res: any = await api.products.getCategories()
+    categories.value = res
+  } catch (error) {
+    console.error('加载分类失败:', error)
+  }
+}
+
+// 跳转到商品详情（打开1688链接）
+function goToDetail(product: any) {
+  if (product.productUrl) {
+    // 复制链接到剪贴板
+    uni.setClipboardData({
+      data: product.productUrl,
+      success: () => {
+        uni.showModal({
+          title: '提示',
+          content: '商品链接已复制，将在浏览器中打开',
+          showCancel: false,
+          success: () => {
+            // 在H5环境可以直接跳转
+            // #ifdef H5
+            window.open(product.productUrl, '_blank')
+            // #endif
+          }
+        })
+      }
+    })
+  } else {
+    uni.showToast({ title: '商品链接不可用', icon: 'none' })
+  }
+}
+
+onMounted(() => {
+  loadProducts()
+})
+
+onShow(() => {
+  // 每次显示页面时刷新
+  if (skip.value === 0) {
+    loadProducts()
+  }
+})
 </script>
 
 <style lang="scss" scoped>
@@ -175,12 +229,15 @@ function goToDetail(id: number) {
 }
 
 .categories {
-  display: flex;
-  padding: 30rpx 20rpx;
   background: white;
-  overflow-x: auto;
+  padding: 20rpx 0;
   white-space: nowrap;
-  gap: 20rpx;
+
+  .categories-inner {
+    display: inline-flex;
+    padding: 0 20rpx;
+    gap: 20rpx;
+  }
 
   .category-item {
     display: flex;
@@ -213,6 +270,18 @@ function goToDetail(id: number) {
   }
 }
 
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 120rpx 0;
+
+  .loading-text {
+    font-size: 28rpx;
+    color: #999;
+  }
+}
+
 .products {
   padding: 30rpx 20rpx;
   display: grid;
@@ -232,6 +301,12 @@ function goToDetail(id: number) {
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
+
+      .product-img {
+        width: 100%;
+        height: 100%;
+      }
 
       .product-placeholder {
         font-size: 100rpx;
@@ -243,16 +318,20 @@ function goToDetail(id: number) {
 
       .product-name {
         display: block;
-        font-size: 28rpx;
+        font-size: 26rpx;
         font-weight: bold;
         color: #333;
         margin-bottom: 8rpx;
-        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.4;
+        height: 72rpx;
       }
 
-      .product-desc {
+      .product-shop {
         display: block;
         font-size: 22rpx;
         color: #999;
@@ -273,11 +352,44 @@ function goToDetail(id: number) {
           color: #ff6b6b;
         }
 
-        .product-sold {
+        .product-category {
           font-size: 20rpx;
-          color: #999;
+          color: #667eea;
+          background: rgba(102, 126, 234, 0.1);
+          padding: 4rpx 12rpx;
+          border-radius: 12rpx;
         }
       }
+    }
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120rpx 0;
+
+    .empty-icon {
+      font-size: 120rpx;
+      margin-bottom: 30rpx;
+    }
+
+    .empty-text {
+      font-size: 28rpx;
+      color: #999;
+    }
+  }
+
+  .load-more {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 30rpx;
+
+    .load-more-text {
+      font-size: 26rpx;
+      color: #667eea;
     }
   }
 }

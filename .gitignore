@@ -1,3 +1,4 @@
 .env
 backend/.env
 *.log
+extra_info/*

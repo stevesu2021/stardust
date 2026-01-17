@@ -233,5 +233,14 @@ export const api = {
   famousPeople: {
     getAllGrouped: () => request({ url: '/famous-people/grouped/all', method: 'GET' }),
     getByZodiac: (zodiacSign: string) => request({ url: `/famous-people/${zodiacSign}`, method: 'GET' })
+  },
+  products: {
+    getList: (skip = 0, take = 20, category?: string) => {
+      const params = new URLSearchParams({ skip: String(skip), take: String(take) });
+      if (category) params.append('category', category);
+      return request({ url: `/products?${params.toString()}`, method: 'GET' });
+    },
+    getById: (id: string) => request({ url: `/products/${id}`, method: 'GET' }),
+    getCategories: () => request({ url: '/products/categories/list', method: 'GET' })
   }
 }
