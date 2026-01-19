@@ -106,7 +106,7 @@ export class AstrologyServiceModule {
   }
 
   /**
-   * 生成AI解读（带缓存：如果数据库已有完整解读则直接返回）
+   * 生成AI解读（带每日次数限制：每天最多5次）
    */
   async generateInterpretation(userId: string) {
     console.log('[AstrologyService] generateInterpretation start for userId:', userId);
@@ -139,28 +139,32 @@ export class AstrologyServiceModule {
       throw new BadRequestException('无法获取星盘数据');
     }
 
-    // 检查是否已有完整的AI解读结果（缓存）
-    const hasCachedInterpretation =
-      reading.zodiacInterpretation &&
-      reading.zodiacInterpretation.trim() !== '' &&
-      reading.baziInterpretation &&
-      reading.baziInterpretation.trim() !== '' &&
-      reading.klineInterpretation &&
-      reading.klineInterpretation.trim() !== '';
+    // 检查每日次数限制
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const DAILY_LIMIT = 5;
 
-    if (hasCachedInterpretation) {
-      console.log('[AstrologyService] Found cached interpretation, returning directly');
-      return {
-        ...reading,
-        fiveElements: JSON.parse(reading.fiveElements || '{}'),
-        zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
-        baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
-        klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
-        _cached: true, // 标记为缓存数据
-      };
+    if (reading.lastInterpretDate !== today) {
+      // 新的一天，重置计数
+      console.log('[AstrologyService] New day, resetting count');
+      reading = await this.prisma.astrologyReading.update({
+        where: { userId },
+        data: {
+          dailyInterpretCount: 0,
+          lastInterpretDate: today,
+        },
+      });
     }
 
-    console.log('[AstrologyService] No cached interpretation, starting AI generation...');
+    // 检查是否超过每日限制
+    if (reading.dailyInterpretCount >= DAILY_LIMIT) {
+      console.log('[AstrologyService] Daily limit reached');
+      throw new BadRequestException(`今日AI解读次数已用完（每日限制${DAILY_LIMIT}次），请明天再试`);
+    }
+
+    console.log('[AstrologyService] Daily interpretation count:', reading.dailyInterpretCount, '/', DAILY_LIMIT);
+
+    // 每次都重新调用AI生成解读（不使用缓存）
+    console.log('[AstrologyService] Starting AI generation...');
 
     // 获取出生省份，默认为"山西"（历史用户）
     const birthProvince = user.birthProvince || '山西';
@@ -208,7 +212,7 @@ export class AstrologyServiceModule {
     );
     console.log('[AstrologyService] Kline interpretation completed');
 
-    // 更新解读结果
+    // 更新解读结果和每日次数
     console.log('[AstrologyService] Updating database...');
     const updatedReading = await this.prisma.astrologyReading.update({
       where: { userId },
@@ -216,6 +220,8 @@ export class AstrologyServiceModule {
         zodiacInterpretation,
         baziInterpretation,
         klineInterpretation,
+        dailyInterpretCount: reading.dailyInterpretCount + 1,
+        lastInterpretDate: today,
       },
     });
     console.log('[AstrologyService] All completed successfully');
@@ -248,6 +254,33 @@ export class AstrologyServiceModule {
       zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
       baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
       klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
+    };
+  }
+
+  /**
+   * 获取用户今日剩余AI解读次数
+   */
+  async getRemainingAttempts(userId: string) {
+    const DAILY_LIMIT = 5;
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    const reading = await this.prisma.astrologyReading.findUnique({
+      where: { userId },
+    });
+
+    if (!reading || reading.lastInterpretDate !== today) {
+      // 没有记录或是新的一天，返回全部次数
+      return {
+        remaining: DAILY_LIMIT,
+        total: DAILY_LIMIT,
+        used: 0,
+      };
+    }
+
+    return {
+      remaining: Math.max(0, DAILY_LIMIT - reading.dailyInterpretCount),
+      total: DAILY_LIMIT,
+      used: reading.dailyInterpretCount,
     };
   }
 

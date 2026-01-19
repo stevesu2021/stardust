@@ -66,6 +66,8 @@ onMounted(() => {
 
   if (otherUserId.value) {
     loadMessages()
+    // 标记所有来自对方的消息为已读
+    markAllAsRead()
   }
 })
 
@@ -79,6 +81,14 @@ async function loadMessages() {
     })
   } catch (error: any) {
     uni.showToast({ title: error.message || '加载失败', icon: 'none' })
+  }
+}
+
+async function markAllAsRead() {
+  try {
+    await api.dating.markAllAsRead(otherUserId.value)
+  } catch (error) {
+    console.error('标记已读失败:', error)
   }
 }
 

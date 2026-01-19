@@ -610,6 +610,15 @@ let AuthService = class AuthService {
         const { password, ...sanitized } = user;
         return sanitized;
     }
+    async getUserById(id) {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+        });
+        if (!user) {
+            throw new Error('用户不存在');
+        }
+        return user;
+    }
 };
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
@@ -718,9 +727,10 @@ let AuthController = class AuthController {
     }
     async getProfile(req) {
         const userId = req.user.sub;
+        const user = await this.authService.getUserById(userId);
         return {
             success: true,
-            userId,
+            user: this.authService.sanitizeUser(user),
             message: '认证成功'
         };
     }
@@ -1134,24 +1144,24 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             console.error('[AstrologyService] Still no reading after calculate');
             throw new common_1.BadRequestException('无法获取星盘数据');
         }
-        const hasCachedInterpretation = reading.zodiacInterpretation &&
-            reading.zodiacInterpretation.trim() !== '' &&
-            reading.baziInterpretation &&
-            reading.baziInterpretation.trim() !== '' &&
-            reading.klineInterpretation &&
-            reading.klineInterpretation.trim() !== '';
-        if (hasCachedInterpretation) {
-            console.log('[AstrologyService] Found cached interpretation, returning directly');
-            return {
-                ...reading,
-                fiveElements: JSON.parse(reading.fiveElements || '{}'),
-                zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
-                baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
-                klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
-                _cached: true,
-            };
+        const today = new Date().toISOString().split('T')[0];
+        const DAILY_LIMIT = 5;
+        if (reading.lastInterpretDate !== today) {
+            console.log('[AstrologyService] New day, resetting count');
+            reading = await this.prisma.astrologyReading.update({
+                where: { userId },
+                data: {
+                    dailyInterpretCount: 0,
+                    lastInterpretDate: today,
+                },
+            });
         }
-        console.log('[AstrologyService] No cached interpretation, starting AI generation...');
+        if (reading.dailyInterpretCount >= DAILY_LIMIT) {
+            console.log('[AstrologyService] Daily limit reached');
+            throw new common_1.BadRequestException(`今日AI解读次数已用完（每日限制${DAILY_LIMIT}次），请明天再试`);
+        }
+        console.log('[AstrologyService] Daily interpretation count:', reading.dailyInterpretCount, '/', DAILY_LIMIT);
+        console.log('[AstrologyService] Starting AI generation...');
         const birthProvince = user.birthProvince || '山西';
         const currentProvince = user.currentProvince || '北京';
         console.log('[AstrologyService] Starting zodiac interpretation...');
@@ -1170,6 +1180,8 @@ let AstrologyServiceModule = class AstrologyServiceModule {
                 zodiacInterpretation,
                 baziInterpretation,
                 klineInterpretation,
+                dailyInterpretCount: reading.dailyInterpretCount + 1,
+                lastInterpretDate: today,
             },
         });
         console.log('[AstrologyService] All completed successfully');
@@ -1194,6 +1206,25 @@ let AstrologyServiceModule = class AstrologyServiceModule {
             zodiacInterpretation: this.safeParseJSON(reading.zodiacInterpretation),
             baziInterpretation: this.safeParseJSON(reading.baziInterpretation),
             klineInterpretation: this.safeParseJSON(reading.klineInterpretation),
+        };
+    }
+    async getRemainingAttempts(userId) {
+        const DAILY_LIMIT = 5;
+        const today = new Date().toISOString().split('T')[0];
+        const reading = await this.prisma.astrologyReading.findUnique({
+            where: { userId },
+        });
+        if (!reading || reading.lastInterpretDate !== today) {
+            return {
+                remaining: DAILY_LIMIT,
+                total: DAILY_LIMIT,
+                used: 0,
+            };
+        }
+        return {
+            remaining: Math.max(0, DAILY_LIMIT - reading.dailyInterpretCount),
+            total: DAILY_LIMIT,
+            used: reading.dailyInterpretCount,
         };
     }
     safeParseJSON(jsonString) {
@@ -1760,6 +1791,10 @@ let AstrologyController = class AstrologyController {
         const userId = req.user.sub;
         return this.astrologyService.getReading(userId);
     }
+    async getRemainingAttempts(req) {
+        const userId = req.user.sub;
+        return this.astrologyService.getRemainingAttempts(userId);
+    }
 };
 exports.AstrologyController = AstrologyController;
 __decorate([
@@ -1786,6 +1821,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AstrologyController.prototype, "getReading", null);
+__decorate([
+    (0, common_1.Get)('interpret/remaining'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AstrologyController.prototype, "getRemainingAttempts", null);
 exports.AstrologyController = AstrologyController = __decorate([
     (0, common_1.Controller)('astrology'),
     __metadata("design:paramtypes", [typeof (_a = typeof astrology_service_1.AstrologyServiceModule !== "undefined" && astrology_service_1.AstrologyServiceModule) === "function" ? _a : Object])
@@ -3496,6 +3539,159 @@ let DatingService = class DatingService {
             data: { isRead: true },
         });
     }
+    async getUnreadCounts(userId) {
+        const unreadMessages = await this.prisma.message.findMany({
+            where: {
+                receiverId: userId,
+                isRead: false,
+            },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        nickname: true,
+                        avatar: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+        const counts = {};
+        unreadMessages.forEach((msg) => {
+            const senderId = msg.senderId;
+            if (!counts[senderId]) {
+                counts[senderId] = {
+                    count: 0,
+                    sender: msg.sender,
+                    lastMessage: msg,
+                };
+            }
+            counts[senderId].count++;
+            if (msg.createdAt > counts[senderId].lastMessage.createdAt) {
+                counts[senderId].lastMessage = msg;
+            }
+        });
+        return Object.entries(counts).map(([senderId, data]) => ({
+            senderId,
+            count: data.count,
+            sender: data.sender,
+            lastMessage: data.lastMessage,
+        }));
+    }
+    async markAllAsRead(userId, otherUserId) {
+        return this.prisma.message.updateMany({
+            where: {
+                receiverId: userId,
+                senderId: otherUserId,
+                isRead: false,
+            },
+            data: {
+                isRead: true,
+            },
+        });
+    }
+    async getTotalUnreadCount(userId) {
+        const count = await this.prisma.message.count({
+            where: {
+                receiverId: userId,
+                isRead: false,
+            },
+        });
+        return { total: count };
+    }
+    async getChatContacts(userId) {
+        const messages = await this.prisma.message.findMany({
+            where: {
+                OR: [
+                    { senderId: userId },
+                    { receiverId: userId },
+                ],
+            },
+            select: {
+                senderId: true,
+                receiverId: true,
+            },
+        });
+        const contactIds = new Set();
+        messages.forEach((msg) => {
+            if (msg.senderId !== userId)
+                contactIds.add(msg.senderId);
+            if (msg.receiverId !== userId)
+                contactIds.add(msg.receiverId);
+        });
+        const contacts = await this.prisma.user.findMany({
+            where: {
+                id: { in: Array.from(contactIds) },
+            },
+            select: {
+                id: true,
+                nickname: true,
+                avatar: true,
+                zodiacSign: true,
+                gender: true,
+                bio: true,
+            },
+        });
+        const contactsWithLastMessage = await Promise.all(contacts.map(async (contact) => {
+            const lastMessage = await this.prisma.message.findFirst({
+                where: {
+                    OR: [
+                        { senderId: userId, receiverId: contact.id },
+                        { senderId: contact.id, receiverId: userId },
+                    ],
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+            });
+            const unreadCount = await this.prisma.message.count({
+                where: {
+                    senderId: contact.id,
+                    receiverId: userId,
+                    isRead: false,
+                },
+            });
+            return {
+                user: contact,
+                lastMessage,
+                unreadCount,
+            };
+        }));
+        contactsWithLastMessage.sort((a, b) => {
+            const aTime = a.lastMessage?.createdAt?.getTime() || 0;
+            const bTime = b.lastMessage?.createdAt?.getTime() || 0;
+            return bTime - aTime;
+        });
+        return contactsWithLastMessage;
+    }
+    async searchUsers(userId, keyword) {
+        if (!keyword || keyword.trim().length === 0) {
+            return [];
+        }
+        const trimmedKeyword = keyword.trim();
+        const users = await this.prisma.user.findMany({
+            where: {
+                id: { not: userId },
+                OR: [
+                    { nickname: { contains: trimmedKeyword } },
+                    { phone: { contains: trimmedKeyword } },
+                ],
+            },
+            select: {
+                id: true,
+                nickname: true,
+                avatar: true,
+                zodiacSign: true,
+                gender: true,
+                bio: true,
+                phone: true,
+            },
+            take: 20,
+        });
+        return users;
+    }
 };
 exports.DatingService = DatingService;
 exports.DatingService = DatingService = __decorate([
@@ -3521,7 +3717,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-var _a, _b, _c;
+var _a, _b, _c, _d, _e, _f, _g, _h;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DatingController = void 0;
 const common_1 = __webpack_require__(2);
@@ -3548,6 +3744,27 @@ let DatingController = class DatingController {
     }
     async markAsRead(messageId) {
         return this.datingService.markAsRead(messageId);
+    }
+    async getUnreadCounts(req) {
+        const userId = req.user.sub;
+        return this.datingService.getUnreadCounts(userId);
+    }
+    async getTotalUnreadCount(req) {
+        const userId = req.user.sub;
+        return this.datingService.getTotalUnreadCount(userId);
+    }
+    async markAllAsRead(otherUserId, req) {
+        const userId = req.user.sub;
+        return this.datingService.markAllAsRead(userId, otherUserId);
+    }
+    async getChatContacts(req) {
+        const userId = req.user.sub;
+        return this.datingService.getChatContacts(userId);
+    }
+    async searchUsers(req) {
+        const userId = req.user.sub;
+        const keyword = req.query.keyword || '';
+        return this.datingService.searchUsers(userId, keyword);
     }
 };
 exports.DatingController = DatingController;
@@ -3594,6 +3811,47 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], DatingController.prototype, "markAsRead", null);
+__decorate([
+    (0, common_1.Get)('unread'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_d = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _d : Object]),
+    __metadata("design:returntype", Promise)
+], DatingController.prototype, "getUnreadCounts", null);
+__decorate([
+    (0, common_1.Get)('unread/total'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_e = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _e : Object]),
+    __metadata("design:returntype", Promise)
+], DatingController.prototype, "getTotalUnreadCount", null);
+__decorate([
+    (0, common_1.Post)('read-all/:otherUserId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('otherUserId')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, typeof (_f = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _f : Object]),
+    __metadata("design:returntype", Promise)
+], DatingController.prototype, "markAllAsRead", null);
+__decorate([
+    (0, common_1.Get)('contacts'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_g = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _g : Object]),
+    __metadata("design:returntype", Promise)
+], DatingController.prototype, "getChatContacts", null);
+__decorate([
+    (0, common_1.Get)('search'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [typeof (_h = typeof express_1.Request !== "undefined" && express_1.Request) === "function" ? _h : Object]),
+    __metadata("design:returntype", Promise)
+], DatingController.prototype, "searchUsers", null);
 exports.DatingController = DatingController = __decorate([
     (0, common_1.Controller)('dating'),
     __metadata("design:paramtypes", [typeof (_a = typeof dating_service_1.DatingService !== "undefined" && dating_service_1.DatingService) === "function" ? _a : Object])

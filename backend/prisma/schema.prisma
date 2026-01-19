@@ -198,6 +198,10 @@ model AstrologyReading {
   baziInterpretation     String   @db.LongText  // 八字解读
   klineInterpretation    String   @db.LongText  // 人生K线解读
 
+  // 每日AI解读次数限制
+  dailyInterpretCount    Int      @default(0)  // 当日已使用次数
+  lastInterpretDate      String?  // 上次解读日期 (YYYY-MM-DD)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

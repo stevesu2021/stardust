@@ -7,8 +7,8 @@
         <text v-else>计算中...</text>
       </button>
       <view class="btn-interpret-wrapper">
-        <button class="btn-interpret" @click="handleGenerateInterpretation" :disabled="!hasBasicData || interpreting">
-          <text v-if="!interpreting">🔮 生成AI解读</text>
+        <button class="btn-interpret" @click="handleGenerateInterpretation" :disabled="!hasBasicData || interpreting || remainingAttempts <= 0">
+          <text v-if="!interpreting">{{ remainingAttempts > 0 ? `🔮 生成AI解读 (${remainingAttempts}/${totalAttempts})` : `🔮 今日次数已用完` }}</text>
           <text v-else>解读中... {{ formatProgress() }}%</text>
         </button>
         <view v-if="interpreting" class="progress-bar">
@@ -394,6 +394,11 @@ const calculating = ref(false)
 const interpreting = ref(false)
 const interpretProgress = ref(0)
 
+// 每日AI解读次数限制
+const remainingAttempts = ref(5)
+const totalAttempts = ref(5)
+const usedAttempts = ref(0)
+
 // 数据
 const basicData = ref<any>(null)
 const readingData = ref<any>(null)
@@ -553,6 +558,12 @@ async function handleGenerateInterpretation() {
     return
   }
 
+  // 检查剩余次数
+  if (remainingAttempts.value <= 0) {
+    uni.showToast({ title: '今日AI解读次数已用完，请明天再试', icon: 'none' })
+    return
+  }
+
   interpreting.value = true
   interpretProgress.value = 0
 
@@ -573,15 +584,35 @@ async function handleGenerateInterpretation() {
     readingData.value = res
     interpretProgress.value = 100
     uni.showToast({ title: '解读生成成功', icon: 'success' })
+    // 更新剩余次数
+    await loadRemainingAttempts()
   } catch (error: any) {
     console.error('[Frontend] API error:', error)
     uni.showToast({ title: error.message || '生成失败，请稍后重试', icon: 'none' })
+    // 如果是次数限制错误，更新剩余次数
+    if (error.message?.includes('次数已用完')) {
+      await loadRemainingAttempts()
+    }
   } finally {
     clearInterval(progressInterval)
     setTimeout(() => {
       interpreting.value = false
       interpretProgress.value = 0
     }, 500)
+  }
+}
+
+// 加载剩余次数
+async function loadRemainingAttempts() {
+  if (!userStore.userInfo?.id) return
+
+  try {
+    const res: any = await api.astrology.getRemainingAttempts()
+    remainingAttempts.value = res.remaining
+    totalAttempts.value = res.total
+    usedAttempts.value = res.used
+  } catch (error) {
+    console.error('加载剩余次数失败:', error)
   }
 }
 
@@ -607,6 +638,8 @@ async function loadExistingReading() {
 // 页面加载时先加载已有数据，再计算基础数据（如果需要）
 async function init() {
   if (!userStore.userInfo?.id) return
+  // 加载剩余次数
+  await loadRemainingAttempts()
   // 先加载已有的解读数据（静默加载，不显示弹窗）
   await loadExistingReading()
   // 如果没有基础数据，静默计算（不显示弹窗）

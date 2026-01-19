@@ -266,8 +266,20 @@ export class AuthService {
     return this.jwtService.sign({ sub: userId });
   }
 
-  private sanitizeUser(user: any) {
+  sanitizeUser(user: any) {
     const { password, ...sanitized } = user;
     return sanitized;
+  }
+
+  async getUserById(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    return user;
   }
 }

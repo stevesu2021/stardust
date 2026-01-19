@@ -44,4 +44,55 @@ export class DatingController {
   async markAsRead(@Param('messageId') messageId: string) {
     return this.datingService.markAsRead(messageId);
   }
+
+  /**
+   * 获取未读消息统计（按发送者分组）
+   */
+  @Get('unread')
+  @UseGuards(JwtAuthGuard)
+  async getUnreadCounts(@Req() req: Request) {
+    const userId = (req as any).user.sub;
+    return this.datingService.getUnreadCounts(userId);
+  }
+
+  /**
+   * 获取总未读消息数
+   */
+  @Get('unread/total')
+  @UseGuards(JwtAuthGuard)
+  async getTotalUnreadCount(@Req() req: Request) {
+    const userId = (req as any).user.sub;
+    return this.datingService.getTotalUnreadCount(userId);
+  }
+
+  /**
+   * 标记与某个用户的所有消息为已读
+   */
+  @Post('read-all/:otherUserId')
+  @UseGuards(JwtAuthGuard)
+  async markAllAsRead(@Param('otherUserId') otherUserId: string, @Req() req: Request) {
+    const userId = (req as any).user.sub;
+    return this.datingService.markAllAsRead(userId, otherUserId);
+  }
+
+  /**
+   * 获取聊天联系人列表
+   */
+  @Get('contacts')
+  @UseGuards(JwtAuthGuard)
+  async getChatContacts(@Req() req: Request) {
+    const userId = (req as any).user.sub;
+    return this.datingService.getChatContacts(userId);
+  }
+
+  /**
+   * 搜索用户（通过手机号或昵称）
+   */
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  async searchUsers(@Req() req: Request) {
+    const userId = (req as any).user.sub;
+    const keyword = (req as any).query.keyword || '';
+    return this.datingService.searchUsers(userId, keyword);
+  }
 }

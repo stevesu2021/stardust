@@ -114,7 +114,8 @@ export const api = {
   astrology: {
     calculate: (userId: string) => request({ url: `/astrology/calculate/${userId}`, method: 'POST' }),
     generateInterpretation: () => request({ url: '/astrology/interpret', method: 'POST' }),
-    getReading: () => request({ url: '/astrology/reading', method: 'GET' })
+    getReading: () => request({ url: '/astrology/reading', method: 'GET' }),
+    getRemainingAttempts: () => request({ url: '/astrology/interpret/remaining', method: 'GET' })
   },
   prayer: {
     create: (data: any) => request({ url: '/prayer', method: 'POST', data }),
@@ -158,7 +159,14 @@ export const api = {
     matches: (userId: string, limit = 10) => request({ url: `/dating/matches/${userId}`, method: 'POST', data: { limit } }),
     sendMessage: (data: any) => request({ url: '/dating/message', method: 'POST', data }),
     messages: (userId: string, otherUserId: string) => request({ url: `/dating/messages/${userId}/${otherUserId}`, method: 'GET' }),
-    markRead: (messageId: string) => request({ url: `/dating/message/read/${messageId}`, method: 'POST' })
+    markRead: (messageId: string) => request({ url: `/dating/message/read/${messageId}`, method: 'POST' }),
+    getUnreadCounts: () => request({ url: '/dating/unread', method: 'GET' }),
+    getTotalUnread: () => request({ url: '/dating/unread/total', method: 'GET' }),
+    markAllAsRead: (otherUserId: string) => request({ url: `/dating/read-all/${otherUserId}`, method: 'POST' }),
+    // 获取聊天联系人列表
+    getContacts: () => request({ url: '/dating/contacts', method: 'GET' }),
+    // 搜索用户
+    searchUsers: (keyword: string) => request({ url: `/dating/search?keyword=${encodeURIComponent(keyword)}`, method: 'GET' })
   },
   palm: {
     getHistory: () => request({ url: '/palm/history', method: 'GET' }),

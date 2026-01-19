@@ -39,6 +39,7 @@
           <view class="avatar-edit-icon">📷</view>
         </view>
         <text class="nickname">{{ userInfo?.nickname || '未设置' }}</text>
+        <text class="phone-number" v-if="userInfo?.phone">{{ userInfo.phone }}</text>
         <text class="user-id" v-if="userInfo?.wechatOpenId">💬 已绑定微信</text>
       </view>
 
@@ -535,6 +536,14 @@ function deleteAvatar() {
       font-weight: bold;
       color: #333;
       margin-bottom: 8rpx;
+      display: block;
+    }
+
+    .phone-number {
+      font-size: 24rpx;
+      color: #999;
+      margin-bottom: 8rpx;
+      display: block;
     }
 
     .user-id {

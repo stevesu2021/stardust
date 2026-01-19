@@ -111,9 +111,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@Req() req: any) {
     const userId = req.user.sub;
+    const user = await this.authService.getUserById(userId);
     return {
       success: true,
-      userId,
+      user: this.authService.sanitizeUser(user),
       message: '认证成功'
     };
   }

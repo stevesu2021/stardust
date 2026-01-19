@@ -49,4 +49,14 @@ export class AstrologyController {
     const userId = req.user.sub;
     return this.astrologyService.getReading(userId);
   }
+
+  /**
+   * 获取今日剩余AI解读次数
+   */
+  @Get('interpret/remaining')
+  @UseGuards(JwtAuthGuard)
+  async getRemainingAttempts(@Request() req) {
+    const userId = req.user.sub;
+    return this.astrologyService.getRemainingAttempts(userId);
+  }
 }
