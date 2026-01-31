@@ -122,6 +122,12 @@
         <text class="feature-title">MBTI测试</text>
         <text class="feature-desc">人格类型分析</text>
       </view>
+
+      <view class="feature-item" @click="goToPage('/pages/love-cp/index')">
+        <text class="feature-icon">💕</text>
+        <text class="feature-title">恋爱CP</text>
+        <text class="feature-desc">十二星座配对</text>
+      </view>
     </view>
   </view>
 </template>

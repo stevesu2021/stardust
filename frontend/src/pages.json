@@ -146,6 +146,13 @@
       "style": {
         "navigationBarTitleText": "商城"
       }
+    },
+    {
+      "path": "pages/love-cp/index",
+      "style": {
+        "navigationBarTitleText": "恋爱CP",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "globalStyle": {
