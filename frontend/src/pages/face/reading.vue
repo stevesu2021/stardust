@@ -104,6 +104,9 @@
           <button class="btn-reanalyze" @click="resetAnalysis">
             <text>重新拍摄分析</text>
           </button>
+          <button class="btn-share" @click="shareResult">
+            <text>📤 分享结果</text>
+          </button>
         </view>
       </view>
     </view>
@@ -173,6 +176,9 @@
         </view>
         <view class="detail-footer">
           <text class="detail-time">{{ formatDate(selectedItem?.createdAt) }}</text>
+          <button class="btn-share-detail" @click="shareHistoryItem">
+            <text>📤 分享</text>
+          </button>
         </view>
       </view>
     </view>
@@ -183,6 +189,7 @@
 import { ref, computed } from 'vue'
 import { useUserStore } from '@/store/user'
 import { api } from '@/api'
+import { share } from '@/utils/wechatShare'
 
 const userStore = useUserStore()
 const activeTab = ref('analyze')
@@ -333,6 +340,34 @@ function formatDate(dateStr: string) {
   const hour = String(date.getHours()).padStart(2, '0')
   const minute = String(date.getMinutes()).padStart(2, '0')
   return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
+// 分享当前结果
+async function shareResult() {
+  if (!result.value) {
+    uni.showToast({ title: '暂无结果可分享', icon: 'none' })
+    return
+  }
+
+  await share({
+    title: '我的面相分析结果',
+    desc: result.value.overall?.substring(0, 50) || '查看我的AI面相分析',
+    imageUrl: imageUri.value || ''
+  })
+}
+
+// 分享历史记录项
+async function shareHistoryItem() {
+  if (!selectedItem.value) {
+    uni.showToast({ title: '暂无数据可分享', icon: 'none' })
+    return
+  }
+
+  await share({
+    title: '面相分析结果 - ' + formatDate(selectedItem.value.createdAt),
+    desc: selectedItem.value.overall?.substring(0, 50) || '查看我的AI面相分析',
+    imageUrl: selectedItem.value.imageUrl || ''
+  })
 }
 </script>
 
@@ -560,13 +595,26 @@ function formatDate(dateStr: string) {
 
     .action-buttons {
       margin-top: 30rpx;
+      display: flex;
+      gap: 20rpx;
 
       .btn-reanalyze {
-        width: 100%;
+        flex: 1;
         height: 88rpx;
         background: white;
         color: #f093fb;
         border: 2rpx solid #f093fb;
+        border-radius: 44rpx;
+        font-size: 28rpx;
+        font-weight: bold;
+      }
+
+      .btn-share {
+        flex: 1;
+        height: 88rpx;
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+        border: none;
         border-radius: 44rpx;
         font-size: 28rpx;
         font-weight: bold;
@@ -743,11 +791,22 @@ function formatDate(dateStr: string) {
     .detail-footer {
       padding: 20rpx 30rpx;
       border-top: 1rpx solid #f0f0f0;
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
 
       .detail-time {
         font-size: 24rpx;
         color: #999;
+      }
+
+      .btn-share-detail {
+        padding: 12rpx 24rpx;
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+        border: none;
+        border-radius: 20rpx;
+        font-size: 24rpx;
       }
     }
   }

@@ -15,6 +15,9 @@
           <view class="progress-fill" :style="{ width: `${interpretProgress}%` }"></view>
         </view>
       </view>
+      <button class="btn-share" @click="handleShare" :disabled="!hasBasicData">
+        <text>📤 分享</text>
+      </button>
     </view>
 
     <!-- Tab 切换 -->
@@ -385,6 +388,7 @@
 import { ref, computed } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import { share, copyShareLink } from '@/utils/wechatShare'
 
 const userStore = useUserStore()
 
@@ -648,6 +652,23 @@ async function init() {
   }
 }
 
+// 分享功能
+async function handleShare() {
+  if (!hasBasicData.value) {
+    uni.showToast({ title: '请先计算星盘', icon: 'none' })
+    return
+  }
+
+  const title = `我的${zodiacSign.value}星盘分析`
+  const desc = `农历${lunarDate.value}出生，幸运元素是${luckyElement.value}`
+
+  await share({
+    title,
+    desc,
+    imageUrl: '' // 可以设置分享图片
+  })
+}
+
 init()
 </script>
 
@@ -674,6 +695,17 @@ init()
     &.btn-calculate {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+    }
+
+    &.btn-share {
+      flex: 0 0 auto;
+      min-width: 140rpx;
+      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      color: white;
+
+      &[disabled] {
+        opacity: 0.5;
+      }
     }
   }
 

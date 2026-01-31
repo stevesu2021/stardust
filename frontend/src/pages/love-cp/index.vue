@@ -2,8 +2,15 @@
   <view class="love-cp-container">
     <!-- 头部背景 -->
     <view class="header-bg">
-      <text class="header-title">💕 十二星座恋爱CP</text>
-      <text class="header-subtitle">探索你的星座与最佳配对</text>
+      <view class="header-content">
+        <view class="header-text">
+          <text class="header-title">💕 十二星座恋爱CP</text>
+          <text class="header-subtitle">探索你的星座与最佳配对</text>
+        </view>
+        <button class="btn-share" @click="handleShare">
+          <text>📤 分享</text>
+        </button>
+      </view>
     </view>
 
     <!-- 星座选择Tabs -->
@@ -83,6 +90,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { share } from '@/utils/wechatShare'
 
 // 星座列表
 const zodiacSigns = [
@@ -393,6 +401,19 @@ function getCompatibilityClass(score: number): string {
   if (score >= 60) return 'average'
   return 'poor'
 }
+
+// 分享功能
+async function handleShare() {
+  const bestMatch = currentZodiacData.value.bestMatches[0]
+  const title = `${currentZodiacName.value}的最佳CP是${bestMatch?.zodiac || ''}`
+  const desc = bestMatch?.description || '查看星座恋爱配对'
+
+  await share({
+    title,
+    desc,
+    imageUrl: ''
+  })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -405,7 +426,6 @@ function getCompatibilityClass(score: number): string {
 .header-bg {
   background: linear-gradient(135deg, #FF6B9D 0%, #FF8E53 100%);
   padding: 40rpx 30rpx 50rpx;
-  text-align: center;
   position: relative;
   overflow: hidden;
 
@@ -431,22 +451,42 @@ function getCompatibilityClass(score: number): string {
     border-radius: 50%;
   }
 
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header-text {
+    flex: 1;
+  }
+
   .header-title {
     display: block;
     font-size: 44rpx;
     font-weight: bold;
     color: white;
     margin-bottom: 12rpx;
-    position: relative;
-    z-index: 1;
   }
 
   .header-subtitle {
     display: block;
     font-size: 26rpx;
     color: rgba(255, 255, 255, 0.9);
-    position: relative;
-    z-index: 1;
+  }
+
+  .btn-share {
+    padding: 16rpx 28rpx;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10rpx);
+    color: white;
+    border: 2rpx solid rgba(255, 255, 255, 0.4);
+    border-radius: 24rpx;
+    font-size: 26rpx;
+    font-weight: bold;
+    flex-shrink: 0;
   }
 }
 

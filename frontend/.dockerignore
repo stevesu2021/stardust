@@ -1,0 +1,39 @@
+# Dependencies
+node_modules
+npm-debug.log
+package-lock.json
+
+# Build output - DON'T exclude dist since we copy pre-built files
+# dist
+# unpackage
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+.hbuilderx
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+nginx.conf
+
+# Logs
+logs
+*.log
+
+# Uni-app specific
+.hbuilderx
+unpackage
