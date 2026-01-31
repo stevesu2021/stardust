@@ -103,6 +103,12 @@
       }
     },
     {
+      "path": "pages/face/reading",
+      "style": {
+        "navigationBarTitleText": "看面相"
+      }
+    },
+    {
       "path": "pages/user/profile",
       "style": {
         "navigationBarTitleText": "个人中心"

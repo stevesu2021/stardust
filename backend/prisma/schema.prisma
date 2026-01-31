@@ -46,6 +46,7 @@ model User {
   matches          Match[]       @relation("UserMatches")
   matchedUsers     Match[]       @relation("MatchedUsers")
   palmReadings     PalmReading[]
+  faceReadings     FaceReading[]
   astrologyReadings AstrologyReading[]
   mbtiResults      MbtiResult[]
   dailyFortunes    DailyFortune[]
@@ -172,6 +173,22 @@ model PalmReading {
   createdAt   DateTime @default(now())
 
   @@map("palm_readings")
+}
+
+// 面相解读记录表
+model FaceReading {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  imageUrl    String   @db.LongText // MinIO 中存储的图片 URL 或 base64 数据
+  forehead    String   @db.LongText // 额头
+  eyes        String   @db.LongText // 眼睛
+  nose        String   @db.LongText // 鼻子
+  mouth       String   @db.LongText // 嘴巴
+  overall     String   @db.LongText // 综合运势
+  createdAt   DateTime @default(now())
+
+  @@map("face_readings")
 }
 
 // 星盘解读记录表

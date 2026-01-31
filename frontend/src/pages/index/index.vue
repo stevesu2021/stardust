@@ -111,6 +111,12 @@
         <text class="feature-desc">AI手相分析</text>
       </view>
 
+      <view class="feature-item" @click="goToPage('/pages/face/reading')">
+        <text class="feature-icon">👤</text>
+        <text class="feature-title">看面相</text>
+        <text class="feature-desc">AI面相分析</text>
+      </view>
+
       <view class="feature-item" @click="goToPage('/pages/mbti/result')">
         <text class="feature-icon">🧠</text>
         <text class="feature-title">MBTI测试</text>

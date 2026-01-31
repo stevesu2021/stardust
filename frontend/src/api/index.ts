@@ -172,6 +172,10 @@ export const api = {
     getHistory: () => request({ url: '/palm/history', method: 'GET' }),
     delete: (id: string) => request({ url: `/palm/history/${id}`, method: 'DELETE' })
   },
+  face: {
+    getHistory: () => request({ url: '/face/history', method: 'GET' }),
+    delete: (id: string) => request({ url: `/face/history/${id}`, method: 'DELETE' })
+  },
   user: {
     get: (id: string) => request({ url: `/user/${id}`, method: 'GET' }),
     update: (id: string, data: any) => request({ url: `/user/${id}`, method: 'PUT', data }),
