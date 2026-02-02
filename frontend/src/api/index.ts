@@ -78,6 +78,11 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
             errorMessage = JSON.stringify(res.data)
           }
 
+          // 确保 errorMessage 是字符串类型
+          if (typeof errorMessage !== 'string') {
+            errorMessage = String(errorMessage)
+          }
+
           console.log('[API] Extracted error message:', errorMessage)
 
           const error = new Error(errorMessage) as any
