@@ -1,15 +1,15 @@
 # Backend Dockerfile for Stardust (NestJS)
-# Optimized for environments with local build
-FROM node:20-alpine
+# Using Debian-based image for better Prisma compatibility
+FROM node:20-slim
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init, openssl for Prisma, and build tools for native modules
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init openssl python3 make g++ && rm -rf /var/lib/apt/lists/*
 
 # Create app user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nestjs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -m nestjs
 
 # Copy package files
 COPY package*.json ./
