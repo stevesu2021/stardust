@@ -60,7 +60,7 @@
           </view>
           <view class="compatibility-list">
             <view
-              v-for="(item, index) in currentZodiacData.compatibility"
+              v-for="(item, index) in sortedCompatibility"
               :key="index"
               class="compatibility-item"
               :class="getCompatibilityClass(item.score)"
@@ -91,6 +91,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { share } from '@/utils/wechatShare'
+import { sortCompatibilityByScoreDesc } from '@/utils/love-cp.js'
 
 // 星座列表
 const zodiacSigns = [
@@ -375,6 +376,10 @@ const currentZodiacName = computed(() => {
 // 当前星座数据
 const currentZodiacData = computed(() => {
   return zodiacData[currentZodiac.value] || { bestMatches: [], compatibility: [] }
+})
+
+const sortedCompatibility = computed(() => {
+  return sortCompatibilityByScoreDesc(currentZodiacData.value.compatibility)
 })
 
 // 切换星座

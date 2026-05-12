@@ -15,9 +15,12 @@ RUN groupadd -g 1001 nodejs && \
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies (using local node_modules if available, or install from registry)
+# Install dependencies
 RUN npm config set registry https://registry.npmmirror.com && \
     npm install --omit=dev
+
+# Copy local node_modules (from local build)
+COPY node_modules ./node_modules/
 
 # Copy Prisma schema
 COPY prisma ./prisma/
@@ -33,13 +36,6 @@ USER nestjs
 
 # Expose the application port
 EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:3000/', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 0
-
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
 CMD ["node", "dist/main.js"]

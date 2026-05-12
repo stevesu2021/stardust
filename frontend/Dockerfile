@@ -2,9 +2,6 @@
 # Optimized for environments with local build
 FROM nginx:alpine
 
-# Install wget for health check
-RUN apk add --no-cache wget
-
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
@@ -21,10 +18,6 @@ RUN mkdir -p /var/cache/nginx/client_temp \
 
 # Expose port 80
 EXPOSE 80
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
