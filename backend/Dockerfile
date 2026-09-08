@@ -28,6 +28,9 @@ COPY prisma ./prisma/
 # Copy pre-built application (assumes "npm run build" was run locally)
 COPY dist ./dist
 
+# Copy static data files
+COPY mbti_data.txt ./mbti_data.txt
+
 # Change ownership
 RUN chown -R nestjs:nodejs /app
 
