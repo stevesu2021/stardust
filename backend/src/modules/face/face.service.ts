@@ -14,9 +14,13 @@ export class FaceService {
     private prisma: PrismaService,
     private minioService: MinioService,
   ) {
-    this.apiKey = this.configService.get<string>('DASHSCOPE_API_KEY');
-    this.baseUrl = this.configService.get<string>('DASHSCOPE_BASE_URL');
-    this.model = this.configService.get<string>('DASHSCOPE_MODEL');
+    // 优先使用方舟（火山豆包）多模态配置，DASHSCOPE 作为兜底
+    this.apiKey =
+      this.configService.get<string>('XIAOMIMIMO_API_KEY') || this.configService.get<string>('DASHSCOPE_API_KEY');
+    this.baseUrl =
+      this.configService.get<string>('XIAOMIMIMO_API_URL') || this.configService.get<string>('DASHSCOPE_BASE_URL');
+    this.model =
+      this.configService.get<string>('XIAOMIMIMO_MODEL') || this.configService.get<string>('DASHSCOPE_MODEL');
   }
 
   async analyzeFace(file: Express.Multer.File, userId: string) {

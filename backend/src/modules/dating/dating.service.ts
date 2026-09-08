@@ -45,7 +45,7 @@ export class DatingService {
       const matches = allUsers.map((potentialMatch) => {
         const score = this.calculateMatchScore(user, potentialMatch);
         return {
-          user: potentialMatch,
+          user: this.toPublicUser(potentialMatch),
           score,
         };
       });
@@ -61,7 +61,7 @@ export class DatingService {
     const matches = sampledUsers.map((potentialMatch) => {
       const score = this.calculateMatchScore(user, potentialMatch);
       return {
-        user: potentialMatch,
+        user: this.toPublicUser(potentialMatch),
         score,
       };
     });
@@ -69,6 +69,13 @@ export class DatingService {
     // 按分数排序并返回Top 3
     matches.sort((a, b) => b.score - a.score);
     return matches.slice(0, 3);
+  }
+
+  /** 匹配结果里只返回安全的公开字段（防止泄漏 password/phone/email 等敏感信息） */
+  private toPublicUser(u: any) {
+    if (!u) return u;
+    const { password, phone, email, wechatOpenId, wechatUnionId, ...safe } = u;
+    return safe;
   }
 
   /**
@@ -94,7 +101,7 @@ export class DatingService {
     const matches = users.map((potentialMatch) => {
       const score = this.calculateMatchScore(user, potentialMatch);
       return {
-        user: potentialMatch,
+        user: this.toPublicUser(potentialMatch),
         score,
       };
     });
@@ -418,7 +425,6 @@ export class DatingService {
         zodiacSign: true,
         gender: true,
         bio: true,
-        phone: true,
       },
       take: 20,
     });

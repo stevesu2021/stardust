@@ -8,11 +8,12 @@ export class ProductController {
   // 获取商品列表
   @Get()
   async getList(
-    @Query('skip') skip: number = 0,
-    @Query('take') take: number = 20,
+    @Query('skip') skip?: number,
+    @Query('take') take?: number,
     @Query('category') category?: string,
   ) {
-    return this.productService.getList(Number(skip), Number(take), category);
+    // NestJS 装饰器参数即使缺省也会显式传入 undefined，TS 参数默认值不生效，需手动兜底
+    return this.productService.getList(Number(skip ?? 0), Number(take ?? 20), category);
   }
 
   // 获取商品详情

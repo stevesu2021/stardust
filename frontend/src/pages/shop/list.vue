@@ -205,31 +205,38 @@ onShow(() => {
 <style lang="scss" scoped>
 .container {
   min-height: 100vh;
-  background: #f8f9fa;
+  background: $sd-bg;
 }
 
 .banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background:
+    radial-gradient(420rpx 260rpx at 85% -40%, rgba(232, 195, 106, 0.16), transparent 70%),
+    radial-gradient(500rpx 320rpx at -10% 130%, rgba(47, 66, 138, 0.45), transparent 72%),
+    $sd-bg-nav;
+  border-bottom: 1rpx solid $sd-stroke;
   padding: 60rpx 40rpx;
   text-align: center;
 
   .banner-title {
     display: block;
+    font-family: $sd-font-display;
     font-size: 48rpx;
     font-weight: bold;
-    color: white;
+    color: $sd-gold-bright;
+    letter-spacing: 4rpx;
     margin-bottom: 15rpx;
   }
 
   .banner-subtitle {
     display: block;
     font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.9);
+    color: $sd-text-2;
   }
 }
 
 .categories {
-  background: white;
+  background: $sd-bg-nav;
+  border-bottom: 1rpx solid $sd-stroke;
   padding: 20rpx 0;
   white-space: nowrap;
 
@@ -245,16 +252,18 @@ onShow(() => {
     align-items: center;
     padding: 20rpx 30rpx;
     border-radius: 40rpx;
-    background: #f5f5f5;
+    background: $sd-bg-elev;
+    border: 1rpx solid $sd-stroke;
     min-width: 120rpx;
     transition: all 0.3s;
 
     &.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, rgba(232, 195, 106, 0.22) 0%, rgba(232, 195, 106, 0.08) 100%);
+      border-color: rgba(232, 195, 106, 0.5);
 
       .category-icon,
       .category-name {
-        color: white;
+        color: $sd-gold-bright;
       }
     }
 
@@ -265,7 +274,7 @@ onShow(() => {
 
     .category-name {
       font-size: 24rpx;
-      color: #666;
+      color: $sd-text-2;
     }
   }
 }
@@ -278,7 +287,7 @@ onShow(() => {
 
   .loading-text {
     font-size: 28rpx;
-    color: #999;
+    color: $sd-text-3;
   }
 }
 
@@ -289,15 +298,15 @@ onShow(() => {
   gap: 20rpx;
 
   .product-item {
-    background: white;
-    border-radius: 16rpx;
+    background: $sd-bg-elev;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius;
     overflow: hidden;
-    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 
     .product-image {
       width: 100%;
       height: 280rpx;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background: linear-gradient(135deg, #1b2145 0%, #141936 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -310,6 +319,7 @@ onShow(() => {
 
       .product-placeholder {
         font-size: 100rpx;
+        opacity: 0.4;
       }
     }
 
@@ -320,7 +330,7 @@ onShow(() => {
         display: block;
         font-size: 26rpx;
         font-weight: bold;
-        color: #333;
+        color: $sd-text;
         margin-bottom: 8rpx;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -334,7 +344,7 @@ onShow(() => {
       .product-shop {
         display: block;
         font-size: 22rpx;
-        color: #999;
+        color: $sd-text-3;
         margin-bottom: 15rpx;
         white-space: nowrap;
         overflow: hidden;
@@ -349,13 +359,13 @@ onShow(() => {
         .product-price {
           font-size: 32rpx;
           font-weight: bold;
-          color: #ff6b6b;
+          color: $sd-gold-bright;
         }
 
         .product-category {
           font-size: 20rpx;
-          color: #667eea;
-          background: rgba(102, 126, 234, 0.1);
+          color: $sd-cinnabar;
+          background: rgba(237, 90, 107, 0.12);
           padding: 4rpx 12rpx;
           border-radius: 12rpx;
         }
@@ -374,11 +384,13 @@ onShow(() => {
     .empty-icon {
       font-size: 120rpx;
       margin-bottom: 30rpx;
+      opacity: 0.4;
+      color: $sd-gold;
     }
 
     .empty-text {
       font-size: 28rpx;
-      color: #999;
+      color: $sd-text-3;
     }
   }
 
@@ -389,7 +401,7 @@ onShow(() => {
 
     .load-more-text {
       font-size: 26rpx;
-      color: #667eea;
+      color: $sd-gold;
     }
   }
 }

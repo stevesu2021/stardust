@@ -78,12 +78,36 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
             errorMessage = JSON.stringify(res.data)
           }
 
+          // 兼容 message 为对象/数组的情况（旧版后端会返回嵌套结构）
+          if (errorMessage && typeof errorMessage === 'object') {
+            const inner: any = (errorMessage as any).message ?? errorMessage
+            errorMessage = typeof inner === 'string' ? inner : JSON.stringify(inner)
+          }
+
           // 确保 errorMessage 是字符串类型
           if (typeof errorMessage !== 'string') {
             errorMessage = String(errorMessage)
           }
 
           console.log('[API] Extracted error message:', errorMessage)
+
+          // 401：登录态失效，清除本地登录信息并引导重新登录（避免所有受保护接口连环报 401）
+          if (res.statusCode === 401 && !url.includes('/auth/')) {
+            try {
+              if (isBrowser) {
+                localStorage.removeItem('user')
+                uni.removeStorageSync('user')
+              } else {
+                uni.removeStorageSync('user')
+              }
+            } catch (e) {
+              // ignore
+            }
+            uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+            setTimeout(() => {
+              uni.reLaunch({ url: '/pages/auth/login' })
+            }, 800)
+          }
 
           const error = new Error(errorMessage) as any
           error.statusCode = res.statusCode

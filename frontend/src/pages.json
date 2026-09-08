@@ -156,16 +156,16 @@
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "black",
+    "navigationBarTextStyle": "white",
     "navigationBarTitleText": "星契集",
-    "navigationBarBackgroundColor": "#F8F8F8",
-    "backgroundColor": "#F8F8F8"
+    "navigationBarBackgroundColor": "#0B0E1F",
+    "backgroundColor": "#0B0E1F"
   },
   "tabBar": {
-    "color": "#7A7E83",
-    "selectedColor": "#3cc51f",
+    "color": "#6B7399",
+    "selectedColor": "#E8C36A",
     "borderStyle": "black",
-    "backgroundColor": "#ffffff",
+    "backgroundColor": "#0F1226",
     "list": [
       {
         "pagePath": "pages/index/index",

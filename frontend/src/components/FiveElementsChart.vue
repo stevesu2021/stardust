@@ -64,46 +64,46 @@ const props = defineProps<{
   data: FiveElementsData
 }>()
 
-// 五行元素配置
+// 五行元素配置（夜观星象 · 暗色五行色板）
 const elementsConfig = [
   {
     key: 'wood',
     name: '木',
-    icon: '🌲',
-    color: '#4CAF50',
-    gradient: 'linear-gradient(135deg, #4CAF50 0%, #81C784 100%)',
+    icon: '木',
+    color: '#6fbf8f',
+    gradient: 'linear-gradient(135deg, #6fbf8f 0%, #8fd4aa 100%)',
     description: '主仁，代表生长、升发、条达舒畅'
   },
   {
     key: 'fire',
     name: '火',
-    icon: '🔥',
-    color: '#F44336',
-    gradient: 'linear-gradient(135deg, #F44336 0%, #EF5350 100%)',
+    icon: '火',
+    color: '#e8735e',
+    gradient: 'linear-gradient(135deg, #e8735e 0%, #f09380 100%)',
     description: '主礼，代表温热、升腾、明亮'
   },
   {
     key: 'earth',
     name: '土',
-    icon: '⛰️',
-    color: '#8D6E63',
-    gradient: 'linear-gradient(135deg, #8D6E63 0%, #A1887F 100%)',
+    icon: '土',
+    color: '#c09a6b',
+    gradient: 'linear-gradient(135deg, #c09a6b 0%, #d4b285 100%)',
     description: '主信，代表承载、生化、受纳'
   },
   {
     key: 'metal',
     name: '金',
-    icon: '⚔️',
-    color: '#FFC107',
-    gradient: 'linear-gradient(135deg, #FFC107 0%, #FFD54F 100%)',
+    icon: '金',
+    color: '#d9c08a',
+    gradient: 'linear-gradient(135deg, #d9c08a 0%, #e8d4a8 100%)',
     description: '主义，代表沉降、肃杀、收敛'
   },
   {
     key: 'water',
     name: '水',
-    icon: '💧',
-    color: '#2196F3',
-    gradient: 'linear-gradient(135deg, #2196F3 0%, #64B5F6 100%)',
+    icon: '水',
+    color: '#6a9bd8',
+    gradient: 'linear-gradient(135deg, #6a9bd8 0%, #8ab2e4 100%)',
     description: '主智，代表寒冷、流动、潜藏'
   }
 ]
@@ -200,13 +200,13 @@ function getDescription() {
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
-    #4CAF50 0deg 72deg,
-    #F44336 72deg 144deg,
-    #8D6E63 144deg 216deg,
-    #FFC107 216deg 288deg,
-    #2196F3 288deg 360deg
+    #6fbf8f 0deg 72deg,
+    #e8735e 72deg 144deg,
+    #c09a6b 144deg 216deg,
+    #d9c08a 216deg 288deg,
+    #6a9bd8 288deg 360deg
   );
-  box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8rpx 30rpx rgba(11, 14, 31, 0.5);
 }
 
 .segment {
@@ -226,12 +226,13 @@ function getDescription() {
   transform: translate(-50%, -50%);
   width: 160rpx;
   height: 160rpx;
-  background: white;
+  background: $sd-bg-elev;
+  border: 1rpx solid $sd-stroke;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 2rpx 10rpx rgba(0, 0, 0, 0.3);
 }
 
 .dominant-element {
@@ -239,7 +240,8 @@ function getDescription() {
 
   .element-icon {
     display: block;
-    font-size: 48rpx;
+    font-family: $sd-font-display;
+    font-size: 44rpx;
     margin-bottom: 8rpx;
   }
 
@@ -247,14 +249,14 @@ function getDescription() {
     display: block;
     font-size: 32rpx;
     font-weight: bold;
-    color: #333;
+    color: $sd-text;
     margin-bottom: 4rpx;
   }
 
   .element-count {
     display: block;
     font-size: 24rpx;
-    color: #999;
+    color: $sd-text-3;
   }
 }
 
@@ -279,14 +281,14 @@ function getDescription() {
 
     .bar-name {
       font-size: 28rpx;
-      color: #333;
+      color: $sd-text;
       font-weight: bold;
       margin-right: auto;
     }
 
     .bar-count {
       font-size: 28rpx;
-      color: #666;
+      color: $sd-text-2;
       font-weight: bold;
     }
   }
@@ -294,7 +296,7 @@ function getDescription() {
   .bar-track {
     width: 100%;
     height: 16rpx;
-    background: #f0f0f0;
+    background: $sd-bg-raise;
     border-radius: 8rpx;
     overflow: hidden;
   }
@@ -306,23 +308,23 @@ function getDescription() {
   }
 
   &.wood .bar-fill {
-    background: linear-gradient(90deg, #4CAF50, #81C784);
+    background: linear-gradient(90deg, #6fbf8f, #8fd4aa);
   }
 
   &.fire .bar-fill {
-    background: linear-gradient(90deg, #F44336, #EF5350);
+    background: linear-gradient(90deg, #e8735e, #f09380);
   }
 
   &.earth .bar-fill {
-    background: linear-gradient(90deg, #8D6E63, #A1887F);
+    background: linear-gradient(90deg, #c09a6b, #d4b285);
   }
 
   &.metal .bar-fill {
-    background: linear-gradient(90deg, #FFC107, #FFD54F);
+    background: linear-gradient(90deg, #d9c08a, #e8d4a8);
   }
 
   &.water .bar-fill {
-    background: linear-gradient(90deg, #2196F3, #64B5F6);
+    background: linear-gradient(90deg, #6a9bd8, #8ab2e4);
   }
 }
 
@@ -330,12 +332,13 @@ function getDescription() {
 .description {
   text-align: center;
   padding: 20rpx;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  background: $sd-bg-raise;
+  border: 1rpx solid $sd-stroke;
   border-radius: 12rpx;
 
   .desc-text {
     font-size: 26rpx;
-    color: #666;
+    color: $sd-text-2;
     line-height: 1.6;
   }
 }

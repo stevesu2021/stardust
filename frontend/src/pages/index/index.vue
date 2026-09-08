@@ -6,51 +6,63 @@
       @close="showMatchModal = false"
       @startChat="handleStartChat"
     />
-    <!-- 紧凑头部 -->
-    <view class="header">
-      <view class="header-content">
-        <view class="app-brand">
-          <text class="brand-icon">✨</text>
+
+    <!-- 星野背景层（纯 CSS，不可交互） -->
+    <view class="sd-stars" />
+    <view class="sd-nebula" />
+
+    <view class="content">
+      <!-- 星徽头部 -->
+      <view class="header">
+        <view class="brand">
+          <view class="brand-sigil">✦</view>
           <view class="brand-text">
             <text class="brand-name">星契集</text>
-            <text class="brand-slogan">探索你的星座与缘分</text>
+            <text class="brand-slogan">{{ greeting }}</text>
           </view>
         </view>
         <view class="header-actions">
           <view class="profile-btn" @click="goToProfile">
-            <image v-if="userInfo?.avatar" :src="userInfo.avatar" class="avatar-img" mode="aspectFill" />
-            <text v-else class="avatar-placeholder">👤</text>
+            <image
+              v-if="userInfo?.avatar"
+              :src="userInfo.avatar"
+              class="avatar-img"
+              mode="aspectFill"
+            />
+            <text v-else class="avatar-placeholder">✧</text>
           </view>
         </view>
       </view>
 
-      <!-- 用户星座五行卡片 -->
-      <view class="user-card" v-if="userInfo && hasAstrologyData">
-        <view class="zodiac-section" @click="goToCelebrities">
-          <text class="zodiac-icon">{{ getZodiacIcon(userInfo.zodiacSign) }}</text>
-          <view class="zodiac-info">
-            <text class="zodiac-label">星座</text>
-            <text class="zodiac-value">{{ userInfo.zodiacSign || '未知' }}</text>
+      <!-- 命盘主卡：星座 × 五行 -->
+      <view
+        v-if="userInfo && hasAstrologyData"
+        class="chart-card"
+        @click="goToCelebrities"
+      >
+        <view class="chart-body">
+          <view class="zodiac-col">
+            <text class="zodiac-symbol">{{ zodiacSymbol(userInfo.zodiacSign) }}</text>
+            <text class="zodiac-name">{{ userInfo.zodiacSign || '未知' }}</text>
           </view>
-        </view>
-        <view class="divider"></view>
-        <view class="element-section">
-          <text class="element-icon">{{ getDominantElementIcon() }}</text>
-          <view class="element-info">
+          <view class="chart-divider">
+            <text class="divider-dot" />
+            <text class="divider-dot" />
+            <text class="divider-dot" />
+          </view>
+          <view class="element-col">
             <text class="element-label">主导五行</text>
-            <text class="element-value" :style="{ color: getDominantElementColor() }">
-              {{ getDominantElementName() }}
+            <text class="element-value" :style="{ color: dominantMeta?.color || '#6b7399' }">
+              {{ dominantMeta?.name || '未知' }}
             </text>
-          </view>
-        </view>
-        <view class="element-badges">
-          <view
-            v-for="elem in getActiveElements()"
-            :key="elem.key"
-            class="element-badge"
-            :class="elem.key"
-          >
-            {{ elem.icon }}
+            <view class="element-beads">
+              <view
+                v-for="elem in elems"
+                :key="elem.key"
+                class="element-bead"
+                :style="{ background: elem.color }"
+              />
+            </view>
           </view>
         </view>
       </view>
@@ -58,75 +70,47 @@
       <!-- 今日运势卡片 -->
       <DailyFortuneCard v-if="userInfo && hasAstrologyData" ref="fortuneCardRef" />
 
-      <!-- 未登录或未计算星盘提示 -->
-      <view class="calc-prompt" v-else-if="userInfo">
-        <text class="prompt-text">点击计算星盘，解锁你的命理密码</text>
-        <view class="calc-btn" @click="calculateAstrology">
+      <!-- 未计算星盘引导 -->
+      <view v-else-if="userInfo" class="calc-prompt" @click="calculateAstrology">
+        <view class="calc-left">
+          <text class="calc-title">解锁你的命理密码</text>
+          <text class="calc-sub">阳历转农历 · 星座 · 五行 · 运势</text>
+        </view>
+        <view class="calc-btn">
           <text>立即计算</text>
         </view>
       </view>
-    </view>
 
-    <!-- 功能入口 -->
-    <view class="features">
-      <view class="feature-item" @click="goToPage('/pages/astrology/calculate')">
-        <text class="feature-icon">✨</text>
-        <text class="feature-title">星盘计算</text>
-        <text class="feature-desc">阳历转农历、星座、五行</text>
+      <!-- 未登录引导 -->
+      <view v-else class="calc-prompt" @click="goToLogin">
+        <view class="calc-left">
+          <text class="calc-title">开启你的星象之旅</text>
+          <text class="calc-sub">登录后解锁全部功能</text>
+        </view>
+        <view class="calc-btn">
+          <text>登录</text>
+        </view>
       </view>
 
-      <view class="feature-item" @click="goToPage('/pages/prayer/list')">
-        <text class="feature-icon">🙏</text>
-        <text class="feature-title">复合祈愿</text>
-        <text class="feature-desc">为爱情祈福</text>
-      </view>
+      <!-- 功能入口 -->
+      <SectionTitle title="功能入口" kicker="✦" />
 
-      <view class="feature-item" @click="goToPage('/pages/prayer/devout-list')">
-        <text class="feature-icon">🕯️</text>
-        <text class="feature-title">虔诚祈祷</text>
-        <text class="feature-desc">向神灵祈愿</text>
-      </view>
-
-      <view class="feature-item" @click="goToPage('/pages/shop/list')">
-        <text class="feature-icon">🛍️</text>
-        <text class="feature-title">商城</text>
-        <text class="feature-desc">星座周边商品</text>
-      </view>
-
-      <view class="feature-item" @click="goToPage('/pages/treehole/list')">
-        <text class="feature-icon">🌳</text>
-        <text class="feature-title">树洞</text>
-        <text class="feature-desc">匿名分享心情</text>
-      </view>
-
-      <view class="feature-item" @click="goToPage('/pages/dating/matches')">
-        <text class="feature-icon">💑</text>
-        <text class="feature-title">缘分匹配</text>
-        <text class="feature-desc">基于星座五行的交友</text>
-      </view>
-
-      <view class="feature-item" @click="goToPage('/pages/palm/reading')">
-        <text class="feature-icon">🤚</text>
-        <text class="feature-title">看手相</text>
-        <text class="feature-desc">AI手相分析</text>
-      </view>
-
-      <view class="feature-item" @click="goToPage('/pages/face/reading')">
-        <text class="feature-icon">👤</text>
-        <text class="feature-title">看面相</text>
-        <text class="feature-desc">AI面相分析</text>
-      </view>
-
-      <view class="feature-item" @click="goToPage('/pages/mbti/result')">
-        <text class="feature-icon">🧠</text>
-        <text class="feature-title">MBTI测试</text>
-        <text class="feature-desc">人格类型分析</text>
-      </view>
-
-      <view class="feature-item" @click="goToPage('/pages/love-cp/index')">
-        <text class="feature-icon">💕</text>
-        <text class="feature-title">恋爱CP</text>
-        <text class="feature-desc">十二星座配对</text>
+      <view class="features">
+        <view
+          v-for="item in features"
+          :key="item.title"
+          class="feature-item"
+          :class="{ 'is-accent': item.accent }"
+          @click="goToPage(item.url)"
+        >
+          <view class="feature-sigil" :class="{ 'sd-sigil--cinnabar': item.accent }">
+            <text>{{ item.symbol }}</text>
+          </view>
+          <view class="feature-text">
+            <text class="feature-title">{{ item.title }}</text>
+            <text class="feature-desc">{{ item.desc }}</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -139,99 +123,54 @@ import { useUserStore } from '@/store/user'
 import { api } from '@/api'
 import DatingMatchModal from '@/components/DatingMatchModal.vue'
 import DailyFortuneCard from '@/components/DailyFortuneCard.vue'
+import SectionTitle from '@/components/section-title/section-title.vue'
+import { zodiacSymbol, dominantElement, activeElements } from '@/utils/astro'
+
+interface FeatureItem {
+  title: string
+  desc: string
+  url: string
+  symbol: string
+  accent: boolean
+}
 
 const userStore = useUserStore()
 const userInfo = ref<any>(null)
 const showMatchModal = ref(false)
 const fortuneCardRef = ref<any>(null)
 
-// 五行配置
-const elementsConfig = [
-  { key: 'wood', name: '木', icon: '🌲', color: '#4CAF50' },
-  { key: 'fire', name: '火', icon: '🔥', color: '#F44336' },
-  { key: 'earth', name: '土', icon: '⛰️', color: '#8D6E63' },
-  { key: 'metal', name: '金', icon: '⚔️', color: '#FFC107' },
-  { key: 'water', name: '水', icon: '💧', color: '#2196F3' }
+// 功能入口配置（星象符号替代 emoji，accent=朱砂强调）
+const features: FeatureItem[] = [
+  { title: '星盘计算', desc: '阳历转农历、星座、五行', url: '/pages/astrology/calculate', symbol: '☉', accent: false },
+  { title: '复合祈愿', desc: '为爱情祈福', url: '/pages/prayer/list', symbol: '❥', accent: true },
+  { title: '虔诚祈祷', desc: '向神灵祈愿', url: '/pages/prayer/devout-list', symbol: '☾', accent: false },
+  { title: '商城', desc: '星座周边商品', url: '/pages/shop/list', symbol: '❖', accent: false },
+  { title: '树洞', desc: '匿名分享心情', url: '/pages/treehole/list', symbol: '✎', accent: false },
+  { title: '缘分匹配', desc: '基于星座五行的交友', url: '/pages/dating/matches', symbol: '❤', accent: false },
+  { title: '看手相', desc: 'AI 手相分析', url: '/pages/palm/reading', symbol: '✋', accent: false },
+  { title: '看面相', desc: 'AI 面相分析', url: '/pages/face/reading', symbol: '☯', accent: false },
+  { title: 'MBTI 测试', desc: '人格类型分析', url: '/pages/mbti/result', symbol: '◈', accent: false },
+  { title: '恋爱CP', desc: '十二星座配对', url: '/pages/love-cp/index', symbol: '❦', accent: false },
 ]
 
-// 星座图标映射
-const zodiacIcons: Record<string, string> = {
-  '白羊座': '♈',
-  '金牛座': '♉',
-  '双子座': '♊',
-  '巨蟹座': '♋',
-  '狮子座': '♌',
-  '处女座': '♍',
-  '天秤座': '♎',
-  '天蝎座': '♏',
-  '射手座': '♐',
-  '摩羯座': '♑',
-  '水瓶座': '♒',
-  '双鱼座': '♓'
-}
+// 问候语（按当前时刻变化）
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  if (h < 5) return '夜深了，星辰与你同在'
+  if (h < 11) return '晨光初启，今日星象已就绪'
+  if (h < 14) return '日正当中，静观其变'
+  if (h < 18) return '午后流光，运势渐盛'
+  if (h < 23) return '暮色四合，繁星将醒'
+  return '夜深了，星辰与你同在'
+})
 
-// 是否有星盘数据
+// 五行数据（收敛到 utils/astro.ts）
+const dominantMeta = computed(() => dominantElement(userInfo.value?.fiveElements))
+const elems = computed(() => activeElements(userInfo.value?.fiveElements))
+
 const hasAstrologyData = computed(() => {
   return userInfo.value?.zodiacSign || userInfo.value?.fiveElements
 })
-
-// 获取星座图标
-function getZodiacIcon(sign: string) {
-  return zodiacIcons[sign] || '⭐'
-}
-
-// 获取主导五行名称
-function getDominantElementName() {
-  if (!userInfo.value?.fiveElements) return '未知'
-  try {
-    const elements = JSON.parse(userInfo.value.fiveElements)
-    const sorted = Object.entries(elements).sort((a, b) => b[1] - a[1])
-    const key = sorted[0]?.[0]
-    return elementsConfig.find(e => e.key === key)?.name || '未知'
-  } catch {
-    return '未知'
-  }
-}
-
-// 获取主导五行颜色
-function getDominantElementColor() {
-  if (!userInfo.value?.fiveElements) return '#999'
-  try {
-    const elements = JSON.parse(userInfo.value.fiveElements)
-    const sorted = Object.entries(elements).sort((a, b) => b[1] - a[1])
-    const key = sorted[0]?.[0]
-    return elementsConfig.find(e => e.key === key)?.color || '#999'
-  } catch {
-    return '#999'
-  }
-}
-
-// 获取主导五行图标
-function getDominantElementIcon() {
-  if (!userInfo.value?.fiveElements) return '❓'
-  try {
-    const elements = JSON.parse(userInfo.value.fiveElements)
-    const sorted = Object.entries(elements).sort((a, b) => b[1] - a[1])
-    const key = sorted[0]?.[0]
-    return elementsConfig.find(e => e.key === key)?.icon || '❓'
-  } catch {
-    return '❓'
-  }
-}
-
-// 获取活跃的五行元素
-function getActiveElements() {
-  if (!userInfo.value?.fiveElements) return []
-  try {
-    const elements = JSON.parse(userInfo.value.fiveElements)
-    return elementsConfig
-      .filter(e => elements[e.key] > 0)
-      .map(e => ({ ...e, count: elements[e.key] }))
-      .sort((a, b) => b.count - a.count)
-  } catch {
-    return []
-  }
-}
 
 // 计算星盘
 async function calculateAstrology() {
@@ -247,11 +186,9 @@ async function calculateAstrology() {
 }
 
 function goToPage(url: string) {
-  // 商城页面在底部导航栏中，需要使用 switchTab
   if (url === '/pages/shop/list') {
     uni.switchTab({ url })
   } else if (url === '/pages/dating/matches') {
-    // 缘分匹配显示弹窗
     showMatchModal.value = true
   } else {
     uni.navigateTo({ url })
@@ -268,10 +205,14 @@ function goToCelebrities() {
   }
 }
 
+function goToLogin() {
+  uni.navigateTo({ url: '/pages/auth/login' })
+}
+
 // 处理开始聊天
 function handleStartChat(userId: string) {
   uni.navigateTo({
-    url: `/pages/dating/chat?otherUserId=${userId}`
+    url: `/pages/dating/chat?otherUserId=${userId}`,
   })
 }
 
@@ -280,7 +221,6 @@ onMounted(() => {
 })
 
 onShow(() => {
-  // 每次显示页面时刷新今日运势
   if (fortuneCardRef.value?.refresh) {
     fortuneCardRef.value.refresh()
   }
@@ -289,50 +229,58 @@ onShow(() => {
 
 <style lang="scss" scoped>
 .container {
+  position: relative;
   min-height: 100vh;
-  background: #f5f6fa;
+  background: $sd-bg;
+  overflow: hidden;
 }
 
-// 头部
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 30rpx 30rpx 60rpx;
+}
+
+/* ---- 星徽头部 ---- */
 .header {
-  padding: 30rpx 30rpx 20rpx;
-  background: white;
-}
-
-.header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 36rpx;
 }
 
-.app-brand {
+.brand {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 20rpx;
+}
 
-  .brand-icon {
-    font-size: 48rpx;
-  }
+.brand-sigil {
+  @include sd-sigil-base();
+  width: 88rpx;
+  height: 88rpx;
+  font-size: 40rpx;
+}
 
-  .brand-text {
-    display: flex;
-    flex-direction: column;
-    gap: 4rpx;
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
 
-    .brand-name {
-      font-size: 36rpx;
-      font-weight: bold;
-      color: #333;
-      line-height: 1;
-    }
+.brand-name {
+  font-family: $sd-font-display;
+  font-size: 40rpx;
+  font-weight: bold;
+  color: $sd-gold-bright;
+  letter-spacing: 4rpx;
+  line-height: 1.1;
+}
 
-    .brand-slogan {
-      font-size: 22rpx;
-      color: #999;
-      line-height: 1;
-    }
-  }
+.brand-slogan {
+  font-size: 22rpx;
+  color: $sd-text-3;
+  line-height: 1;
 }
 
 .header-actions {
@@ -341,7 +289,8 @@ onShow(() => {
     height: 72rpx;
     border-radius: 50%;
     overflow: hidden;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: $sd-bg-raise;
+    border: 1rpx solid $sd-stroke-strong;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -352,160 +301,218 @@ onShow(() => {
     }
 
     .avatar-placeholder {
-      font-size: 36rpx;
+      font-size: 34rpx;
+      color: $sd-gold;
     }
   }
 }
 
-// 用户卡片
-.user-card {
+/* ---- 命盘主卡 ---- */
+.chart-card {
   position: relative;
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20rpx;
-  padding: 30rpx;
+  border-radius: $sd-radius-lg;
+  padding: 44rpx 34rpx;
+  background:
+    radial-gradient(420rpx 260rpx at 88% -30%, rgba(232, 195, 106, 0.14), transparent 70%),
+    radial-gradient(360rpx 300rpx at 6% 120%, rgba(47, 66, 138, 0.4), transparent 72%),
+    $sd-bg-elev;
+  border: 1rpx solid rgba(232, 195, 106, 0.3);
   overflow: hidden;
+  margin-bottom: 24rpx;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 200rpx;
-    height: 200rpx;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
+  &:active {
+    transform: scale(0.985);
   }
 
-  .zodiac-section,
-  .element-section {
+  .chart-body {
     display: flex;
     align-items: center;
-    gap: 12rpx;
-
-    .zodiac-icon,
-    .element-icon {
-      font-size: 40rpx;
-    }
-
-    .zodiac-info,
-    .element-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4rpx;
-
-      .zodiac-label,
-      .element-label {
-        font-size: 22rpx;
-        color: rgba(255, 255, 255, 0.8);
-      }
-
-      .zodiac-value,
-      .element-value {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: white;
-      }
-    }
   }
 
-  .divider {
-    width: 1rpx;
-    height: 40rpx;
-    background: rgba(255, 255, 255, 0.3);
-    margin: 0 20rpx;
-  }
-
-  .element-badges {
-    position: absolute;
-    right: 20rpx;
-    bottom: 16rpx;
+  .zodiac-col {
     display: flex;
-    gap: 6rpx;
+    flex-direction: column;
+    align-items: center;
+    min-width: 190rpx;
 
-    .element-badge {
-      width: 36rpx;
-      height: 36rpx;
-      background: rgba(255, 255, 255, 0.25);
+    .zodiac-symbol {
+      font-size: 88rpx;
+      color: $sd-gold-bright;
+      line-height: 1.1;
+      text-shadow: 0 0 30rpx rgba(232, 195, 106, 0.35);
+    }
+
+    .zodiac-name {
+      margin-top: 8rpx;
+      font-size: 26rpx;
+      color: $sd-text-2;
+      letter-spacing: 2rpx;
+    }
+  }
+
+  .chart-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10rpx;
+    margin: 0 30rpx;
+
+    .divider-dot {
+      width: 6rpx;
+      height: 6rpx;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20rpx;
-      backdrop-filter: blur(10rpx);
+      background: rgba(232, 195, 106, 0.5);
 
-      &.wood { background: rgba(76, 175, 80, 0.3); }
-      &.fire { background: rgba(244, 67, 54, 0.3); }
-      &.earth { background: rgba(141, 110, 99, 0.3); }
-      &.metal { background: rgba(255, 193, 7, 0.3); }
-      &.water { background: rgba(33, 150, 243, 0.3); }
+      &:nth-child(2) {
+        opacity: 0.6;
+      }
+
+      &:nth-child(3) {
+        opacity: 0.3;
+      }
+    }
+  }
+
+  .element-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .element-label {
+      font-size: 22rpx;
+      color: $sd-text-3;
+      letter-spacing: 3rpx;
+    }
+
+    .element-value {
+      margin-top: 8rpx;
+      font-family: $sd-font-display;
+      font-size: 44rpx;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+
+    .element-beads {
+      display: flex;
+      gap: 12rpx;
+      margin-top: 16rpx;
+
+      .element-bead {
+        width: 16rpx;
+        height: 16rpx;
+        border-radius: 50%;
+        box-shadow: 0 0 12rpx rgba(255, 255, 255, 0.12);
+      }
     }
   }
 }
 
-// 计算提示
+/* ---- 引导卡（未登录 / 未计算） ---- */
 .calc-prompt {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-  border-radius: 16rpx;
-  padding: 24rpx 30rpx;
+  border-radius: $sd-radius-lg;
+  padding: 34rpx 30rpx;
+  background:
+    radial-gradient(380rpx 240rpx at 90% -40%, rgba(232, 195, 106, 0.12), transparent 70%),
+    $sd-bg-elev;
+  border: 1rpx dashed rgba(232, 195, 106, 0.4);
+  margin-bottom: 24rpx;
 
-  .prompt-text {
-    font-size: 26rpx;
-    color: #634200;
+  &:active {
+    opacity: 0.85;
+  }
+
+  .calc-left {
+    display: flex;
+    flex-direction: column;
+    gap: 8rpx;
+
+    .calc-title {
+      font-size: 30rpx;
+      font-weight: bold;
+      color: $sd-text;
+    }
+
+    .calc-sub {
+      font-size: 22rpx;
+      color: $sd-text-3;
+    }
   }
 
   .calc-btn {
-    padding: 12rpx 24rpx;
-    background: white;
-    border-radius: 20rpx;
-    font-size: 24rpx;
-    color: #634200;
+    padding: 14rpx 34rpx;
+    border-radius: $sd-radius-pill;
+    background: linear-gradient(135deg, $sd-gold-bright 0%, $sd-gold 52%, #c9a558 100%);
+    color: $sd-gold-ink;
+    font-size: 26rpx;
     font-weight: bold;
+    box-shadow: 0 6rpx 24rpx rgba(232, 195, 106, 0.28);
   }
 }
 
-// 功能入口
+/* ---- 功能入口 ---- */
 .features {
-  padding: 30rpx;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20rpx;
 }
 
 .feature-item {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx 20rpx;
-  text-align: center;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
-  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: 28rpx 24rpx;
+  border-radius: $sd-radius;
+  background: $sd-bg-elev;
+  border: 1rpx solid $sd-stroke;
+  transition: transform 0.15s ease;
 
   &:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
   }
 
-  .feature-icon {
-    display: block;
-    font-size: 56rpx;
-    margin-bottom: 16rpx;
+  &.is-accent {
+    border-color: rgba(237, 90, 107, 0.32);
+    background:
+      linear-gradient(160deg, rgba(237, 90, 107, 0.08) 0%, transparent 50%),
+      $sd-bg-elev;
   }
 
-  .feature-title {
-    display: block;
-    font-size: 28rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 8rpx;
+  .feature-sigil {
+    @include sd-sigil-base();
+    width: 84rpx;
+    height: 84rpx;
+    font-size: 38rpx;
+    flex-shrink: 0;
+
+    &.sd-sigil--cinnabar {
+      @include sd-sigil-base(true);
+    }
   }
 
-  .feature-desc {
-    display: block;
-    font-size: 22rpx;
-    color: #999;
+  .feature-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6rpx;
+    min-width: 0;
+
+    .feature-title {
+      font-size: 28rpx;
+      font-weight: bold;
+      color: $sd-text;
+    }
+
+    .feature-desc {
+      font-size: 21rpx;
+      color: $sd-text-3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 </style>

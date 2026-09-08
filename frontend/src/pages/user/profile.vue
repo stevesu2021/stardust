@@ -385,7 +385,7 @@ function deleteAvatar() {
 .container {
   padding: 40rpx;
   min-height: 100vh;
-  background: #f8f9fa;
+  background: $sd-bg;
 }
 
 // 未登录状态
@@ -396,33 +396,37 @@ function deleteAvatar() {
   .login-icon {
     font-size: 120rpx;
     margin-bottom: 30rpx;
+    color: $sd-gold;
   }
 
   .title {
     display: block;
+    font-family: $sd-font-display;
     font-size: 48rpx;
     font-weight: bold;
-    color: #333;
+    color: $sd-gold-bright;
+    letter-spacing: 4rpx;
     margin-bottom: 20rpx;
   }
 
   .subtitle {
     display: block;
     font-size: 28rpx;
-    color: #666;
+    color: $sd-text-2;
     margin-bottom: 60rpx;
   }
 
   .login-options {
-    background: white;
-    border-radius: 20rpx;
+    background: $sd-bg-elev;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius-lg;
     padding: 40rpx;
     margin: 0 20rpx;
 
     .wechat-login-btn {
       width: 100%;
       height: 96rpx;
-      background: #07C160;
+      background: #07c160;
       color: white;
       border-radius: 48rpx;
       display: flex;
@@ -435,7 +439,7 @@ function deleteAvatar() {
 
       &:active {
         transform: scale(0.98);
-        background: #06AD56;
+        background: #06ad56;
       }
 
       .wechat-icon {
@@ -453,24 +457,28 @@ function deleteAvatar() {
       .line {
         flex: 1;
         height: 1rpx;
-        background: #e5e5e5;
+        background: $sd-stroke;
       }
 
       .divider-text {
         margin: 0 24rpx;
         font-size: 24rpx;
-        color: #999;
+        color: $sd-text-3;
       }
     }
 
     .btn {
       width: 100%;
       height: 88rpx;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: linear-gradient(135deg, $sd-gold-bright 0%, $sd-gold 52%, #c9a558 100%);
+      color: $sd-gold-ink;
       border-radius: 12rpx;
       font-size: 32rpx;
       font-weight: bold;
+
+      &::after {
+        border: none;
+      }
     }
 
     .register-link {
@@ -478,7 +486,7 @@ function deleteAvatar() {
 
       .link-text {
         font-size: 28rpx;
-        color: #667eea;
+        color: $sd-gold;
       }
     }
   }
@@ -493,15 +501,15 @@ function deleteAvatar() {
     .avatar {
       width: 160rpx;
       height: 160rpx;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, rgba(232, 195, 106, 0.4) 0%, rgba(47, 66, 138, 0.7) 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 30rpx;
       overflow: hidden;
-      border: 4rpx solid white;
-      box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+      border: 4rpx solid rgba(232, 195, 106, 0.45);
+      box-shadow: 0 0 40rpx rgba(232, 195, 106, 0.18);
       position: relative;
 
       .avatar-image {
@@ -511,7 +519,7 @@ function deleteAvatar() {
 
       .avatar-text {
         font-size: 80rpx;
-        color: white;
+        color: $sd-gold-bright;
         font-weight: bold;
       }
 
@@ -521,35 +529,37 @@ function deleteAvatar() {
         right: 0;
         width: 48rpx;
         height: 48rpx;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(11, 14, 31, 0.72);
+        border: 1rpx solid $sd-stroke-strong;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 24rpx;
-        backdrop-filter: blur(4rpx);
+        font-size: 22rpx;
+        color: $sd-gold;
       }
     }
 
     .nickname {
       font-size: 36rpx;
       font-weight: bold;
-      color: #333;
+      color: $sd-text;
       margin-bottom: 8rpx;
       display: block;
     }
 
     .phone-number {
       font-size: 24rpx;
-      color: #999;
+      color: $sd-text-3;
       margin-bottom: 8rpx;
       display: block;
     }
 
     .user-id {
       font-size: 24rpx;
-      color: #07C160;
-      background: #e8f5e9;
+      color: #63d99a;
+      background: rgba(7, 193, 96, 0.12);
+      border: 1rpx solid rgba(7, 193, 96, 0.3);
       padding: 6rpx 16rpx;
       border-radius: 20rpx;
       display: inline-block;
@@ -557,16 +567,16 @@ function deleteAvatar() {
   }
 
   .info {
-    background: white;
-    border-radius: 20rpx;
+    background: $sd-bg-elev;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius-lg;
     padding: 40rpx;
     margin-bottom: 40rpx;
-    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 
     .info-item {
       margin-bottom: 30rpx;
       padding-bottom: 30rpx;
-      border-bottom: 1rpx solid #f5f5f5;
+      border-bottom: 1rpx solid $sd-stroke;
 
       &:last-child {
         margin-bottom: 0;
@@ -577,14 +587,14 @@ function deleteAvatar() {
       .label {
         display: block;
         font-size: 28rpx;
-        color: #999;
+        color: $sd-text-3;
         margin-bottom: 10rpx;
       }
 
       .value {
         display: block;
         font-size: 32rpx;
-        color: #333;
+        color: $sd-text;
         font-weight: bold;
       }
 
@@ -598,28 +608,39 @@ function deleteAvatar() {
     .btn {
       width: 100%;
       height: 88rpx;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: linear-gradient(135deg, $sd-gold-bright 0%, $sd-gold 52%, #c9a558 100%);
+      color: $sd-gold-ink;
       border-radius: 12rpx;
       font-size: 32rpx;
       font-weight: bold;
       margin-bottom: 20rpx;
+
+      &::after {
+        border: none;
+      }
     }
 
     .btn-secondary {
-      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+      background: $sd-bg-raise;
+      color: $sd-text;
+      border: 1rpx solid $sd-stroke-strong;
     }
 
     .btn-wechat {
-      background: #07C160;
+      background: #07c160;
+      color: white;
     }
 
     .btn-wechat-unbind {
-      background: #ff9800;
+      background: transparent;
+      color: #ffb056;
+      border: 1rpx solid rgba(255, 152, 0, 0.5);
     }
 
     .btn-logout {
-      background: #ff6b6b;
+      background: transparent;
+      color: $sd-cinnabar;
+      border: 1rpx solid rgba(237, 90, 107, 0.45);
       margin-top: 20rpx;
     }
   }

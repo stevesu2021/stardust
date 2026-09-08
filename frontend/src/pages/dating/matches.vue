@@ -256,7 +256,7 @@ function startChat(userId: string) {
 .container {
   padding: 20rpx;
   min-height: 100vh;
-  background: #f5f6fa;
+  background: $sd-bg;
 }
 
 // 搜索栏
@@ -266,29 +266,30 @@ function startChat(userId: string) {
   .search-input-wrapper {
     display: flex;
     align-items: center;
-    background: white;
-    border-radius: 50rpx;
-    padding: 20rpx 30rpx;
-    box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+    background: $sd-bg-elev;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius-pill;
+    padding: 14rpx 30rpx;
 
     .search-icon {
-      font-size: 32rpx;
+      font-size: 28rpx;
+      color: $sd-text-3;
       margin-right: 16rpx;
     }
 
     .search-input {
       flex: 1;
       font-size: 28rpx;
-      color: #333;
+      color: $sd-text;
 
       &::placeholder {
-        color: #999;
+        color: $sd-text-3;
       }
     }
 
     .clear-icon {
       font-size: 28rpx;
-      color: #999;
+      color: $sd-text-3;
       padding: 10rpx;
       margin-left: 10rpx;
     }
@@ -299,7 +300,7 @@ function startChat(userId: string) {
 .section-title {
   display: block;
   font-size: 26rpx;
-  color: #999;
+  color: $sd-text-3;
   margin-bottom: 20rpx;
   padding: 0 10rpx;
 }
@@ -307,8 +308,9 @@ function startChat(userId: string) {
 // 联系人列表
 .contacts {
   .contact-card {
-    background: white;
-    border-radius: 20rpx;
+    background: $sd-bg-elev;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius-lg;
     padding: 30rpx;
     margin-bottom: 20rpx;
 
@@ -340,8 +342,8 @@ function startChat(userId: string) {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, rgba(232, 195, 106, 0.35) 0%, rgba(47, 66, 138, 0.6) 100%);
+            color: $sd-gold-bright;
             font-size: 40rpx;
             display: flex;
             align-items: center;
@@ -354,13 +356,13 @@ function startChat(userId: string) {
             right: -8rpx;
             min-width: 36rpx;
             height: 36rpx;
-            background: #ff4757;
+            background: $sd-cinnabar;
             border-radius: 18rpx;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 0 8rpx;
-            border: 3rpx solid white;
+            border: 3rpx solid $sd-bg-elev;
 
             .unread-count {
               font-size: 20rpx;
@@ -380,17 +382,17 @@ function startChat(userId: string) {
           .nickname {
             font-size: 32rpx;
             font-weight: bold;
-            color: #333;
+            color: $sd-text;
           }
 
           .phone {
             font-size: 24rpx;
-            color: #999;
+            color: $sd-text-3;
           }
 
           .last-message {
             font-size: 26rpx;
-            color: #666;
+            color: $sd-text-2;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -400,7 +402,7 @@ function startChat(userId: string) {
 
       .message-time {
         font-size: 24rpx;
-        color: #999;
+        color: $sd-text-3;
         flex-shrink: 0;
       }
     }
@@ -411,11 +413,12 @@ function startChat(userId: string) {
       .info-item {
         display: inline-block;
         font-size: 24rpx;
-        color: #666;
+        color: $sd-text-2;
         margin-right: 20rpx;
-        background: #f5f5f5;
+        background: $sd-bg-raise;
+        border: 1rpx solid $sd-stroke;
         padding: 6rpx 16rpx;
-        border-radius: 20rpx;
+        border-radius: $sd-radius-pill;
       }
     }
 
@@ -423,13 +426,17 @@ function startChat(userId: string) {
       position: relative;
       width: 100%;
       height: 70rpx;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 12rpx;
+      background: linear-gradient(135deg, $sd-gold-bright 0%, $sd-gold 52%, #c9a558 100%);
+      color: $sd-gold-ink;
+      border-radius: $sd-radius-sm;
       font-size: 28rpx;
       display: flex;
       align-items: center;
       justify-content: center;
+
+      &::after {
+        border: none;
+      }
     }
 
     .btn-badge {
@@ -438,13 +445,13 @@ function startChat(userId: string) {
       right: 20rpx;
       min-width: 40rpx;
       height: 40rpx;
-      background: #ff4757;
+      background: $sd-cinnabar;
       border-radius: 20rpx;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0 10rpx;
-      border: 3rpx solid white;
+      border: 3rpx solid $sd-bg-elev;
 
       text {
         font-size: 22rpx;
@@ -482,17 +489,18 @@ function startChat(userId: string) {
     font-size: 100rpx;
     margin-bottom: 20rpx;
     opacity: 0.5;
+    color: $sd-gold;
   }
 
   .empty-text {
     font-size: 28rpx;
-    color: #999;
+    color: $sd-text-2;
     margin-bottom: 10rpx;
   }
 
   .empty-hint {
     font-size: 24rpx;
-    color: #bbb;
+    color: $sd-text-3;
   }
 }
 </style>

@@ -20,10 +20,20 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    let message =
       exception instanceof HttpException
         ? exception.getResponse()
         : 'Internal server error';
+
+    // BadRequestException(err) 等把对象传进异常时会产生 { message: { message, error, statusCode } }
+    // 的嵌套结构，这里拍平，保证客户端始终拿到字符串 message
+    if (message && typeof message === 'object' && (message as any).message !== undefined) {
+      const inner = (message as any).message;
+      message = inner && typeof inner === 'object' && inner.message !== undefined ? inner.message : inner;
+    }
+    if (Array.isArray(message)) {
+      message = message.join('；');
+    }
 
     response.status(status).json({
       statusCode: status,

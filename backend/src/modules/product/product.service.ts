@@ -7,6 +7,10 @@ export class ProductService {
 
   // 获取商品列表（分页，可选按分类筛选）
   async getList(skip = 0, take = 20, category?: string) {
+    // NaN 防御（skip/take 来自 query 参数）
+    if (!Number.isFinite(skip)) skip = 0;
+    if (!Number.isFinite(take) || take <= 0) take = 20;
+
     const where = category ? { category } : {};
 
     const [products, total] = await Promise.all([

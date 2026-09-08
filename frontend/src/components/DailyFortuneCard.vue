@@ -1,12 +1,15 @@
 <template>
   <view class="fortune-card" @click="goToDetail">
     <view class="fortune-header">
-      <text class="fortune-title">今日运势</text>
+      <view class="fh-left">
+        <text class="fh-kicker">✦</text>
+        <text class="fortune-title">今日运势</text>
+      </view>
       <text class="fortune-date">{{ todayDate }}</text>
     </view>
 
     <view v-if="loading" class="fortune-loading">
-      <text class="loading-text">加载中...</text>
+      <LoadingSkeleton :rows="2" height="30rpx" gap="24rpx" />
     </view>
 
     <view v-else-if="fortune" class="fortune-content">
@@ -21,31 +24,31 @@
       </view>
 
       <view v-if="fortune.precautions" class="precautions">
-        <text class="precautions-label">⚠️ 注意事项</text>
+        <text class="precautions-label">⚠ 注意事项</text>
         <text class="precautions-text">{{ fortune.precautions }}</text>
       </view>
 
       <view class="fortune-footer">
         <view class="lucky-items" v-if="fortune.luckyColor || fortune.luckyNumber">
           <view class="lucky-item" v-if="fortune.luckyColor">
-            <text class="lucky-icon">🎨</text>
+            <text class="lucky-icon">◈</text>
             <text class="lucky-label">{{ fortune.luckyColor }}</text>
           </view>
           <view class="lucky-item" v-if="fortune.luckyNumber">
-            <text class="lucky-icon">🔢</text>
+            <text class="lucky-icon">✧</text>
             <text class="lucky-label">{{ fortune.luckyNumber }}</text>
           </view>
           <view class="lucky-item" v-if="fortune.luckyDirection">
-            <text class="lucky-icon">🧭</text>
+            <text class="lucky-icon">➤</text>
             <text class="lucky-label">{{ fortune.luckyDirection }}</text>
           </view>
         </view>
-        <text class="more-hint">点击查看详情 →</text>
+        <text class="more-hint">查看详情 ›</text>
       </view>
     </view>
 
     <view v-else class="fortune-empty">
-      <text class="empty-text">点击查看今日运势</text>
+      <text class="empty-text">轻触卡片，开启今日星象</text>
     </view>
   </view>
 </template>
@@ -53,6 +56,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api'
+import LoadingSkeleton from '@/components/loading-skeleton/loading-skeleton.vue'
 
 const fortune = ref<any>(null)
 const loading = ref(false)
@@ -89,18 +93,24 @@ function goToDetail() {
 }
 
 // 暴露刷新方法给父组件
-defineExpose({
-  refresh: loadFortune
-})
+defineExpose({ refresh: loadFortune })
 </script>
 
 <style lang="scss" scoped>
 .fortune-card {
-  background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-  border-radius: 20rpx;
+  position: relative;
+  background:
+    radial-gradient(300rpx 200rpx at 12% -20%, rgba(232, 195, 106, 0.14), transparent 70%),
+    $sd-bg-elev;
+  border: 1rpx solid $sd-stroke;
+  border-radius: $sd-radius-lg;
   padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(253, 203, 110, 0.3);
+  margin-bottom: 8rpx;
+  overflow: hidden;
+
+  &:active {
+    opacity: 0.9;
+  }
 }
 
 .fortune-header {
@@ -109,29 +119,38 @@ defineExpose({
   align-items: center;
   margin-bottom: 24rpx;
 
+  .fh-left {
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+  }
+
+  .fh-kicker {
+    font-size: 22rpx;
+    color: $sd-gold;
+  }
+
   .fortune-title {
+    font-family: $sd-font-display;
     font-size: 32rpx;
     font-weight: bold;
-    color: #634200;
+    color: $sd-gold-bright;
+    letter-spacing: 2rpx;
   }
 
   .fortune-date {
     font-size: 24rpx;
-    color: rgba(99, 66, 0, 0.7);
+    color: $sd-text-3;
   }
 }
 
 .fortune-loading,
 .fortune-empty {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40rpx 0;
+  padding: 30rpx 0;
 
-  .loading-text,
   .empty-text {
-    font-size: 28rpx;
-    color: #634200;
+    font-size: 26rpx;
+    color: $sd-text-3;
   }
 }
 
@@ -139,79 +158,83 @@ defineExpose({
   .score-section {
     display: flex;
     align-items: center;
-    gap: 24rpx;
+    gap: 26rpx;
     margin-bottom: 20rpx;
+  }
 
-    .score-ring {
-      width: 120rpx;
-      height: 120rpx;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.8);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      border: 4rpx solid #634200;
+  .score-ring {
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: $sd-bg-raise;
+    border: 4rpx solid rgba(232, 195, 106, 0.55);
 
-      &.excellent {
-        background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
-        border-color: #ff6b6b;
-        .score-value { color: white; }
-        .score-label { color: rgba(255, 255, 255, 0.9); }
-      }
-
-      &.good {
-        background: linear-gradient(135deg, #a8e6cf 0%, #55efc4 100%);
-        border-color: #55efc4;
-        .score-value { color: white; }
-        .score-label { color: rgba(255, 255, 255, 0.9); }
-      }
+    &.excellent {
+      border-color: $sd-gold-bright;
+      box-shadow: 0 0 30rpx rgba(232, 195, 106, 0.35);
 
       .score-value {
-        font-size: 48rpx;
-        font-weight: bold;
-        color: #634200;
-        line-height: 1;
-      }
-
-      .score-label {
-        font-size: 20rpx;
-        color: #634200;
-        margin-top: 4rpx;
+        color: $sd-gold-bright;
       }
     }
 
-    .score-info {
-      flex: 1;
+    &.good {
+      border-color: rgba(111, 191, 143, 0.7);
 
-      .score-summary {
-        font-size: 28rpx;
-        color: #634200;
-        line-height: 1.5;
+      .score-value {
+        color: $sd-wood;
       }
+    }
+
+    .score-value {
+      font-size: 46rpx;
+      font-weight: bold;
+      color: $sd-text;
+      line-height: 1;
+    }
+
+    .score-label {
+      font-size: 20rpx;
+      color: $sd-text-3;
+      margin-top: 4rpx;
+    }
+  }
+
+  .score-info {
+    flex: 1;
+
+    .score-summary {
+      font-size: 27rpx;
+      color: $sd-text-2;
+      line-height: 1.6;
     }
   }
 
   .precautions {
-    background: rgba(99, 66, 0, 0.08);
-    border-radius: 12rpx;
-    padding: 16rpx;
+    background: rgba(237, 90, 107, 0.08);
+    border: 1rpx solid rgba(237, 90, 107, 0.22);
+    border-radius: $sd-radius-sm;
+    padding: 18rpx;
     margin-bottom: 20rpx;
 
     .precautions-label {
       display: block;
       font-size: 24rpx;
       font-weight: bold;
-      color: #634200;
+      color: $sd-cinnabar;
       margin-bottom: 8rpx;
     }
 
     .precautions-text {
       display: block;
       font-size: 24rpx;
-      color: rgba(99, 66, 0, 0.8);
-      line-height: 1.5;
+      color: $sd-text-2;
+      line-height: 1.6;
     }
   }
 
@@ -219,34 +242,36 @@ defineExpose({
     display: flex;
     justify-content: space-between;
     align-items: center;
+  }
 
-    .lucky-items {
-      display: flex;
-      gap: 16rpx;
+  .lucky-items {
+    display: flex;
+    gap: 14rpx;
+  }
 
-      .lucky-item {
-        display: flex;
-        align-items: center;
-        gap: 6rpx;
-        background: rgba(255, 255, 255, 0.6);
-        padding: 8rpx 16rpx;
-        border-radius: 20rpx;
+  .lucky-item {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    background: $sd-bg-raise;
+    border: 1rpx solid $sd-stroke;
+    padding: 8rpx 18rpx;
+    border-radius: $sd-radius-pill;
 
-        .lucky-icon {
-          font-size: 20rpx;
-        }
-
-        .lucky-label {
-          font-size: 22rpx;
-          color: #634200;
-        }
-      }
+    .lucky-icon {
+      font-size: 20rpx;
+      color: $sd-gold;
     }
 
-    .more-hint {
-      font-size: 24rpx;
-      color: rgba(99, 66, 0, 0.7);
+    .lucky-label {
+      font-size: 22rpx;
+      color: $sd-text-2;
     }
+  }
+
+  .more-hint {
+    font-size: 24rpx;
+    color: $sd-gold;
   }
 }
 </style>

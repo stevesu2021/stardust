@@ -417,7 +417,7 @@ import { watch } from 'vue'
     border: 3rpx solid rgba(255, 255, 255, 0.2);
 
     &.placeholder {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, rgba(232, 195, 106, 0.35) 0%, rgba(47, 66, 138, 0.6) 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -425,7 +425,7 @@ import { watch } from 'vue'
       .avatar-text {
         font-size: 40rpx;
         font-weight: bold;
-        color: #fff;
+        color: #f5d98b;
       }
     }
   }

@@ -6,7 +6,9 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class AvatarService {
   private readonly dashscopeApiKey: string;
-  private readonly dashscopeBaseUrl: string;
+  private dashscopeBaseUrl: string;
+  private dashscopeApiHost: string;
+  private text2ImageModel: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -15,6 +17,10 @@ export class AvatarService {
   ) {
     this.dashscopeApiKey = this.configService.get<string>('DASHSCOPE_API_KEY') || '';
     this.dashscopeBaseUrl = this.configService.get<string>('DASHSCOPE_BASE_URL') || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
+    // DashScope 原生 API 域名（异步文生图任务用），可用 DASHSCOPE_API_HOST 覆盖
+    this.dashscopeApiHost =
+      this.configService.get<string>('DASHSCOPE_API_HOST') || 'https://dashscope.aliyuncs.com/api/v1';
+    this.text2ImageModel = this.configService.get<string>('DASHSCOPE_T2I_MODEL') || 'wanx-v1';
   }
 
   /**
@@ -109,7 +115,7 @@ export class AvatarService {
       // 步骤1: 创建异步任务
       console.log('[AvatarService] Step 1: Creating async task...');
       const createTaskResponse = await this.fetchWithTimeout(
-        'https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis',
+        `${this.dashscopeApiHost}/services/aigc/text2image/image-synthesis`,
         {
           method: 'POST',
           headers: {
@@ -118,7 +124,7 @@ export class AvatarService {
             'X-DashScope-Async': 'enable',
           },
           body: JSON.stringify({
-            model: 'wanx-v1',
+            model: this.text2ImageModel,
             input: {
               prompt: prompt,
             },
@@ -158,7 +164,7 @@ export class AvatarService {
         await new Promise(resolve => setTimeout(resolve, pollInterval));
 
         const queryResponse = await this.fetchWithTimeout(
-          `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`,
+          `${this.dashscopeApiHost}/tasks/${taskId}`,
           {
             method: 'GET',
             headers: {

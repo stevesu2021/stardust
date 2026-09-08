@@ -1,0 +1,74 @@
+/**
+ * 星契集 · 夜观星象 设计令牌
+ * uni.scss 会被 uni-app 自动注入每个组件的样式编译，只放 SCSS 变量（不输出 CSS）
+ */
+
+/* ---- 夜空底色 ---- */
+$sd-bg: #0b0e1f;          // 页面底：深靛夜空
+$sd-bg-nav: #0f1226;      // 导航 / tabBar 底
+$sd-bg-elev: #141936;     // 卡片面
+$sd-bg-raise: #1b2145;    // 悬浮面 / 输入框底
+
+/* ---- 描边 ---- */
+$sd-stroke: rgba(160, 178, 255, 0.14);
+$sd-stroke-strong: rgba(160, 178, 255, 0.26);
+
+/* ---- 文字 ---- */
+$sd-text: #edeffa;
+$sd-text-2: #a6aecb;
+$sd-text-3: #6b7399;
+
+/* ---- 星光金 ---- */
+$sd-gold: #e8c36a;
+$sd-gold-bright: #f5d98b;
+$sd-gold-deep: #b8944a;
+$sd-gold-ink: #4a3813;    // 金底上的深色字
+
+/* ---- 朱砂（情感功能强调色） ---- */
+$sd-cinnabar: #ed5a6b;
+$sd-cinnabar-deep: #c13a4e;
+
+/* ---- 五行（暗色适配） ---- */
+$sd-wood: #6fbf8f;
+$sd-fire: #e8735e;
+$sd-earth: #c09a6b;
+$sd-metal: #d9c08a;
+$sd-water: #6a9bd8;
+
+/* ---- 字体 ---- */
+$sd-font-display: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+$sd-font-body: -apple-system, 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+
+/* ---- 圆角 ---- */
+$sd-radius-sm: 12rpx;
+$sd-radius: 20rpx;
+$sd-radius-lg: 28rpx;
+$sd-radius-pill: 999rpx;
+
+/* ---- 光效 ---- */
+$sd-glow-gold: 0 0 32rpx rgba(232, 195, 106, 0.16);
+$sd-glow-cinnabar: 0 0 32rpx rgba(237, 90, 107, 0.18);
+
+/* ---- 印章式金徽 mixin（跨组件复用，勿用 @extend 跨文件） ---- */
+@mixin sd-sigil-base($accent: false) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: $sd-font-display;
+
+  @if $accent {
+    background:
+      radial-gradient(circle at 50% 34%, rgba(237, 90, 107, 0.18) 0%, rgba(237, 90, 107, 0.04) 58%, transparent 72%),
+      $sd-bg-raise;
+    border: 1rpx solid rgba(237, 90, 107, 0.42);
+    color: $sd-cinnabar;
+  } @else {
+    background:
+      radial-gradient(circle at 50% 34%, rgba(232, 195, 106, 0.16) 0%, rgba(232, 195, 106, 0.04) 58%, transparent 72%),
+      $sd-bg-raise;
+    border: 1rpx solid rgba(232, 195, 106, 0.4);
+    color: $sd-gold;
+  }
+}
+

@@ -96,8 +96,10 @@ export class AstrologyServiceModule {
       },
     });
 
+    // 返回前脱敏（prisma update 返回完整 user，含 password）
+    const { password: _pw, ...safeUser } = updatedUser;
     return {
-      user: updatedUser,
+      user: safeUser,
       lunar,
       zodiacSign,
       fiveElements,
