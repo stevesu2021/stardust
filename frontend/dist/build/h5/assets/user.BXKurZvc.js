@@ -1,1 +1,0 @@
-import{X as n,r as e}from"./index-MJpyMX0b.js";const o=n("user",()=>{const n=e(""),o=e(null);return{token:n,userInfo:o,setToken:function(e){n.value=e},setUserInfo:function(n){o.value=n},logout:function(){n.value="",o.value=null}}},{persist:!0});export{o as u};
