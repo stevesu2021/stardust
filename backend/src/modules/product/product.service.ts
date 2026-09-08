@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
@@ -65,6 +65,25 @@ export class ProductService {
     let skipped = 0;
 
     for (const product of products) {
+      // 导入时归一化图片 URL 为 HTTPS 域名格式
+      // 防止再出现 http://IP:9000 这类 URL（HTTPS 页面下会被浏览器 Mixed Content 拦截不显示）
+      if (product.imageUrl) {
+        try {
+          const u = new URL(product.imageUrl);
+          if (u.protocol === 'http:') {
+            u.protocol = 'https:';
+          }
+          if (u.hostname !== 'xingqiji.xyz') {
+            u.hostname = 'xingqiji.xyz';
+            u.port = '';
+            u.pathname = '/minio' + u.pathname;
+          }
+          product.imageUrl = u.toString();
+        } catch {
+          throw new BadRequestException(`无效的图片地址: ${product.imageUrl}`);
+        }
+      }
+
       try {
         // 使用 upsert 避免重复导入
         await this.prisma.product.upsert({

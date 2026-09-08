@@ -295,7 +295,7 @@ let MinioService = class MinioService {
         });
         const publicUrl = this.configService.get('MINIO_PUBLIC_URL');
         if (publicUrl) {
-            return `${publicUrl}/${this.bucketName}/${objectName}`;
+            return `${publicUrl.replace(/\/+$/, '')}/${this.bucketName}/${objectName}`;
         }
         const port = this.configService.get('MINIO_PORT');
         const useSSL = this.configService.get('MINIO_USE_SSL') === 'true';
@@ -6128,6 +6128,23 @@ let ProductService = class ProductService {
         let imported = 0;
         let skipped = 0;
         for (const product of products) {
+            if (product.imageUrl) {
+                try {
+                    const u = new URL(product.imageUrl);
+                    if (u.protocol === 'http:') {
+                        u.protocol = 'https:';
+                    }
+                    if (u.hostname !== 'xingqiji.xyz') {
+                        u.hostname = 'xingqiji.xyz';
+                        u.port = '';
+                        u.pathname = '/minio' + u.pathname;
+                    }
+                    product.imageUrl = u.toString();
+                }
+                catch {
+                    throw new common_1.BadRequestException(`无效的图片地址: ${product.imageUrl}`);
+                }
+            }
             try {
                 await this.prisma.product.upsert({
                     where: {

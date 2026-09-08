@@ -85,7 +85,8 @@ export class MinioService implements OnModuleInit, OnModuleDestroy {
     // 返回公开访问的 URL，优先使用 MINIO_PUBLIC_URL 配置
     const publicUrl = this.configService.get<string>('MINIO_PUBLIC_URL');
     if (publicUrl) {
-      return `${publicUrl}/${this.bucketName}/${objectName}`;
+      // 归一化：去掉末尾斜杠，避免拼接出 //path
+      return `${publicUrl.replace(/\/+$/, '')}/${this.bucketName}/${objectName}`;
     }
 
     const port = this.configService.get<string>('MINIO_PORT');
