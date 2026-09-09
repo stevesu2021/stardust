@@ -8,7 +8,7 @@
       </button>
       <view class="btn-interpret-wrapper">
         <button class="btn-interpret" @click="handleGenerateInterpretation" :disabled="!hasBasicData || interpreting || remainingAttempts <= 0">
-          <text v-if="!interpreting">{{ remainingAttempts > 0 ? `🔮 生成AI解读 (${remainingAttempts}/${totalAttempts})` : `🔮 今日次数已用完` }}</text>
+          <text v-if="!interpreting">{{ remainingAttempts > 0 ? '🔮 生成AI解读' : '🔮 今日次数已用完' }}</text>
           <text v-else>解读中... {{ formatProgress() }}%</text>
         </button>
         <view v-if="interpreting" class="progress-bar">

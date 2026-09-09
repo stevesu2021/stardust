@@ -11,7 +11,7 @@ const isBrowser = typeof window !== 'undefined'
 
 // 开发环境：使用相对路径，通过 Vite proxy 代理到后端
 // 生产环境：需要根据实际部署配置
-const BASE_URL = '/api'
+export const BASE_URL = '/api'
 
 interface RequestOptions {
   url: string
@@ -105,7 +105,13 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
             }
             uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
             setTimeout(() => {
+              // #ifdef H5
+              // H5 下 uni.reLaunch 有静默失效的版本 bug，用 hash 导航兜底
+              window.location.hash = '#/pages/auth/login'
+              // #endif
+              // #ifndef H5
               uni.reLaunch({ url: '/pages/auth/login' })
+              // #endif
             }, 800)
           }
 

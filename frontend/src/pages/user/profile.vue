@@ -94,6 +94,7 @@ import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
 import { onShow } from '@dcloudio/uni-app'
+import { relaunch } from '@/utils/navigation'
 import FiveElementsChart from '@/components/FiveElementsChart.vue'
 
 const userStore = useUserStore()
@@ -259,7 +260,7 @@ function logout() {
         userStore.logout()
         uni.showToast({ title: '已退出登录', icon: 'success' })
         setTimeout(() => {
-          uni.reLaunch({ url: '/pages/user/profile' })
+          relaunch('/pages/user/profile')
         }, 1000)
       }
     }

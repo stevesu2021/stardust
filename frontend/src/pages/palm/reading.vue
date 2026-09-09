@@ -190,6 +190,7 @@ import { ref, computed } from 'vue'
 import { useUserStore } from '@/store/user'
 import { api } from '@/api'
 import { share } from '@/utils/wechatShare'
+import { compressImageForUpload } from '@/utils/image'
 
 const userStore = useUserStore()
 const activeTab = ref('analyze')
@@ -201,27 +202,15 @@ const historyLoading = ref(false)
 const showDetail = ref(false)
 const selectedItem = ref<any>(null)
 
-// 压缩图片：手机拍摄的照片普遍 2~8MB，超过服务端上传体积限制会被 nginx 以 413 拒绝，
-// 上传前先等比压到 1280px 宽以内（AI 识别足够用），压缩失败则原样返回
-function compressImage(src: string): Promise<string> {
-  return new Promise((resolve) => {
-    uni.getImageInfo({
-      src,
-      success: (info: any) => {
-        if (!info.width || info.width <= 1280) {
-          resolve(src)
-          return
-        }
-        uni.compressImage({
-          src,
-          quality: 80,
-          success: (res: any) => resolve(res.tempFilePath || src),
-          fail: () => resolve(src)
-        })
-      },
-      fail: () => resolve(src)
-    })
-  })
+// 上传前压缩（平台自适应、全程 fail-safe，永不挂起/永不 reject）：
+// Android 拍照普遍 2~8MB，超限会被网关 413；uni-h5 未实现 uni.compressImage，
+// 故 H5 走 canvas 压缩（utils/image.ts 内部处理），失败自动回退原图
+async function compressImage(src: string): Promise<string> {
+  try {
+    return await compressImageForUpload(src)
+  } catch {
+    return src
+  }
 }
 
 function chooseImage() {

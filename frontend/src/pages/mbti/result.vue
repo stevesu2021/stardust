@@ -125,6 +125,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { api } from '@/api'
+import { goToTab } from '@/utils/navigation'
 
 const result = ref<any>(null)
 const loading = ref(true)
@@ -163,7 +164,7 @@ function retakeTest() {
 }
 
 function goBack() {
-  uni.switchTab({ url: '/pages/index/index' })
+  goToTab('/pages/index/index')
 }
 </script>
 

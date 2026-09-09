@@ -125,6 +125,7 @@ import DatingMatchModal from '@/components/DatingMatchModal.vue'
 import DailyFortuneCard from '@/components/DailyFortuneCard.vue'
 import SectionTitle from '@/components/section-title/section-title.vue'
 import { zodiacSymbol, dominantElement, activeElements } from '@/utils/astro'
+import { goToTab } from '@/utils/navigation'
 
 interface FeatureItem {
   title: string
@@ -187,7 +188,7 @@ async function calculateAstrology() {
 
 function goToPage(url: string) {
   if (url === '/pages/shop/list') {
-    uni.switchTab({ url })
+    goToTab(url)
   } else if (url === '/pages/dating/matches') {
     showMatchModal.value = true
   } else {

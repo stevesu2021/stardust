@@ -38,6 +38,7 @@
 import { ref } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import { relaunch } from '@/utils/navigation'
 
 const identifier = ref('')
 const password = ref('')
@@ -72,7 +73,7 @@ async function handleLogin() {
 
     // reLaunch：清空页面栈并触发全部页面重新挂载，确保首页/我的等页面的登录状态立即同步
     setTimeout(() => {
-      uni.reLaunch({ url: '/pages/index/index' })
+      relaunch('/pages/index/index')
     }, 600)
   } catch (error: any) {
     console.error('登录错误:', error)
@@ -134,7 +135,7 @@ async function handleWechatLogin() {
     } else {
       uni.showToast({ title: '登录成功', icon: 'success' })
       setTimeout(() => {
-        uni.switchTab({ url: '/pages/index/index' })
+        relaunch('/pages/index/index')
       }, 1000)
     }
   } catch (error: any) {
