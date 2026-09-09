@@ -17,12 +17,12 @@
     <view class="form">
       <view class="form-item">
         <text class="label">手机号/邮箱</text>
-        <input class="input" v-model="identifier" placeholder="请输入手机号或邮箱" />
+        <input class="input" v-model="identifier" placeholder="请输入手机号或邮箱" placeholder-style="color: #9aa3b8" />
       </view>
 
       <view class="form-item">
         <text class="label">密码</text>
-        <input class="input" v-model="password" type="password" placeholder="请输入密码" />
+        <input class="input" v-model="password" type="password" placeholder="请输入密码" placeholder-style="color: #9aa3b8" />
       </view>
 
       <button class="btn" @click="handleLogin" :loading="loading">登录</button>
@@ -226,7 +226,7 @@ function goToRegister() {
     .label {
       display: block;
       font-size: 28rpx;
-      color: #333;
+      color: #c7cde4; // 深色背景上 label 用亮灰，深灰 #333 会看不清
       margin-bottom: 20rpx;
     }
 
@@ -237,7 +237,13 @@ function goToRegister() {
       border-radius: 12rpx;
       padding: 0 30rpx;
       font-size: 28rpx;
+      color: #1a1d29; // 深色页面背景上输入文字必须显式给近黑色，否则继承白色看不见
+      caret-color: #667eea; // 光标高亮可见，可感知移动
       border: 1rpx solid #e5e5e5;
+
+      &:focus {
+        border-color: #667eea;
+      }
     }
   }
 

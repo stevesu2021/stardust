@@ -3,13 +3,13 @@
     <view class="form">
       <view class="form-item">
         <text class="label">昵称</text>
-        <input class="input" v-model="nickname" placeholder="请输入昵称" />
+        <input class="input" v-model="nickname" placeholder="请输入昵称" placeholder-style="color: #9aa3b8" />
       </view>
 
       <view class="form-item">
         <text class="label">匿名昵称</text>
         <view class="anonymous-input-wrapper">
-          <input class="input anonymous-input" v-model="anonymousNickname" placeholder="用于树洞等场景" />
+          <input class="input anonymous-input" v-model="anonymousNickname" placeholder="用于树洞等场景" placeholder-style="color: #9aa3b8" />
           <button class="refresh-btn" @click="refreshAnonymousNickname">🎲</button>
         </view>
         <text class="hint">点击🎲可以随机更换昵称</text>
@@ -17,12 +17,12 @@
 
       <view class="form-item">
         <text class="label">手机号</text>
-        <input class="input" v-model="phone" placeholder="请输入手机号" />
+        <input class="input" v-model="phone" placeholder="请输入手机号" placeholder-style="color: #9aa3b8" />
       </view>
 
       <view class="form-item">
         <text class="label">密码</text>
-        <input class="input" v-model="password" type="password" placeholder="请输入密码" />
+        <input class="input" v-model="password" type="password" placeholder="请输入密码" placeholder-style="color: #9aa3b8" />
       </view>
 
       <view class="form-item">
@@ -302,7 +302,7 @@ async function handleRegister() {
     .label {
       display: block;
       font-size: 28rpx;
-      color: #333;
+      color: #c7cde4; // 深色背景上 label 用亮灰
       margin-bottom: 20rpx;
     }
 
@@ -313,7 +313,13 @@ async function handleRegister() {
       border-radius: 12rpx;
       padding: 0 30rpx;
       font-size: 28rpx;
+      color: #1a1d29; // 白底输入框必须显式给近黑色文字，否则继承主题白色看不见
+      caret-color: #667eea; // 光标高亮可见，可感知移动
       border: 1rpx solid #e5e5e5;
+
+      &:focus {
+        border-color: #667eea;
+      }
     }
 
     .anonymous-input-wrapper {
@@ -355,6 +361,7 @@ async function handleRegister() {
       border-radius: 12rpx;
       padding: 0 30rpx;
       font-size: 28rpx;
+      color: #1a1d29; // 与输入框一致：选中值近黑色清晰可读
       border: 1rpx solid #e5e5e5;
       line-height: 88rpx;
     }
