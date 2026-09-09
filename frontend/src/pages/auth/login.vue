@@ -70,10 +70,10 @@ async function handleLogin() {
 
     uni.showToast({ title: '登录成功', icon: 'success' })
 
-    // 延迟跳转，让用户看到成功提示
+    // reLaunch：清空页面栈并触发全部页面重新挂载，确保首页/我的等页面的登录状态立即同步
     setTimeout(() => {
-      uni.switchTab({ url: '/pages/index/index' })
-    }, 1000)
+      uni.reLaunch({ url: '/pages/index/index' })
+    }, 600)
   } catch (error: any) {
     console.error('登录错误:', error)
 

@@ -1,0 +1,1 @@
+import{Y as n,r as e}from"./index-BR7V8cav.js";const o=n("user",()=>{const n=e(""),o=e(null);return{token:n,userInfo:o,setToken:function(e){n.value=e},setUserInfo:function(n){o.value=n},logout:function(){n.value="",o.value=null}}},{persist:!0});export{o as u};

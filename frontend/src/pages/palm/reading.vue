@@ -201,13 +201,36 @@ const historyLoading = ref(false)
 const showDetail = ref(false)
 const selectedItem = ref<any>(null)
 
+// 压缩图片：手机拍摄的照片普遍 2~8MB，超过服务端上传体积限制会被 nginx 以 413 拒绝，
+// 上传前先等比压到 1280px 宽以内（AI 识别足够用），压缩失败则原样返回
+function compressImage(src: string): Promise<string> {
+  return new Promise((resolve) => {
+    uni.getImageInfo({
+      src,
+      success: (info: any) => {
+        if (!info.width || info.width <= 1280) {
+          resolve(src)
+          return
+        }
+        uni.compressImage({
+          src,
+          quality: 80,
+          success: (res: any) => resolve(res.tempFilePath || src),
+          fail: () => resolve(src)
+        })
+      },
+      fail: () => resolve(src)
+    })
+  })
+}
+
 function chooseImage() {
   uni.chooseImage({
     count: 1,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
-    success: (res: any) => {
-      imageUri.value = res.tempFilePaths[0]
+    success: async (res: any) => {
+      imageUri.value = await compressImage(res.tempFilePaths[0])
       result.value = null
     },
     fail: () => {
@@ -273,6 +296,9 @@ async function analyzePalm() {
         const errorData = JSON.parse(uploadRes.data)
         throw new Error(errorData.message || errorData.error || '分析失败')
       } catch {
+        if (uploadRes.statusCode === 413) {
+          throw new Error('图片过大，请缩小图片后重试')
+        }
         throw new Error(`分析失败 (${uploadRes.statusCode})`)
       }
     }

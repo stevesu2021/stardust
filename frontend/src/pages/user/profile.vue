@@ -93,6 +93,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import { onShow } from '@dcloudio/uni-app'
 import FiveElementsChart from '@/components/FiveElementsChart.vue'
 
 const userStore = useUserStore()
@@ -115,6 +116,14 @@ const isLoggedin = computed(() => {
 })
 
 onMounted(() => {
+  if (isLoggedin.value) {
+    userInfo.value = userStore.userInfo
+  }
+})
+
+onShow(() => {
+  // tab 页会被框架缓存（onMounted 只执行一次），每次显示时必须重新同步 store 里的登录状态，
+  // 否则在登录页登录成功后切回本页仍显示未登录
   if (isLoggedin.value) {
     userInfo.value = userStore.userInfo
   }

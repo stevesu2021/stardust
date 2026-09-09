@@ -570,6 +570,7 @@ async function handleGenerateInterpretation() {
 
   interpreting.value = true
   interpretProgress.value = 0
+  const requestStartedAt = Date.now()
 
   // 启动进度模拟
   const progressInterval = setInterval(() => {
@@ -592,10 +593,20 @@ async function handleGenerateInterpretation() {
     await loadRemainingAttempts()
   } catch (error: any) {
     console.error('[Frontend] API error:', error)
-    uni.showToast({ title: error.message || '生成失败，请稍后重试', icon: 'none' })
-    // 如果是次数限制错误，更新剩余次数
-    if (error.message?.includes('次数已用完')) {
+    // 后端生成约 1-4 分钟，若网关/网络中途断开（504/超时/请求失败），
+    // 后端通常会继续跑完并写库 —— 轮询把结果捞回来，避免用户重试浪费次数
+    const msg = error?.message || ''
+    const likelyTimeout = /504|超时|timeout|请求失败|网络/i.test(msg)
+    if (likelyTimeout && await pollReadingAfterTimeout(requestStartedAt)) {
+      interpretProgress.value = 100
+      uni.showToast({ title: '解读已生成完成', icon: 'success' })
       await loadRemainingAttempts()
+    } else {
+      uni.showToast({ title: msg || '生成失败，请稍后重试', icon: 'none' })
+      // 如果是次数限制错误，更新剩余次数
+      if (msg.includes('次数已用完')) {
+        await loadRemainingAttempts()
+      }
     }
   } finally {
     clearInterval(progressInterval)
@@ -604,6 +615,25 @@ async function handleGenerateInterpretation() {
       interpretProgress.value = 0
     }, 500)
   }
+}
+
+// 断连后轮询解读结果：每 8 秒查一次库，最多等 5 分钟。
+// 只接受 startedAt 之后写入的结果（updatedAt 由数据库自动更新），避免把旧解读当成新结果
+async function pollReadingAfterTimeout(startedAt: number): Promise<boolean> {
+  for (let i = 0; i < 38; i++) {
+    await new Promise((r) => setTimeout(r, 8000))
+    try {
+      const reading: any = await api.astrology.getReading()
+      const fresh = reading?.updatedAt ? new Date(reading.updatedAt).getTime() >= startedAt - 5000 : true
+      if (fresh && reading?.zodiacInterpretation && reading?.baziInterpretation && reading?.klineInterpretation) {
+        readingData.value = reading
+        return true
+      }
+    } catch (e) {
+      // 网络抖动，继续下一轮
+    }
+  }
+  return false
 }
 
 // 加载剩余次数

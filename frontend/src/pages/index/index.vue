@@ -221,6 +221,9 @@ onMounted(() => {
 })
 
 onShow(() => {
+  // 每次页面显示时都从 store 同步登录状态（tab 页会被缓存，onMounted 只执行一次，
+  // 登录/退出后必须在这里刷新，否则首页一直显示旧状态）
+  userInfo.value = userStore.userInfo
   if (fortuneCardRef.value?.refresh) {
     fortuneCardRef.value.refresh()
   }
