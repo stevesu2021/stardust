@@ -55,5 +55,8 @@
   "uniStatistics": {
     "enable": false
   },
+  "h5": {
+    "title": "星契集 - AI占星 · 面相手相解读"
+  },
   "vueVersion": "3"
 }

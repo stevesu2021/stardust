@@ -1,4 +1,5 @@
 import { Controller, Post, Body, UseGuards, Req, Get, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -11,6 +12,8 @@ export class AuthController {
    * POST /api/auth/register
    * 请求体: { nickname, phone, password, gender, birthYear, birthMonth, birthDay, birthHour }
    */
+  // 防撞库/批量注册：同 IP 每分钟最多 3 次
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @Post('register')
   async register(@Body() data: any) {
     try {
@@ -29,6 +32,8 @@ export class AuthController {
    * POST /api/auth/login
    * 请求体: { identifier, password }
    */
+  // 防密码爆破：同 IP 每分钟最多 5 次登录尝试
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('login')
   async login(@Body() data: { identifier: string; password: string }) {
     try {
@@ -50,6 +55,8 @@ export class AuthController {
    * POST /api/auth/wechat/login
    * 请求体: { code, userInfo? }
    */
+  // 防伪造 code 批量刷接口：同 IP 每分钟最多 5 次
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('wechat/login')
   async wechatLogin(@Body() data: { code: string; userInfo?: any }) {
     try {
