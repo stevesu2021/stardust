@@ -39,7 +39,7 @@
             <text class="lucky-label">{{ fortune.luckyNumber }}</text>
           </view>
           <view class="lucky-item" v-if="fortune.luckyDirection">
-            <text class="lucky-icon">➤</text>
+            <text class="lucky-icon">⌖</text>
             <text class="lucky-label">{{ fortune.luckyDirection }}</text>
           </view>
         </view>

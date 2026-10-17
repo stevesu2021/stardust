@@ -1,44 +1,56 @@
 <template>
   <view class="container">
-    <view class="header">
-      <text class="title">虔诚祈祷</text>
-      <text class="subtitle">向神灵表达你的心愿</text>
-    </view>
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
 
-    <view class="form">
+    <view class="content sd-reveal">
+      <!-- 题铭 -->
+      <view class="header sd-reveal-1">
+        <text class="title">虔诚祈祷</text>
+        <text class="subtitle">向神灵表达你的心愿</text>
+      </view>
+
       <!-- 祈祷内容 -->
-      <view class="form-section">
-        <text class="section-title">祈祷内容</text>
-        <textarea
-          class="content-input"
-          v-model="content"
-          placeholder="请输入你的祈祷内容，系统会自动帮你分类..."
-          :maxlength="500"
-          :show-confirm-bar="false"
-        />
+      <view class="form-section sd-reveal-1">
+        <text class="section-title">✦ 祈祷内容</text>
+        <view class="wish-note">
+          <text class="wish-mark">✦</text>
+          <textarea
+            class="content-input"
+            v-model="content"
+            placeholder="请输入你的祈祷内容，系统会自动帮你分类..."
+            placeholder-style="color: #8d95bd"
+            :maxlength="500"
+            :show-confirm-bar="false"
+          />
+        </view>
         <view class="input-footer">
           <text class="char-count">{{ content.length }}/500</text>
-          <view class="classify-btn" @click="handleManualClassify" :class="{ loading: isClassifying }">
-            <text class="classify-icon">{{ isClassifying ? '⏳' : '✓' }}</text>
+          <view class="classify-btn" :class="{ loading: isClassifying }" @click="handleManualClassify">
+            <text class="classify-icon">{{ isClassifying ? '✶' : '✓' }}</text>
             <text class="classify-text">{{ isClassifying ? '分类中...' : '完成分类' }}</text>
           </view>
         </view>
       </view>
 
       <!-- AI 分类结果 -->
-      <view class="form-section" v-if="classifiedCategory">
-        <text class="section-title">智能分类</text>
+      <view class="form-section sd-reveal-2" v-if="classifiedCategory">
+        <text class="section-title">✦ 智能分类</text>
         <view class="category-result">
-          <text class="category-icon">✨</text>
-          <text class="category-name">{{ classifiedCategory.name }}</text>
-          <text class="category-hint">已根据内容自动分类</text>
+          <view class="sd-sigil sd-sigil--sm">
+            <text>✦</text>
+          </view>
+          <view class="category-text">
+            <text class="category-name">{{ classifiedCategory.name }}</text>
+            <text class="category-hint">已根据内容自动分类</text>
+          </view>
         </view>
       </view>
 
       <!-- 选择神职 -->
-      <view class="form-section" v-if="deities.length > 0">
+      <view class="form-section sd-reveal-2" v-if="deities.length > 0">
         <view class="section-header">
-          <text class="section-title">选择祈愿神职</text>
+          <text class="section-title">✦ 选择祈愿神职</text>
           <view class="select-all-btn" @click="toggleSelectAll">
             <text class="select-all-text">{{ isAllSelected ? '取消全选' : '全选' }}</text>
           </view>
@@ -59,15 +71,17 @@
       </view>
 
       <!-- 是否匿名 -->
-      <view class="form-section">
-        <text class="section-title">显示设置</text>
+      <view class="form-section sd-reveal-3">
+        <text class="section-title">✦ 显示设置</text>
         <view class="anonymous-options">
           <view
             class="option-item"
             :class="{ active: isAnonymous }"
             @click="isAnonymous = true"
           >
-            <text class="option-icon">{{ isAnonymous ? '🔒' : '🔓' }}</text>
+            <view class="sd-sigil sd-sigil--sm option-sigil">
+              <text>☽</text>
+            </view>
             <view class="option-content">
               <text class="option-title">匿名祈祷</text>
               <text class="option-desc">只显示匿名昵称</text>
@@ -78,7 +92,9 @@
             :class="{ active: !isAnonymous }"
             @click="isAnonymous = false"
           >
-            <text class="option-icon">{{ !isAnonymous ? '👤' : '👁️' }}</text>
+            <view class="sd-sigil sd-sigil--sm option-sigil">
+              <text>☉</text>
+            </view>
             <view class="option-content">
               <text class="option-title">实名祈祷</text>
               <text class="option-desc">显示您的昵称</text>
@@ -88,9 +104,18 @@
       </view>
 
       <!-- 提交按钮 -->
-      <button class="submit-btn" @click="handleSubmit" :loading="loading" :disabled="!canSubmit">
-        {{ submitButtonText }}
-      </button>
+      <view class="submit-wrap sd-reveal-4">
+        <StardButton
+          variant="gold"
+          size="lg"
+          block
+          :disabled="!canSubmit"
+          :loading="loading"
+          @click="handleSubmit"
+        >
+          {{ submitButtonText }}
+        </StardButton>
+      </view>
     </view>
   </view>
 </template>
@@ -99,6 +124,7 @@
 import { ref, computed } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import StardButton from '@/components/stard-button/stard-button.vue'
 
 const userStore = useUserStore()
 const content = ref('')
@@ -134,14 +160,14 @@ async function handleManualClassify() {
     uni.showToast({ title: '请先输入祈祷内容', icon: 'none' })
     return
   }
-  if (isClassifying.value) return
+  if (isClassifying) return
 
   await classifyContent()
 }
 
 // AI 分类
 async function classifyContent() {
-  if (isClassifying.value) return
+  if (isClassifying) return
 
   isClassifying.value = true
   try {
@@ -215,251 +241,324 @@ async function handleSubmit() {
 
 <style lang="scss" scoped>
 .container {
+  position: relative;
   min-height: 100vh;
-  background: #f5f6fa;
-  padding-bottom: 40rpx;
+  overflow: hidden;
+  background: $sd-bg;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40rpx 30rpx;
   text-align: center;
+  padding: 12rpx 0 32rpx;
 
   .title {
     display: block;
+    font-family: $sd-font-display;
     font-size: 44rpx;
     font-weight: bold;
-    color: white;
+    letter-spacing: 6rpx;
+    @include sd-gold-text();
     margin-bottom: 10rpx;
   }
 
   .subtitle {
     display: block;
-    font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 24rpx;
+    color: $sd-text-3;
+    letter-spacing: 3rpx;
   }
 }
 
-.form {
+.form-section {
+  @include sd-card-surface();
   padding: 30rpx;
+  margin-bottom: 24rpx;
 
-  .form-section {
-    background: white;
-    border-radius: 20rpx;
-    padding: 30rpx;
+  .section-title {
+    display: block;
+    font-family: $sd-font-display;
+    font-size: 30rpx;
+    font-weight: bold;
+    color: $sd-gold-bright;
+    letter-spacing: 3rpx;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20rpx;
 
     .section-title {
-      display: block;
-      font-size: 30rpx;
-      font-weight: bold;
-      color: #333;
-      margin-bottom: 20rpx;
+      margin-bottom: 0;
     }
 
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20rpx;
+    .select-all-btn {
+      padding: 8rpx 24rpx;
+      border-radius: $sd-radius-pill;
+      border: 1rpx solid rgba(232, 195, 106, 0.5);
+      background: rgba(232, 195, 106, 0.08);
 
-      .select-all-btn {
-        padding: 8rpx 20rpx;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20rpx;
-
-        .select-all-text {
-          font-size: 24rpx;
-          color: white;
-        }
+      &:active {
+        opacity: 0.75;
       }
+
+      .select-all-text {
+        font-size: 22rpx;
+        color: $sd-gold;
+        letter-spacing: 2rpx;
+      }
+    }
+  }
+
+  /* 许愿笺：金边虚线心笺 */
+  .wish-note {
+    position: relative;
+    margin-top: 20rpx;
+    background: $sd-bg-raise;
+    border: 2rpx dashed rgba(232, 195, 106, 0.45);
+    border-radius: $sd-radius-lg;
+    padding: 24rpx;
+
+    .wish-mark {
+      position: absolute;
+      top: 14rpx;
+      right: 18rpx;
+      font-size: 26rpx;
+      color: rgba(232, 195, 106, 0.55);
+      line-height: 1;
     }
 
     .content-input {
       width: 100%;
-      min-height: 200rpx;
-      padding: 20rpx;
-      background: #f8f9fa;
-      border-radius: 12rpx;
-      font-size: 30rpx;
-      border: 1rpx solid #e5e5e5;
-      line-height: 1.6;
+      min-height: 220rpx;
+      padding: 0 44rpx 0 0;
+      background: transparent;
+      border: none;
+      font-family: $sd-font-display;
+      font-size: 28rpx;
+      color: $sd-text;
+      line-height: 1.8;
+      box-sizing: border-box;
+    }
+  }
+
+  .input-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10rpx;
+
+    .char-count {
+      font-size: 22rpx;
+      color: $sd-text-3;
     }
 
-    .input-footer {
-      display: flex;
-      justify-content: space-between;
+    .classify-btn {
+      display: inline-flex;
       align-items: center;
-      margin-top: 10rpx;
+      gap: 8rpx;
+      padding: 10rpx 26rpx;
+      border-radius: $sd-radius-pill;
+      background: $sd-gold-grad;
+      box-shadow: 0 4rpx 18rpx rgba(232, 195, 106, 0.26);
+      transition: opacity 0.3s;
 
-      .char-count {
+      &.loading {
+        opacity: 0.65;
+      }
+
+      &:active {
+        transform: scale(0.96);
+        opacity: 0.88;
+      }
+
+      .classify-icon {
         font-size: 24rpx;
-        color: #999;
+        color: $sd-gold-ink;
+        line-height: 1;
       }
 
-      .classify-btn {
-        display: flex;
-        align-items: center;
-        gap: 8rpx;
-        padding: 8rpx 20rpx;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20rpx;
-        transition: all 0.3s;
-
-        &.loading {
-          opacity: 0.7;
-        }
-
-        .classify-icon {
-          font-size: 28rpx;
-        }
-
-        .classify-text {
-          font-size: 24rpx;
-          color: white;
-          font-weight: bold;
-        }
+      .classify-text {
+        font-size: 22rpx;
+        color: $sd-gold-ink;
+        font-weight: bold;
+        letter-spacing: 2rpx;
       }
     }
+  }
 
-    .category-result {
+  /* AI 分类结果 */
+  .category-result {
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    margin-top: 20rpx;
+    padding: 24rpx;
+    border-radius: $sd-radius;
+    background: linear-gradient(135deg, rgba(232, 195, 106, 0.12) 0%, rgba(232, 195, 106, 0.03) 60%), $sd-bg-raise;
+    border: 1rpx solid rgba(232, 195, 106, 0.4);
+
+    .category-text {
       display: flex;
-      align-items: center;
-      gap: 16rpx;
-      padding: 24rpx;
-      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
-      border-radius: 12rpx;
-
-      .category-icon {
-        font-size: 40rpx;
-      }
+      flex-direction: column;
+      gap: 6rpx;
+      min-width: 0;
 
       .category-name {
+        font-family: $sd-font-display;
         font-size: 30rpx;
         font-weight: bold;
-        color: #634200;
+        color: $sd-gold-bright;
+        letter-spacing: 2rpx;
       }
 
       .category-hint {
-        font-size: 24rpx;
-        color: rgba(99, 66, 0, 0.6);
-        margin-left: auto;
+        font-size: 22rpx;
+        color: $sd-text-3;
       }
     }
+  }
 
-    .deities-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16rpx;
-      margin-bottom: 16rpx;
+  /* 神职胶囊 */
+  .deities-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16rpx;
+    margin-top: 20rpx;
+    margin-bottom: 16rpx;
 
-      .deity-item {
-        flex: 0 0 calc(50% - 8rpx);
-        display: flex;
-        align-items: center;
-        gap: 12rpx;
-        padding: 20rpx;
-        background: #f8f9fa;
-        border-radius: 12rpx;
-        border: 2rpx solid transparent;
-        transition: all 0.3s;
+    .deity-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 12rpx;
+      padding: 12rpx 26rpx;
+      border-radius: $sd-radius-pill;
+      background: $sd-bg-raise;
+      border: 1rpx solid $sd-stroke;
+      transition: all 0.2s ease;
 
-        &.selected {
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-          border-color: #667eea;
+      &:active {
+        transform: scale(0.96);
+        opacity: 0.88;
+      }
 
-          .deity-icon {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-          }
+      &.selected {
+        background: $sd-gold-grad;
+        border-color: rgba(245, 217, 139, 0.6);
+        box-shadow: $sd-glow-gold;
+
+        .deity-name {
+          color: $sd-gold-ink;
+          font-weight: bold;
         }
 
         .deity-icon {
-          width: 40rpx;
-          height: 40rpx;
-          border-radius: 50%;
-          background: #e5e5e5;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24rpx;
-          color: #999;
-          flex-shrink: 0;
-        }
-
-        .deity-name {
-          font-size: 26rpx;
-          color: #333;
-          line-height: 1.4;
+          background: rgba(74, 56, 19, 0.14);
+          border-color: rgba(74, 56, 19, 0.32);
+          color: $sd-gold-ink;
         }
       }
-    }
 
-    .selection-hint {
-      display: block;
-      font-size: 24rpx;
-      color: #667eea;
-      text-align: center;
-    }
-
-    .anonymous-options {
-      display: flex;
-      flex-direction: column;
-      gap: 16rpx;
-
-      .option-item {
+      .deity-icon {
+        width: 36rpx;
+        height: 36rpx;
+        border-radius: 50%;
+        border: 1rpx solid $sd-stroke-strong;
         display: flex;
         align-items: center;
-        gap: 16rpx;
-        padding: 24rpx;
-        background: #f8f9fa;
-        border-radius: 12rpx;
-        border: 2rpx solid transparent;
-        transition: all 0.3s;
+        justify-content: center;
+        font-size: 22rpx;
+        color: $sd-gold-bright;
+        flex-shrink: 0;
+        line-height: 1;
+      }
 
-        &.active {
-          background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-          border-color: #667eea;
-        }
-
-        .option-icon {
-          font-size: 36rpx;
-        }
-
-        .option-content {
-          display: flex;
-          flex-direction: column;
-
-          .option-title {
-            font-size: 28rpx;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 4rpx;
-          }
-
-          .option-desc {
-            font-size: 24rpx;
-            color: #999;
-          }
-        }
+      .deity-name {
+        font-size: 26rpx;
+        color: $sd-text-2;
+        line-height: 1.4;
       }
     }
   }
 
-  .submit-btn {
-    width: 100%;
-    height: 88rpx;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12rpx;
-    font-size: 32rpx;
-    font-weight: bold;
-    margin-top: 20rpx;
-    border: none;
+  .selection-hint {
+    display: block;
+    font-size: 22rpx;
+    color: $sd-gold;
+    letter-spacing: 2rpx;
+    text-align: center;
+  }
 
-    &[disabled] {
-      opacity: 0.6;
+  /* 匿名 / 实名 */
+  .anonymous-options {
+    display: flex;
+    flex-direction: column;
+    gap: 16rpx;
+    margin-top: 20rpx;
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 20rpx;
+      padding: 24rpx;
+      background: $sd-bg-raise;
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius;
+      transition: all 0.2s ease;
+
+      &:active {
+        transform: scale(0.98);
+        opacity: 0.9;
+      }
+
+      &.active {
+        background: linear-gradient(160deg, rgba(232, 195, 106, 0.12) 0%, rgba(232, 195, 106, 0.02) 50%), $sd-bg-raise;
+        border-color: rgba(232, 195, 106, 0.5);
+        box-shadow: $sd-glow-gold;
+
+        .option-title {
+          color: $sd-gold-bright;
+        }
+      }
+
+      .option-sigil {
+        opacity: 0.45;
+        transition: opacity 0.2s ease;
+      }
+
+      &.active .option-sigil {
+        opacity: 1;
+      }
+
+      .option-content {
+        display: flex;
+        flex-direction: column;
+        gap: 6rpx;
+
+        .option-title {
+          font-size: 28rpx;
+          font-weight: bold;
+          color: $sd-text;
+        }
+
+        .option-desc {
+          font-size: 22rpx;
+          color: $sd-text-3;
+        }
+      }
     }
   }
+}
+
+.submit-wrap {
+  margin-top: 8rpx;
 }
 </style>

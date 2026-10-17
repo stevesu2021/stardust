@@ -17,6 +17,7 @@ $sd-stroke-strong: rgba(160, 178, 255, 0.26);
 $sd-text: #edeffa;
 $sd-text-2: #a6aecb;
 $sd-text-3: #6b7399;
+$sd-placeholder: #8d95bd; // 输入框提示文字（比 text-3 亮，保证可读）
 
 /* ---- 星光金 ---- */
 $sd-gold: #e8c36a;
@@ -27,6 +28,12 @@ $sd-gold-ink: #4a3813;    // 金底上的深色字
 /* ---- 朱砂（情感功能强调色） ---- */
 $sd-cinnabar: #ed5a6b;
 $sd-cinnabar-deep: #c13a4e;
+$sd-cinnabar-soft: #ff9aa8; // 朱砂面上的浅字
+
+/* ---- 星云紫（辅助强调 / 灵性与智慧） ---- */
+$sd-purple: #8b7ce8;
+$sd-purple-bright: #b0a4f5;
+$sd-purple-deep: #5a4fb8;
 
 /* ---- 五行（暗色适配） ---- */
 $sd-wood: #6fbf8f;
@@ -34,6 +41,12 @@ $sd-fire: #e8735e;
 $sd-earth: #c09a6b;
 $sd-metal: #d9c08a;
 $sd-water: #6a9bd8;
+
+/* ---- 渐变令牌 ---- */
+$sd-gold-grad: linear-gradient(135deg, #f5d98b 0%, #e8c36a 45%, #c9a558 100%);
+$sd-cinnabar-grad: linear-gradient(135deg, #f0788a 0%, #ed5a6b 56%, #c13a4e 100%);
+$sd-purple-grad: linear-gradient(135deg, #b0a4f5 0%, #8b7ce8 52%, #5a4fb8 100%);
+$sd-card-grad: linear-gradient(168deg, #171c3d 0%, #141936 58%, #111631 100%);
 
 /* ---- 字体 ---- */
 $sd-font-display: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
@@ -43,11 +56,17 @@ $sd-font-body: -apple-system, 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans', 'Hel
 $sd-radius-sm: 12rpx;
 $sd-radius: 20rpx;
 $sd-radius-lg: 28rpx;
+$sd-radius-xl: 36rpx;
 $sd-radius-pill: 999rpx;
+
+/* ---- 阴影 ---- */
+$sd-shadow-card: 0 16rpx 40rpx rgba(4, 6, 18, 0.35);
+$sd-shadow-raise: 0 10rpx 30rpx rgba(4, 6, 18, 0.45);
 
 /* ---- 光效 ---- */
 $sd-glow-gold: 0 0 32rpx rgba(232, 195, 106, 0.16);
 $sd-glow-cinnabar: 0 0 32rpx rgba(237, 90, 107, 0.18);
+$sd-glow-purple: 0 0 32rpx rgba(139, 124, 232, 0.2);
 
 /* ---- 印章式金徽 mixin（跨组件复用，勿用 @extend 跨文件） ---- */
 @mixin sd-sigil-base($accent: false) {
@@ -72,3 +91,45 @@ $sd-glow-cinnabar: 0 0 32rpx rgba(237, 90, 107, 0.18);
   }
 }
 
+/* ---- 星夜卡片面 mixin：渐变面 + 描边 + 圆角 + 投影 ---- */
+@mixin sd-card-surface($accent: false) {
+  border-radius: $sd-radius-lg;
+  border: 1rpx solid $sd-stroke;
+  background: $sd-card-grad;
+  box-shadow: $sd-shadow-card;
+
+  @if $accent == gold {
+    border-color: rgba(232, 195, 106, 0.34);
+    background:
+      linear-gradient(160deg, rgba(232, 195, 106, 0.1) 0%, rgba(232, 195, 106, 0.02) 46%),
+      $sd-card-grad;
+  }
+
+  @if $accent == cinnabar {
+    border-color: rgba(237, 90, 107, 0.32);
+    background:
+      linear-gradient(160deg, rgba(237, 90, 107, 0.09) 0%, rgba(237, 90, 107, 0.02) 48%),
+      $sd-card-grad;
+  }
+
+  @if $accent == purple {
+    border-color: rgba(139, 124, 232, 0.34);
+    background:
+      linear-gradient(160deg, rgba(139, 124, 232, 0.1) 0%, rgba(139, 124, 232, 0.02) 48%),
+      $sd-card-grad;
+  }
+}
+
+/* ---- 金字标题 mixin（渐变鎏金字，H5 全效；小程序自动降级为亮金纯色，见 App.vue 说明） ---- */
+@mixin sd-gold-text {
+  color: $sd-gold-bright;
+  font-weight: 600;
+
+  /* #ifdef H5 */
+  background: $sd-gold-grad;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  /* #endif */
+}

@@ -1,51 +1,75 @@
 <template>
   <view class="container">
-    <view class="header">
-      <text class="title">虔诚祈祷</text>
-      <text class="subtitle">向神灵祈愿，寻求庇佑</text>
-    </view>
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
 
-    <view class="list" v-if="list.length > 0">
-      <view class="item" v-for="item in list" :key="item.id">
-        <view class="item-header">
-          <view class="user-info">
-            <image v-if="item.user?.avatar" :src="item.user.avatar" class="avatar" mode="aspectFill" />
-            <view v-else class="avatar-placeholder">{{ item.user?.nickname?.[0] || '匿' }}</view>
-            <text class="nickname">{{ item.isAnonymous ? (item.user?.anonymousNickname || '匿名') : (item.user?.nickname || '匿名') }}</text>
-          </view>
-          <text class="time">{{ formatTime(item.createdAt) }}</text>
-        </view>
+    <view class="content sd-reveal">
+      <!-- 题铭 -->
+      <view class="header sd-reveal-1">
+        <text class="title">虔诚祈祷</text>
+        <text class="subtitle">向神灵祈愿，寻求庇佑</text>
+      </view>
 
-        <view class="item-content">
-          <text class="content">{{ item.content }}</text>
-          <view class="category-info" v-if="item.category">
-            <text class="category-label">分类：</text>
-            <text class="category-value">{{ getCategoryName(item.category) }}</text>
-          </view>
-          <view class="deities-info" v-if="item.deities">
-            <text class="deities-label">祈愿：</text>
-            <text class="deities-value">{{ getDeitiesNames(item.deities) }}</text>
-          </view>
-        </view>
+      <!-- 加载骨架 -->
+      <view v-if="loading && list.length === 0" class="skeleton-area">
+        <LoadingSkeleton :rows="3" height="240rpx" gap="24rpx" />
+      </view>
 
-        <view class="item-footer">
-          <view class="support-section" @click="supportPrayer(item.id)">
-            <text class="support-icon">🕯️</text>
-            <text class="support-count">{{ item.supports || 0 }}</text>
-            <text class="support-text">支持</text>
+      <!-- 祈祷卡片流 -->
+      <view v-else-if="list.length > 0" class="list">
+        <view
+          v-for="(item, index) in list"
+          :key="item.id"
+          class="item"
+          :class="'sd-reveal-' + ((index % 4) + 1)"
+        >
+          <view class="item-header">
+            <view class="user-info">
+              <image v-if="item.user?.avatar" :src="item.user.avatar" class="avatar" mode="aspectFill" />
+              <view v-else class="avatar-placeholder">{{ item.user?.nickname?.[0] || '匿' }}</view>
+              <text class="nickname">{{ item.isAnonymous ? (item.user?.anonymousNickname || '匿名') : (item.user?.nickname || '匿名') }}</text>
+            </view>
+            <text class="time">{{ formatTime(item.createdAt) }}</text>
+          </view>
+
+          <view class="item-content">
+            <text class="content-text">{{ item.content }}</text>
+            <view v-if="item.category" class="category-info">
+              <text class="category-label">分类</text>
+              <text class="category-value">{{ getCategoryName(item.category) }}</text>
+            </view>
+            <view v-if="item.deities" class="deities-info">
+              <text class="deities-label">祈愿：</text>
+              <text class="deities-value">{{ getDeitiesNames(item.deities) }}</text>
+            </view>
+          </view>
+
+          <view class="item-footer">
+            <view class="support-section" @click="supportPrayer(item.id)">
+              <view class="support-sigil">
+                <text>☾</text>
+              </view>
+              <text class="support-count">{{ item.supports || 0 }}</text>
+              <text class="support-text">支持</text>
+            </view>
           </view>
         </view>
       </view>
+
+      <!-- 空态 -->
+      <EmptyState
+        v-else
+        icon="☾"
+        title="还没有祈祷记录"
+        desc="点击下方按钮开始祈愿"
+        action-text="开始祈愿"
+        @action="create"
+      />
     </view>
 
-    <view class="empty" v-else>
-      <text class="empty-icon">🕯️</text>
-      <text class="empty-text">还没有祈祷记录</text>
-      <text class="empty-hint">点击下方按钮开始祈愿</text>
-    </view>
-
+    <!-- 发布祈祷 -->
     <view class="fab" @click="create">
-      <text class="fab-icon">+</text>
+      <text class="fab-icon">☾</text>
     </view>
   </view>
 </template>
@@ -55,9 +79,12 @@ import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import EmptyState from '@/components/empty-state/empty-state.vue'
+import LoadingSkeleton from '@/components/loading-skeleton/loading-skeleton.vue'
 
 const userStore = useUserStore()
 const list = ref<any[]>([])
+const loading = ref(false)
 
 // 分类映射
 const categoryMap: Record<string, string> = {
@@ -82,11 +109,14 @@ onShow(() => {
 })
 
 async function loadList() {
+  loading.value = true
   try {
     const res: any = await api.devoutPrayer.getDevoutList()
     list.value = res
   } catch (error: any) {
     uni.showToast({ title: error.message || '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -129,198 +159,212 @@ function getDeitiesNames(deitiesJson: string) {
 
 <style lang="scss" scoped>
 .container {
+  position: relative;
   min-height: 100vh;
-  background: #f5f6fa;
-  padding-bottom: 160rpx;
+  overflow: hidden;
+  background: $sd-bg;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 200rpx);
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 40rpx 30rpx;
   text-align: center;
+  padding: 12rpx 0 32rpx;
 
   .title {
     display: block;
+    font-family: $sd-font-display;
     font-size: 44rpx;
     font-weight: bold;
-    color: white;
+    letter-spacing: 6rpx;
+    @include sd-gold-text();
     margin-bottom: 10rpx;
   }
 
   .subtitle {
     display: block;
-    font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 24rpx;
+    color: $sd-text-3;
+    letter-spacing: 3rpx;
   }
+}
+
+.skeleton-area {
+  padding: 8rpx 0 16rpx;
 }
 
 .list {
-  padding: 20rpx;
-
-  .item {
-    background: white;
-    border-radius: 20rpx;
-    padding: 30rpx;
-    margin-bottom: 20rpx;
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
-
-    .item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20rpx;
-
-      .user-info {
-        display: flex;
-        align-items: center;
-        gap: 16rpx;
-
-        .avatar {
-          width: 60rpx;
-          height: 60rpx;
-          border-radius: 50%;
-        }
-
-        .avatar-placeholder {
-          width: 60rpx;
-          height: 60rpx;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 28rpx;
-          color: white;
-          font-weight: bold;
-        }
-
-        .nickname {
-          font-size: 28rpx;
-          font-weight: bold;
-          color: #333;
-        }
-      }
-
-      .time {
-        font-size: 24rpx;
-        color: #999;
-      }
-    }
-
-    .item-content {
-      margin-bottom: 20rpx;
-
-      .content {
-        display: block;
-        font-size: 30rpx;
-        color: #333;
-        line-height: 1.6;
-        margin-bottom: 16rpx;
-      }
-
-      .category-info {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10rpx;
-
-        .category-label {
-          font-size: 24rpx;
-          color: #999;
-        }
-
-        .category-value {
-          font-size: 24rpx;
-          color: #667eea;
-        }
-      }
-
-      .deities-info {
-        display: flex;
-        align-items: flex-start;
-
-        .deities-label {
-          font-size: 24rpx;
-          color: #999;
-          flex-shrink: 0;
-        }
-
-        .deities-value {
-          font-size: 24rpx;
-          color: #f39c12;
-          line-height: 1.5;
-        }
-      }
-    }
-
-    .item-footer {
-      border-top: 1rpx solid #f0f0f0;
-      padding-top: 20rpx;
-
-      .support-section {
-        display: flex;
-        align-items: center;
-        gap: 10rpx;
-
-        .support-icon {
-          font-size: 32rpx;
-        }
-
-        .support-count {
-          font-size: 28rpx;
-          color: #f39c12;
-          font-weight: bold;
-        }
-
-        .support-text {
-          font-size: 26rpx;
-          color: #999;
-        }
-      }
-    }
-  }
-}
-
-.empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 40rpx;
+}
 
-  .empty-icon {
-    font-size: 120rpx;
-    margin-bottom: 30rpx;
+.item {
+  @include sd-card-surface();
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+
+  .item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20rpx;
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 16rpx;
+      min-width: 0;
+
+      .avatar {
+        width: 60rpx;
+        height: 60rpx;
+        border-radius: 50%;
+        border: 1rpx solid $sd-stroke-strong;
+      }
+
+      .avatar-placeholder {
+        @include sd-sigil-base();
+        width: 60rpx;
+        height: 60rpx;
+        font-size: 26rpx;
+        flex-shrink: 0;
+      }
+
+      .nickname {
+        font-size: 26rpx;
+        font-weight: bold;
+        color: $sd-text-2;
+        letter-spacing: 1rpx;
+      }
+    }
+
+    .time {
+      font-size: 22rpx;
+      color: $sd-text-3;
+    }
   }
 
-  .empty-text {
-    font-size: 32rpx;
-    color: #333;
-    margin-bottom: 10rpx;
+  .item-content {
+    margin-bottom: 20rpx;
+
+    .content-text {
+      display: block;
+      font-size: 30rpx;
+      color: $sd-text;
+      line-height: 1.7;
+      margin-bottom: 14rpx;
+    }
+
+    .category-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 10rpx;
+      padding: 6rpx 20rpx;
+      border-radius: $sd-radius-pill;
+      background: rgba(139, 124, 232, 0.1);
+      border: 1rpx solid rgba(139, 124, 232, 0.36);
+      margin-bottom: 10rpx;
+
+      .category-label {
+        font-size: 20rpx;
+        color: $sd-text-3;
+        letter-spacing: 2rpx;
+      }
+
+      .category-value {
+        font-size: 22rpx;
+        color: $sd-purple-bright;
+      }
+    }
+
+    .deities-info {
+      display: flex;
+      align-items: baseline;
+      gap: 8rpx;
+
+      .deities-label {
+        font-size: 22rpx;
+        color: $sd-text-3;
+        flex-shrink: 0;
+        letter-spacing: 2rpx;
+      }
+
+      .deities-value {
+        font-size: 24rpx;
+        color: $sd-gold;
+        line-height: 1.5;
+      }
+    }
   }
 
-  .empty-hint {
-    font-size: 26rpx;
-    color: #999;
+  .item-footer {
+    border-top: 1rpx solid $sd-stroke;
+    padding-top: 20rpx;
+
+    .support-section {
+      display: inline-flex;
+      align-items: center;
+      gap: 14rpx;
+      padding: 10rpx 28rpx;
+      border-radius: $sd-radius-pill;
+      background: rgba(237, 90, 107, 0.08);
+      border: 1rpx solid rgba(237, 90, 107, 0.34);
+
+      &:active {
+        transform: scale(0.96);
+        opacity: 0.88;
+      }
+
+      .support-sigil {
+        @include sd-sigil-base(true);
+        width: 44rpx;
+        height: 44rpx;
+        font-size: 24rpx;
+      }
+
+      .support-count {
+        font-size: 28rpx;
+        font-weight: bold;
+        color: $sd-cinnabar-soft;
+      }
+
+      .support-text {
+        font-size: 24rpx;
+        color: $sd-text-3;
+      }
+    }
   }
 }
 
 .fab {
   position: fixed;
   right: 40rpx;
-  bottom: 120rpx;
-  width: 120rpx;
-  height: 120rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  bottom: calc(env(safe-area-inset-bottom) + 120rpx);
+  width: 112rpx;
+  height: 112rpx;
   border-radius: 50%;
+  background: $sd-gold-grad;
+  border: 1rpx solid rgba(245, 217, 139, 0.55);
+  box-shadow: 0 0 44rpx rgba(232, 195, 106, 0.35), 0 16rpx 36rpx rgba(4, 6, 18, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 20rpx rgba(102, 126, 234, 0.4);
   z-index: 100;
 
+  &:active {
+    transform: scale(0.92);
+    opacity: 0.88;
+  }
+
   .fab-icon {
-    font-size: 60rpx;
-    color: white;
+    font-family: $sd-font-display;
+    font-size: 46rpx;
+    color: $sd-gold-ink;
     line-height: 1;
   }
 }

@@ -1,113 +1,122 @@
 <template>
   <view class="container">
-    <!-- 搜索栏 -->
-    <view class="search-bar">
-      <view class="search-input-wrapper">
-        <text class="search-icon">🔍</text>
-        <input
-          class="search-input"
-          v-model="searchKeyword"
-          placeholder="搜索手机号或昵称"
-          :confirm-type="'search'"
-          @confirm="handleSearch"
-          @input="onSearchInput"
-        />
-        <text v-if="searchKeyword" class="clear-icon" @click="clearSearch">✕</text>
-      </view>
-    </view>
+    <!-- 氛围层（星云 + 星野，不可交互） -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
 
-    <!-- 搜索结果 -->
-    <view v-if="isSearching && searchResults.length > 0" class="contacts search-results">
-      <text class="section-title">搜索结果 ({{ searchResults.length }})</text>
-      <view
-        v-for="user in searchResults"
-        :key="user.id"
-        class="contact-card"
-        @click="startChat(user.id)"
-      >
-        <view class="contact-header">
-          <view class="header-left">
-            <view class="avatar-wrapper">
-              <image
-                v-if="user.avatar"
-                :src="user.avatar"
-                class="avatar"
-                mode="aspectFill"
-              />
-              <text v-else class="avatar-placeholder">{{ (user.nickname || '匿').charAt(0) }}</text>
-            </view>
-            <view class="user-info">
-              <text class="nickname">{{ user.nickname || '匿名' }}</text>
-              <text class="phone" v-if="user.phone">{{ user.phone }}</text>
-            </view>
-          </view>
+    <view class="content sd-reveal">
+      <!-- 搜索栏 -->
+      <view class="search-bar">
+        <view class="search-input-wrapper">
+          <text class="search-icon">⌖</text>
+          <input
+            class="search-input"
+            v-model="searchKeyword"
+            placeholder="搜索手机号或昵称"
+            placeholder-style="color: #8d95bd"
+            :confirm-type="'search'"
+            @confirm="handleSearch"
+            @input="onSearchInput"
+          />
+          <text v-if="searchKeyword" class="clear-icon" @click="clearSearch">✕</text>
         </view>
-        <view class="contact-info">
-          <text class="info-item" v-if="user.zodiacSign">星座: {{ user.zodiacSign }}</text>
-          <text class="info-item" v-if="user.gender">性别: {{ user.gender === 'male' ? '男' : '女' }}</text>
-        </view>
-        <button class="chat-btn" @click.stop="startChat(user.id)">
-          <text>发起聊天</text>
-        </button>
       </view>
-    </view>
 
-    <!-- 无搜索结果 -->
-    <view v-if="isSearching && searchResults.length === 0" class="empty-state">
-      <text class="empty-icon">🔍</text>
-      <text class="empty-text">未找到相关用户</text>
-    </view>
-
-    <!-- 聊天联系人列表 -->
-    <view v-if="!isSearching" class="contacts">
-      <text class="section-title" v-if="contacts.length > 0">聊天联系人 ({{ contacts.length }})</text>
-
-      <view
-        v-for="item in contacts"
-        :key="item.user.id"
-        class="contact-card"
-        @click="startChat(item.user.id)"
-      >
-        <view class="contact-header">
-          <view class="header-left">
-            <view class="avatar-wrapper">
-              <image
-                v-if="item.user.avatar"
-                :src="item.user.avatar"
-                class="avatar"
-                mode="aspectFill"
-              />
-              <text v-else class="avatar-placeholder">{{ (item.user.nickname || '匿').charAt(0) }}</text>
-              <!-- 未读消息红点 -->
-              <view v-if="item.unreadCount > 0" class="unread-badge">
-                <text class="unread-count">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</text>
+      <!-- 搜索结果 -->
+      <view v-if="isSearching && searchResults.length > 0" class="contacts search-results">
+        <text class="section-title">搜索结果 ({{ searchResults.length }})</text>
+        <view
+          v-for="user in searchResults"
+          :key="user.id"
+          class="contact-card"
+          @click="startChat(user.id)"
+        >
+          <view class="contact-header">
+            <view class="header-left">
+              <view class="avatar-wrapper">
+                <image
+                  v-if="user.avatar"
+                  :src="user.avatar"
+                  class="avatar"
+                  mode="aspectFill"
+                />
+                <text v-else class="avatar-placeholder">{{ (user.nickname || '匿').charAt(0) }}</text>
+              </view>
+              <view class="user-info">
+                <text class="nickname">{{ user.nickname || '匿名' }}</text>
+                <text class="phone" v-if="user.phone">{{ user.phone }}</text>
               </view>
             </view>
-            <view class="user-info">
-              <text class="nickname">{{ item.user.nickname || '匿名' }}</text>
-              <text class="last-message">{{ formatLastMessage(item.lastMessage) }}</text>
-            </view>
           </view>
-          <text class="message-time">{{ formatTime(item.lastMessage?.createdAt) }}</text>
-        </view>
-        <view class="contact-info">
-          <text class="info-item" v-if="item.user.zodiacSign">星座: {{ item.user.zodiacSign }}</text>
-          <text class="info-item" v-if="item.user.gender">性别: {{ item.user.gender === 'male' ? '男' : '女' }}</text>
-        </view>
-        <button class="chat-btn" @click.stop="startChat(item.user.id)">
-          <text>聊天</text>
-          <!-- 未读消息数显示 -->
-          <view v-if="item.unreadCount > 0" class="btn-badge">
-            <text>{{ item.unreadCount }}</text>
+          <view class="contact-info">
+            <text class="info-item" v-if="user.zodiacSign">星座: {{ user.zodiacSign }}</text>
+            <text class="info-item" v-if="user.gender">性别: {{ user.gender === 'male' ? '男' : '女' }}</text>
           </view>
-        </button>
+          <button class="chat-btn" @click.stop="startChat(user.id)">
+            <text>发起聊天</text>
+          </button>
+        </view>
       </view>
 
-      <!-- 空状态 -->
-      <view v-if="contacts.length === 0" class="empty-state">
-        <text class="empty-icon">💬</text>
-        <text class="empty-text">还没有聊天记录</text>
-        <text class="empty-hint">去首页"缘分匹配"找朋友聊天吧</text>
+      <!-- 无搜索结果 -->
+      <EmptyState
+        v-if="isSearching && searchResults.length === 0"
+        icon="⌖"
+        title="未找到相关用户"
+      />
+
+      <!-- 聊天联系人列表 -->
+      <view v-if="!isSearching" class="contacts">
+        <text class="section-title" v-if="contacts.length > 0">聊天联系人 ({{ contacts.length }})</text>
+
+        <view
+          v-for="item in contacts"
+          :key="item.user.id"
+          class="contact-card"
+          @click="startChat(item.user.id)"
+        >
+          <view class="contact-header">
+            <view class="header-left">
+              <view class="avatar-wrapper">
+                <image
+                  v-if="item.user.avatar"
+                  :src="item.user.avatar"
+                  class="avatar"
+                  mode="aspectFill"
+                />
+                <text v-else class="avatar-placeholder">{{ (item.user.nickname || '匿').charAt(0) }}</text>
+                <!-- 未读消息红点 -->
+                <view v-if="item.unreadCount > 0" class="unread-badge">
+                  <text class="unread-count">{{ item.unreadCount > 99 ? '99+' : item.unreadCount }}</text>
+                </view>
+              </view>
+              <view class="user-info">
+                <text class="nickname">{{ item.user.nickname || '匿名' }}</text>
+                <text class="last-message">{{ formatLastMessage(item.lastMessage) }}</text>
+              </view>
+            </view>
+            <text class="message-time">{{ formatTime(item.lastMessage?.createdAt) }}</text>
+          </view>
+          <view class="contact-info">
+            <text class="info-item" v-if="item.user.zodiacSign">星座: {{ item.user.zodiacSign }}</text>
+            <text class="info-item" v-if="item.user.gender">性别: {{ item.user.gender === 'male' ? '男' : '女' }}</text>
+          </view>
+          <button class="chat-btn" @click.stop="startChat(item.user.id)">
+            <text>聊天</text>
+            <!-- 未读消息数显示 -->
+            <view v-if="item.unreadCount > 0" class="btn-badge">
+              <text>{{ item.unreadCount }}</text>
+            </view>
+          </button>
+        </view>
+
+        <!-- 空状态 -->
+        <EmptyState
+          v-if="contacts.length === 0"
+          icon="✉"
+          title="还没有聊天记录"
+          desc="去首页「缘分匹配」找朋友聊天吧"
+        />
       </view>
     </view>
   </view>
@@ -118,6 +127,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import EmptyState from '@/components/empty-state/empty-state.vue'
 
 const contacts = ref<any[]>([])
 const userStore = useUserStore()
@@ -254,9 +264,17 @@ function startChat(userId: string) {
 
 <style lang="scss" scoped>
 .container {
-  padding: 20rpx;
+  position: relative;
   min-height: 100vh;
+  overflow: hidden;
   background: $sd-bg;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 24rpx 32rpx 40rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
 }
 
 // 搜索栏
@@ -283,7 +301,7 @@ function startChat(userId: string) {
       color: $sd-text;
 
       &::placeholder {
-        color: $sd-text-3;
+        color: $sd-placeholder;
       }
     }
 
@@ -299,8 +317,11 @@ function startChat(userId: string) {
 // 区域标题
 .section-title {
   display: block;
+  font-family: $sd-font-display;
   font-size: 26rpx;
-  color: $sd-text-3;
+  font-weight: 600;
+  color: $sd-gold-bright;
+  letter-spacing: 2rpx;
   margin-bottom: 20rpx;
   padding: 0 10rpx;
 }
@@ -313,6 +334,10 @@ function startChat(userId: string) {
     border-radius: $sd-radius-lg;
     padding: 30rpx;
     margin-bottom: 20rpx;
+
+    &:active {
+      opacity: 0.85;
+    }
 
     .contact-header {
       display: flex;
@@ -426,13 +451,20 @@ function startChat(userId: string) {
       position: relative;
       width: 100%;
       height: 70rpx;
-      background: linear-gradient(135deg, $sd-gold-bright 0%, $sd-gold 52%, #c9a558 100%);
+      background: $sd-gold-grad;
       color: $sd-gold-ink;
       border-radius: $sd-radius-sm;
       font-size: 28rpx;
+      font-weight: bold;
+      box-shadow: 0 6rpx 24rpx rgba(232, 195, 106, 0.28);
       display: flex;
       align-items: center;
       justify-content: center;
+
+      &:active {
+        transform: scale(0.96);
+        opacity: 0.88;
+      }
 
       &::after {
         border: none;
@@ -474,33 +506,6 @@ function startChat(userId: string) {
         display: none;
       }
     }
-  }
-}
-
-// 空状态
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 0;
-
-  .empty-icon {
-    font-size: 100rpx;
-    margin-bottom: 20rpx;
-    opacity: 0.5;
-    color: $sd-gold;
-  }
-
-  .empty-text {
-    font-size: 28rpx;
-    color: $sd-text-2;
-    margin-bottom: 10rpx;
-  }
-
-  .empty-hint {
-    font-size: 24rpx;
-    color: $sd-text-3;
   }
 }
 </style>

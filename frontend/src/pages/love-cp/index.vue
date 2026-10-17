@@ -1,90 +1,94 @@
 <template>
-  <view class="love-cp-container">
-    <!-- 头部背景 -->
-    <view class="header-bg">
-      <view class="header-content">
-        <view class="header-text">
-          <text class="header-title">💕 十二星座恋爱CP</text>
-          <text class="header-subtitle">探索你的星座与最佳配对</text>
+  <view class="container">
+    <!-- 星夜氛围层 -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+    <view class="sd-shooting-star" />
+
+    <view class="content sd-reveal">
+      <!-- 自定义导航头 -->
+      <view class="page-header">
+        <view class="back-sigil" @click="goBack">‹</view>
+        <view class="header-main">
+          <view class="header-title-row">
+            <text class="title-mark">❥</text>
+            <text class="header-title">十二星座恋爱CP</text>
+          </view>
+          <text class="header-subtitle">朱砂为契 · 探索你的星座与最佳配对</text>
         </view>
         <button class="btn-share" @click="handleShare">
-          <text>📤 分享</text>
+          <text>✧ 分享</text>
         </button>
       </view>
+
+      <!-- 星座选择Tabs -->
+      <scroll-view class="zodiac-tabs" scroll-x scroll-with-animation>
+        <view class="tabs-wrapper">
+          <view
+            v-for="(zodiac, index) in zodiacSigns"
+            :key="zodiac.key"
+            class="tab-item"
+            :class="{ active: currentZodiac === zodiac.key }"
+            @click="switchZodiac(zodiac.key)"
+          >
+            <text class="tab-icon">{{ zodiac.icon }}</text>
+            <text class="tab-name">{{ zodiac.name }}</text>
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 最佳配对 -->
+      <StardCard variant="cinnabar" glow class="best-matches-card sd-reveal-1">
+        <view class="card-header">
+          <text class="card-title"><text class="title-mark">❥</text> 谁最适合和{{ currentZodiacName }}谈恋爱</text>
+        </view>
+        <view class="matches-list">
+          <view
+            v-for="(match, index) in currentZodiacData.bestMatches"
+            :key="index"
+            class="match-item"
+            :class="'rank-' + (index + 1)"
+          >
+            <view class="rank-badge">{{ index + 1 }}</view>
+            <view class="match-info">
+              <text class="match-zodiac">{{ match.zodiac }}</text>
+              <text class="match-desc">{{ match.description }}</text>
+            </view>
+          </view>
+        </view>
+      </StardCard>
+
+      <!-- 配合度详情 -->
+      <view class="compatibility-card sd-reveal-2">
+        <view class="card-header">
+          <text class="card-title">✦ {{ currentZodiacName }}与每个星座的爱情配合度</text>
+        </view>
+        <view class="compatibility-list">
+          <view
+            v-for="(item, index) in sortedCompatibility"
+            :key="index"
+            class="compatibility-item"
+            :class="getCompatibilityClass(item.score)"
+          >
+            <view class="compatibility-left">
+              <text class="compatibility-zodiac">{{ item.zodiac }}</text>
+              <text class="compatibility-desc">{{ item.description }}</text>
+            </view>
+            <view class="compatibility-right">
+              <view class="score-bar">
+                <view
+                  class="score-fill"
+                  :style="{ width: item.score + '%' }"
+                ></view>
+              </view>
+              <text class="score-text">
+                {{ item.score }}%
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
     </view>
-
-    <!-- 星座选择Tabs -->
-    <scroll-view class="zodiac-tabs" scroll-x scroll-with-animation>
-      <view class="tabs-wrapper">
-        <view
-          v-for="(zodiac, index) in zodiacSigns"
-          :key="zodiac.key"
-          class="tab-item"
-          :class="{ active: currentZodiac === zodiac.key }"
-          @click="switchZodiac(zodiac.key)"
-        >
-          <text class="tab-icon">{{ zodiac.icon }}</text>
-          <text class="tab-name">{{ zodiac.name }}</text>
-        </view>
-      </view>
-    </scroll-view>
-
-    <!-- 内容区域 -->
-    <scroll-view class="content-scroll" scroll-y>
-      <view class="content-wrapper">
-        <!-- 最佳配对 -->
-        <view class="best-matches-card">
-          <view class="card-header">
-            <text class="card-title">💘 谁最适合和{{ currentZodiacName }}谈恋爱</text>
-          </view>
-          <view class="matches-list">
-            <view
-              v-for="(match, index) in currentZodiacData.bestMatches"
-              :key="index"
-              class="match-item"
-              :class="'rank-' + (index + 1)"
-            >
-              <view class="rank-badge">{{ index + 1 }}</view>
-              <view class="match-info">
-                <text class="match-zodiac">{{ match.zodiac }}</text>
-                <text class="match-desc">{{ match.description }}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-
-        <!-- 配合度详情 -->
-        <view class="compatibility-card">
-          <view class="card-header">
-            <text class="card-title">📊 {{ currentZodiacName }}与每个星座的爱情配合度</text>
-          </view>
-          <view class="compatibility-list">
-            <view
-              v-for="(item, index) in sortedCompatibility"
-              :key="index"
-              class="compatibility-item"
-              :class="getCompatibilityClass(item.score)"
-            >
-              <view class="compatibility-left">
-                <text class="compatibility-zodiac">{{ item.zodiac }}</text>
-                <text class="compatibility-desc">{{ item.description }}</text>
-              </view>
-              <view class="compatibility-right">
-                <view class="score-bar">
-                  <view
-                    class="score-fill"
-                    :style="{ width: item.score + '%', background: getScoreColor(item.score) }"
-                  ></view>
-                </view>
-                <text class="score-text" :style="{ color: getScoreColor(item.score) }">
-                  {{ item.score }}%
-                </text>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-    </scroll-view>
   </view>
 </template>
 
@@ -92,6 +96,7 @@
 import { ref, computed } from 'vue'
 import { share } from '@/utils/wechatShare'
 import { sortCompatibilityByScoreDesc } from '@/utils/love-cp.js'
+import StardCard from '@/components/stard-card/stard-card.vue'
 
 // 星座列表
 const zodiacSigns = [
@@ -419,150 +424,178 @@ async function handleShare() {
     imageUrl: ''
   })
 }
+
+// 自定义导航头：返回上一页
+function goBack() {
+  uni.navigateBack()
+}
 </script>
 
 <style lang="scss" scoped>
-.love-cp-container {
+.container {
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(180deg, #FFE5EC 0%, #FFF5F7 100%);
+  overflow: hidden;
+  background: $sd-bg;
 }
 
-// 头部背景
-.header-bg {
-  background: linear-gradient(135deg, #FF6B9D 0%, #FF8E53 100%);
-  padding: 40rpx 30rpx 50rpx;
+.content {
   position: relative;
-  overflow: hidden;
+  z-index: 1;
+  padding: 0 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 56rpx);
+}
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 200rpx;
-    height: 200rpx;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 50%;
+/* ---- 自定义导航头 ---- */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: calc(env(safe-area-inset-top) + 24rpx) 0 28rpx;
+}
+
+.back-sigil {
+  @include sd-sigil-base();
+  width: 64rpx;
+  height: 64rpx;
+  font-size: 40rpx;
+  line-height: 1;
+
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.88;
   }
+}
+
+.header-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+
+  .title-mark {
+    font-size: 40rpx;
+    line-height: 1;
+    color: $sd-cinnabar;
+  }
+}
+
+.header-title {
+  font-family: $sd-font-display;
+  font-size: 36rpx;
+  font-weight: bold;
+  letter-spacing: 3rpx;
+  line-height: 1.2;
+  @include sd-gold-text();
+}
+
+.header-subtitle {
+  font-size: 22rpx;
+  color: $sd-text-3;
+  letter-spacing: 2rpx;
+}
+
+.btn-share {
+  flex-shrink: 0;
+  padding: 12rpx 26rpx;
+  background: rgba(27, 33, 69, 0.72);
+  border: 1rpx solid rgba(237, 90, 107, 0.38);
+  border-radius: $sd-radius-pill;
+  font-size: 24rpx;
+  font-weight: bold;
+  line-height: 1.6;
+  color: $sd-cinnabar-soft;
 
   &::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: -10%;
-    width: 150rpx;
-    height: 150rpx;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
+    border: none;
   }
 
-  .header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-    z-index: 1;
-  }
-
-  .header-text {
-    flex: 1;
-  }
-
-  .header-title {
-    display: block;
-    font-size: 44rpx;
-    font-weight: bold;
-    color: white;
-    margin-bottom: 12rpx;
-  }
-
-  .header-subtitle {
-    display: block;
-    font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.9);
-  }
-
-  .btn-share {
-    padding: 16rpx 28rpx;
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(10rpx);
-    color: white;
-    border: 2rpx solid rgba(255, 255, 255, 0.4);
-    border-radius: 24rpx;
-    font-size: 26rpx;
-    font-weight: bold;
-    flex-shrink: 0;
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.88;
   }
 }
 
-// 星座Tabs
+/* ---- 星座 Tabs ---- */
 .zodiac-tabs {
-  background: white;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #F0F0F0;
   white-space: nowrap;
+  margin-bottom: 28rpx;
 
   .tabs-wrapper {
     display: inline-flex;
-    padding: 0 10rpx;
+    gap: 16rpx;
+    padding: 4rpx 2rpx;
+  }
 
-    .tab-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 16rpx 20rpx;
-      margin: 0 6rpx;
-      border-radius: 16rpx;
-      transition: all 0.3s;
-      min-width: 100rpx;
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 108rpx;
+    padding: 16rpx 20rpx;
+    border-radius: $sd-radius-pill;
+    background: $sd-bg-elev;
+    border: 1rpx solid $sd-stroke;
+    transition: all 0.25s ease;
 
-      &.active {
-        background: linear-gradient(135deg, #FF6B9D 0%, #FF8E53 100%);
+    &:active {
+      transform: scale(0.96);
+      opacity: 0.88;
+    }
 
-        .tab-icon,
-        .tab-name {
-          color: white;
-        }
-      }
+    &.active {
+      background: $sd-gold-grad;
+      border-color: rgba(232, 195, 106, 0.6);
+      box-shadow: $sd-glow-gold;
 
-      .tab-icon {
-        font-size: 36rpx;
-        color: #666;
-        margin-bottom: 6rpx;
-      }
-
+      .tab-icon,
       .tab-name {
-        font-size: 22rpx;
-        color: #666;
+        color: $sd-gold-ink;
       }
+    }
+
+    .tab-icon {
+      font-size: 40rpx;
+      line-height: 1.2;
+      color: $sd-gold;
+      margin-bottom: 6rpx;
+    }
+
+    .tab-name {
+      font-size: 22rpx;
+      color: $sd-text-2;
+      letter-spacing: 1rpx;
     }
   }
 }
 
-// 内容滚动区域
-.content-scroll {
-  height: calc(100vh - 280rpx);
-}
-
-.content-wrapper {
-  padding: 20rpx;
-}
-
-// 最佳配对卡片
+/* ---- 最佳配对卡（朱砂） ---- */
 .best-matches-card {
-  background: white;
-  border-radius: 24rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 8rpx 30rpx rgba(255, 107, 157, 0.15);
+  padding: 32rpx 30rpx;
+  margin-bottom: 24rpx;
 
   .card-header {
     margin-bottom: 24rpx;
+  }
 
-    .card-title {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #333;
+  .card-title {
+    font-family: $sd-font-display;
+    font-size: 30rpx;
+    font-weight: bold;
+    color: $sd-gold-bright;
+    letter-spacing: 2rpx;
+
+    .title-mark {
+      color: $sd-cinnabar;
+      margin-right: 6rpx;
     }
   }
 
@@ -571,8 +604,9 @@ async function handleShare() {
       display: flex;
       align-items: center;
       padding: 24rpx;
-      background: linear-gradient(135deg, #FFF5F7 0%, #FFE5EC 100%);
-      border-radius: 16rpx;
+      background: rgba(27, 33, 69, 0.5);
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius;
       margin-bottom: 16rpx;
 
       &:last-child {
@@ -580,87 +614,128 @@ async function handleShare() {
       }
 
       &.rank-1 {
-        background: linear-gradient(135deg, #FFD6E8 0%, #FFAFCC 100%);
-        border: 2rpx solid #FF8FB1;
+        border-color: rgba(237, 90, 107, 0.42);
+        background:
+          linear-gradient(160deg, rgba(237, 90, 107, 0.14) 0%, rgba(237, 90, 107, 0.03) 55%),
+          rgba(27, 33, 69, 0.5);
       }
 
       &.rank-2 {
-        background: linear-gradient(135deg, #FFE5EC 0%, #FFD6E8 100%);
+        border-color: rgba(237, 90, 107, 0.24);
       }
 
       .rank-badge {
-        width: 50rpx;
-        height: 50rpx;
+        width: 52rpx;
+        height: 52rpx;
         border-radius: 50%;
-        background: linear-gradient(135deg, #FF6B9D 0%, #FF8E53 100%);
-        color: white;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24rpx;
         font-weight: bold;
-        margin-right: 20rpx;
         flex-shrink: 0;
+        margin-right: 20rpx;
+        background: $sd-cinnabar-grad;
+        color: $sd-cinnabar-soft;
+        box-shadow: $sd-glow-cinnabar;
+      }
+
+      &.rank-2 .rank-badge {
+        background: rgba(237, 90, 107, 0.16);
+        border: 1rpx solid rgba(237, 90, 107, 0.4);
+        color: $sd-cinnabar;
+        box-shadow: none;
+      }
+
+      &.rank-3 .rank-badge {
+        background: $sd-bg-raise;
+        border: 1rpx solid $sd-stroke-strong;
+        color: $sd-text-2;
+        box-shadow: none;
       }
 
       .match-info {
         flex: 1;
+        min-width: 0;
         display: flex;
         flex-direction: column;
         gap: 8rpx;
 
         .match-zodiac {
+          font-family: $sd-font-display;
           font-size: 30rpx;
           font-weight: bold;
-          color: #FF6B9D;
+          color: $sd-cinnabar-soft;
         }
 
         .match-desc {
           font-size: 24rpx;
-          color: #666;
-          line-height: 1.5;
+          color: $sd-text-2;
+          line-height: 1.6;
         }
       }
     }
   }
 }
 
-// 配合度卡片
+/* ---- 配合度排行 ---- */
 .compatibility-card {
-  background: white;
-  border-radius: 24rpx;
-  padding: 30rpx;
-  box-shadow: 0 8rpx 30rpx rgba(255, 107, 157, 0.15);
+  @include sd-card-surface();
+  padding: 32rpx 30rpx;
 
   .card-header {
     margin-bottom: 24rpx;
+  }
 
-    .card-title {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #333;
-    }
+  .card-title {
+    font-family: $sd-font-display;
+    font-size: 30rpx;
+    font-weight: bold;
+    color: $sd-gold-bright;
+    letter-spacing: 2rpx;
   }
 
   .compatibility-list {
     .compatibility-item {
       display: flex;
       align-items: center;
-      padding: 20rpx;
-      background: #F8F9FA;
-      border-radius: 16rpx;
-      margin-bottom: 12rpx;
+      padding: 22rpx 24rpx;
+      background: $sd-bg-raise;
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius;
+      margin-bottom: 14rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
 
       &.excellent {
-        background: linear-gradient(135deg, #FFF0F3 0%, #FFE5EC 100%);
+        border-color: rgba(237, 90, 107, 0.42);
+        background:
+          linear-gradient(160deg, rgba(237, 90, 107, 0.12) 0%, rgba(237, 90, 107, 0.02) 55%),
+          $sd-bg-raise;
+
+        .score-fill {
+          box-shadow: $sd-glow-cinnabar;
+        }
       }
 
       &.good {
-        background: linear-gradient(135deg, #FFF5F7 0%, #FFF0F3 100%);
+        border-color: rgba(232, 195, 106, 0.36);
+      }
+
+      &.fair,
+      &.average {
+        border-color: $sd-stroke-strong;
+      }
+
+      &.poor {
+        opacity: 0.75;
       }
 
       .compatibility-left {
         flex: 1;
+        min-width: 0;
         display: flex;
         flex-direction: column;
         gap: 6rpx;
@@ -668,13 +743,13 @@ async function handleShare() {
         .compatibility-zodiac {
           font-size: 28rpx;
           font-weight: bold;
-          color: #333;
+          color: $sd-text;
         }
 
         .compatibility-desc {
           font-size: 22rpx;
-          color: #999;
-          line-height: 1.4;
+          color: $sd-text-3;
+          line-height: 1.5;
         }
       }
 
@@ -682,26 +757,28 @@ async function handleShare() {
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-        gap: 8rpx;
-        margin-left: 20rpx;
+        gap: 10rpx;
+        margin-left: 24rpx;
 
         .score-bar {
-          width: 100rpx;
-          height: 12rpx;
-          background: #E8E8E8;
-          border-radius: 6rpx;
+          width: 120rpx;
+          height: 10rpx;
+          background: rgba(11, 14, 31, 0.6);
+          border-radius: $sd-radius-pill;
           overflow: hidden;
 
           .score-fill {
             height: 100%;
-            border-radius: 6rpx;
+            background: $sd-cinnabar-grad;
+            border-radius: $sd-radius-pill;
             transition: width 0.5s ease;
           }
         }
 
         .score-text {
-          font-size: 24rpx;
+          font-size: 26rpx;
           font-weight: bold;
+          color: $sd-gold-bright;
         }
       }
     }

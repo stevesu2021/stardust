@@ -1,32 +1,62 @@
 <template>
   <view class="container">
-    <!-- 微信登录区域 -->
-    <view class="wechat-section">
-      <view class="wechat-login-btn" @click="handleWechatLogin">
-        <image class="wechat-icon" src="/static/wechat.svg" mode="aspectFit" />
-        <text>微信登录</text>
+    <!-- 氛围层（星云 + 星野 + 流星，不可交互） -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+    <view class="sd-shooting-star" />
+
+    <view class="content sd-reveal">
+      <!-- 品牌区 -->
+      <view class="brand">
+        <view class="sd-sigil sd-sigil--lg"><text>✦</text></view>
+        <text class="brand-name sd-gold-text">星契集</text>
+        <text class="brand-slogan">以星为契 · 遇见注定</text>
       </view>
+
+      <!-- 账密登录表单 -->
+      <view class="form-card">
+        <view class="form-item">
+          <text class="label">手机号/邮箱</text>
+          <input
+            class="input"
+            v-model="identifier"
+            placeholder="请输入手机号或邮箱"
+            placeholder-style="color: #8d95bd"
+          />
+        </view>
+
+        <view class="form-item">
+          <text class="label">密码</text>
+          <input
+            class="input"
+            v-model="password"
+            type="password"
+            placeholder="请输入密码"
+            placeholder-style="color: #8d95bd"
+          />
+        </view>
+
+        <StardButton variant="gold" size="lg" block :loading="loading" @click="handleLogin">
+          <text>✦ 登录</text>
+        </StardButton>
+      </view>
+
+      <!-- 分隔线 -->
       <view class="divider">
-        <view class="line"></view>
+        <view class="line" />
         <text class="divider-text">或</text>
-        <view class="line"></view>
-      </view>
-    </view>
-
-    <!-- 传统登录表单 -->
-    <view class="form">
-      <view class="form-item">
-        <text class="label">手机号/邮箱</text>
-        <input class="input" v-model="identifier" placeholder="请输入手机号或邮箱" placeholder-style="color: #9aa3b8" />
+        <view class="line" />
       </view>
 
-      <view class="form-item">
-        <text class="label">密码</text>
-        <input class="input" v-model="password" type="password" placeholder="请输入密码" placeholder-style="color: #9aa3b8" />
-      </view>
+      <!-- 微信一键登录 -->
+      <StardButton variant="wechat" block :loading="wechatLoading" @click="handleWechatLogin">
+        <view class="wechat-inner">
+          <image class="wechat-icon" src="/static/wechat.svg" mode="aspectFit" />
+          <text>微信登录</text>
+        </view>
+      </StardButton>
 
-      <button class="btn" @click="handleLogin" :loading="loading">登录</button>
-
+      <!-- 注册跳转 -->
       <view class="links">
         <text class="link" @click="goToRegister">还没有账号？去注册</text>
       </view>
@@ -39,6 +69,7 @@ import { ref } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
 import { relaunch } from '@/utils/navigation'
+import StardButton from '@/components/stard-button/stard-button.vue'
 
 const identifier = ref('')
 const password = ref('')
@@ -165,106 +196,119 @@ function goToRegister() {
 
 <style lang="scss" scoped>
 .container {
-  padding: 60rpx 40rpx;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: $sd-bg;
 }
 
-// 微信登录区域
-.wechat-section {
-  margin-bottom: 60rpx;
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 100rpx 48rpx 48rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 48rpx);
+}
 
-  .wechat-login-btn {
-    width: 100%;
-    height: 96rpx;
-    background: #07C160;
-    color: white;
-    border-radius: 48rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32rpx;
+// 品牌区
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 64rpx;
+
+  .brand-name {
+    font-family: $sd-font-display;
+    font-size: 56rpx;
     font-weight: bold;
-    box-shadow: 0 4rpx 20rpx rgba(7, 193, 96, 0.3);
-    transition: all 0.3s;
-
-    &:active {
-      transform: scale(0.98);
-      background: #06AD56;
-    }
-
-    .wechat-icon {
-      width: 48rpx;
-      height: 48rpx;
-      margin-right: 12rpx;
-    }
+    letter-spacing: 10rpx;
+    line-height: 1.2;
+    margin: 30rpx 0 14rpx;
+    /* 补偿末字字距，保持视觉居中 */
+    padding-left: 10rpx;
   }
 
-  .divider {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 40rpx 0;
-
-    .line {
-      flex: 1;
-      height: 1rpx;
-      background: #e5e5e5;
-    }
-
-    .divider-text {
-      margin: 0 24rpx;
-      font-size: 24rpx;
-      color: #999;
-    }
+  .brand-slogan {
+    font-size: 24rpx;
+    color: $sd-text-3;
+    letter-spacing: 4rpx;
   }
 }
 
-// 传统登录表单
-.form {
+// 账密登录表单卡片
+.form-card {
+  @include sd-card-surface();
+  padding: 40rpx 36rpx;
+  margin-bottom: 40rpx;
+
   .form-item {
-    margin-bottom: 40rpx;
+    margin-bottom: 36rpx;
 
     .label {
       display: block;
-      font-size: 28rpx;
-      color: #c7cde4; // 深色背景上 label 用亮灰，深灰 #333 会看不清
-      margin-bottom: 20rpx;
+      font-size: 26rpx;
+      color: $sd-text-2;
+      letter-spacing: 2rpx;
+      margin-bottom: 14rpx;
     }
 
     .input {
       width: 100%;
       height: 88rpx;
-      background: white;
-      border-radius: 12rpx;
-      padding: 0 30rpx;
+      box-sizing: border-box;
+      background: $sd-bg-raise;
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius;
+      padding: 0 28rpx;
       font-size: 28rpx;
-      color: #1a1d29; // 深色页面背景上输入文字必须显式给近黑色，否则继承白色看不见
-      caret-color: #667eea; // 光标高亮可见，可感知移动
-      border: 1rpx solid #e5e5e5;
-
-      &:focus {
-        border-color: #667eea;
-      }
+      color: $sd-text;
+      caret-color: $sd-gold-bright;
     }
   }
+}
 
-  .btn {
-    width: 100%;
-    height: 88rpx;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12rpx;
-    font-size: 32rpx;
-    margin-top: 40rpx;
+// 分隔线
+.divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 40rpx;
+
+  .line {
+    flex: 1;
+    height: 1rpx;
+    background: $sd-stroke;
   }
 
-  .links {
-    text-align: center;
-    margin-top: 40rpx;
+  .divider-text {
+    margin: 0 24rpx;
+    font-size: 24rpx;
+    color: $sd-text-3;
+    letter-spacing: 2rpx;
+  }
+}
 
-    .link {
-      font-size: 28rpx;
-      color: #667eea;
-    }
+// 微信登录按钮内容
+.wechat-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+
+  .wechat-icon {
+    width: 44rpx;
+    height: 44rpx;
+  }
+}
+
+// 注册跳转
+.links {
+  text-align: center;
+  margin-top: 48rpx;
+
+  .link {
+    font-size: 26rpx;
+    color: $sd-gold;
+    letter-spacing: 2rpx;
   }
 }
 </style>

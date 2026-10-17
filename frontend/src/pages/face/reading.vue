@@ -1,142 +1,154 @@
 <template>
   <view class="container">
-    <!-- 头部切换 -->
-    <view class="tabs">
-      <view class="tab" :class="{ active: activeTab === 'analyze' }" @click="activeTab = 'analyze'">
-        <text>看面相</text>
-      </view>
-      <view class="tab" :class="{ active: activeTab === 'history' }" @click="switchToHistory">
-        <text>历史记录</text>
-      </view>
-    </view>
+    <!-- 氛围层：星云 + 星野 + 流星 -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+    <view class="sd-shooting-star" />
 
-    <!-- 看面相页面 -->
-    <view v-if="activeTab === 'analyze'" class="analyze-view">
-      <!-- 上传区域 -->
-      <view class="upload-section">
-        <view class="upload-box" @click="chooseImage">
-          <image v-if="imageUri" :src="imageUri" class="preview-image" mode="aspectFit" />
-          <view v-else class="upload-placeholder">
-            <text class="upload-icon">📷</text>
-            <text class="upload-text">点击上传面部照片</text>
-            <text class="upload-hint">请清晰拍摄正面面部</text>
-          </view>
+    <view class="content sd-reveal">
+      <!-- 头部切换（胶囊 Tab） -->
+      <view class="tabs">
+        <view class="tab" :class="{ active: activeTab === 'analyze' }" @click="activeTab = 'analyze'">
+          <text>看面相</text>
         </view>
-
-        <view class="tips">
-          <text class="tips-title">拍摄建议：</text>
-          <text class="tips-item">• 保持正面，光线充足</text>
-          <text class="tips-item">• 五官清晰可见</text>
-          <text class="tips-item">• 表情自然放松</text>
+        <view class="tab" :class="{ active: activeTab === 'history' }" @click="switchToHistory">
+          <text>历史记录</text>
         </view>
       </view>
 
-      <button class="btn-analyze" @click="analyzeFace" :loading="analyzing" :disabled="!imageUri">
-        {{ analyzing ? '分析中...' : '开始分析' }}
-      </button>
-
-      <!-- 分析结果 -->
-      <view v-if="result" class="result-section">
-        <view class="result-header">
-          <text class="result-title">🔮 面相分析结果</text>
-          <text class="result-subtitle">基于AI视觉大模型分析</text>
-        </view>
-
-        <view class="result-content">
-          <!-- 额头 -->
-          <view class="result-card forehead">
-            <view class="card-header">
-              <view class="icon-wrapper">
-                <text class="card-icon">🧠</text>
-              </view>
-              <text class="card-title">额头</text>
+      <!-- 看面相页面 -->
+      <view v-if="activeTab === 'analyze'" class="analyze-view">
+        <!-- 上传区域：星夜祭坛 -->
+        <view class="upload-section sd-reveal-1">
+          <view class="upload-box" @click="chooseImage">
+            <image v-if="imageUri" :src="imageUri" class="preview-image" mode="aspectFit" />
+            <view v-else class="upload-placeholder">
+              <view class="sd-sigil sd-sigil--lg upload-sigil"><text>◉</text></view>
+              <text class="upload-text">点击上传面部照片</text>
+              <text class="upload-hint">请清晰拍摄正面面部</text>
             </view>
-            <text class="card-content">{{ result.forehead || '暂无分析' }}</text>
           </view>
 
-          <!-- 眼睛 -->
-          <view class="result-card eyes">
-            <view class="card-header">
-              <view class="icon-wrapper">
-                <text class="card-icon">👁️</text>
-              </view>
-              <text class="card-title">眼睛</text>
-            </view>
-            <text class="card-content">{{ result.eyes || '暂无分析' }}</text>
-          </view>
-
-          <!-- 鼻子 -->
-          <view class="result-card nose">
-            <view class="card-header">
-              <view class="icon-wrapper">
-                <text class="card-icon">👃</text>
-              </view>
-              <text class="card-title">鼻子</text>
-            </view>
-            <text class="card-content">{{ result.nose || '暂无分析' }}</text>
-          </view>
-
-          <!-- 嘴巴 -->
-          <view class="result-card mouth">
-            <view class="card-header">
-              <view class="icon-wrapper">
-                <text class="card-icon">👄</text>
-              </view>
-              <text class="card-title">嘴巴</text>
-            </view>
-            <text class="card-content">{{ result.mouth || '暂无分析' }}</text>
-          </view>
-
-          <!-- 综合运势 -->
-          <view class="result-card overall">
-            <view class="card-header">
-              <view class="icon-wrapper">
-                <text class="card-icon">⭐</text>
-              </view>
-              <text class="card-title">综合运势</text>
-            </view>
-            <text class="card-content">{{ result.overall || '暂无分析' }}</text>
+          <view class="tips">
+            <text class="tips-title">拍摄要诀</text>
+            <text class="tips-item">✧ 保持正面，光线充足</text>
+            <text class="tips-item">✧ 五官清晰可见</text>
+            <text class="tips-item">✧ 表情自然放松</text>
           </view>
         </view>
 
-        <!-- 重新分析按钮 -->
-        <view class="action-buttons">
-          <button class="btn-reanalyze" @click="resetAnalysis">
-            <text>重新拍摄分析</text>
-          </button>
-          <button class="btn-share" @click="shareResult">
-            <text>📤 分享结果</text>
-          </button>
-        </view>
-      </view>
-    </view>
-
-    <!-- 历史记录页面 -->
-    <view v-if="activeTab === 'history'" class="history-view">
-      <view v-if="history.length === 0 && !historyLoading" class="empty-state">
-        <text class="empty-icon">📜</text>
-        <text class="empty-text">暂无历史记录</text>
-        <text class="empty-hint">拍摄面相后，记录会自动保存在这里</text>
-      </view>
-
-      <view v-else-if="historyLoading" class="loading-state">
-        <text>加载中...</text>
-      </view>
-
-      <view v-else class="history-list">
-        <view
-          v-for="item in history"
-          :key="item.id"
-          class="history-item"
-          @click="viewHistoryDetail(item)"
+        <StardButton
+          class="analyze-cta"
+          variant="gold"
+          size="lg"
+          block
+          :loading="analyzing"
+          :disabled="!imageUri"
+          @click="analyzeFace"
         >
-          <image :src="item.imageUrl" class="history-image" mode="aspectFill" />
-          <view class="history-info">
-            <text class="history-date">{{ formatDate(item.createdAt) }}</text>
-            <text class="history-preview">{{ item.overall?.substring(0, 30) || '综合运势分析' }}...</text>
+          {{ analyzing ? '星象推演中...' : '✦ 开始解读' }}
+        </StardButton>
+
+        <!-- 分析结果：古籍卷轴 -->
+        <view v-if="result" class="result-section sd-reveal-2">
+          <StardCard variant="gold" glow class="scroll-card">
+            <view class="scroll-head">
+              <view class="sd-sigil sd-sigil--md scroll-head-sigil"><text>☽</text></view>
+              <text class="scroll-title">面相分析结果</text>
+              <text class="scroll-subtitle">基于AI视觉大模型分析</text>
+            </view>
+
+            <view class="sd-divider" />
+
+            <view class="scroll-section">
+              <view class="section-head">
+                <view class="sd-sigil sd-sigil--sm section-sigil"><text>☉</text></view>
+                <text class="section-title">额头</text>
+              </view>
+              <text class="section-text">{{ result.forehead || '暂无分析' }}</text>
+            </view>
+
+            <view class="sd-divider" />
+
+            <view class="scroll-section">
+              <view class="section-head">
+                <view class="sd-sigil sd-sigil--sm section-sigil"><text>◉</text></view>
+                <text class="section-title">眼睛</text>
+              </view>
+              <text class="section-text">{{ result.eyes || '暂无分析' }}</text>
+            </view>
+
+            <view class="sd-divider" />
+
+            <view class="scroll-section">
+              <view class="section-head">
+                <view class="sd-sigil sd-sigil--sm section-sigil"><text>☶</text></view>
+                <text class="section-title">鼻子</text>
+              </view>
+              <text class="section-text">{{ result.nose || '暂无分析' }}</text>
+            </view>
+
+            <view class="sd-divider" />
+
+            <view class="scroll-section">
+              <view class="section-head">
+                <view class="sd-sigil sd-sigil--sm section-sigil"><text>☱</text></view>
+                <text class="section-title">嘴巴</text>
+              </view>
+              <text class="section-text">{{ result.mouth || '暂无分析' }}</text>
+            </view>
+
+            <view class="sd-divider" />
+
+            <view class="scroll-section">
+              <view class="section-head">
+                <view class="sd-sigil sd-sigil--sm section-sigil"><text>✧</text></view>
+                <text class="section-title">综合运势</text>
+              </view>
+              <text class="section-text">{{ result.overall || '暂无分析' }}</text>
+            </view>
+          </StardCard>
+
+          <!-- 重新分析按钮 -->
+          <view class="action-buttons">
+            <StardButton class="action-btn" variant="ghost" size="md" @click="resetAnalysis">
+              重新拍摄分析
+            </StardButton>
+            <StardButton class="action-btn" variant="outline" size="md" @click="shareResult">
+              ✉ 分享结果
+            </StardButton>
           </view>
-          <view class="history-actions" @click.stop>
-            <text class="btn-delete" @click="deleteHistoryItem(item.id)">删除</text>
+        </view>
+      </view>
+
+      <!-- 历史记录页面 -->
+      <view v-if="activeTab === 'history'" class="history-view">
+        <EmptyState
+          v-if="history.length === 0 && !historyLoading"
+          icon="❖"
+          title="暂无历史记录"
+          desc="拍摄面相后，记录会自动保存在这里"
+        />
+
+        <view v-else-if="historyLoading" class="loading-state">
+          <text class="loading-text">加载中...</text>
+        </view>
+
+        <view v-else class="history-list sd-reveal-1">
+          <view
+            v-for="item in history"
+            :key="item.id"
+            class="history-item"
+            @click="viewHistoryDetail(item)"
+          >
+            <image :src="item.imageUrl" class="history-image" mode="aspectFill" />
+            <view class="history-info">
+              <text class="history-date">{{ formatDate(item.createdAt) }}</text>
+              <text class="history-preview">{{ item.overall?.substring(0, 30) || '综合运势分析' }}...</text>
+            </view>
+            <view class="history-actions" @click.stop>
+              <text class="btn-delete" @click="deleteHistoryItem(item.id)">删除</text>
+            </view>
           </view>
         </view>
       </view>
@@ -154,31 +166,29 @@
         </view>
         <view class="detail-body">
           <view class="detail-section">
-            <text class="detail-label">额头</text>
+            <text class="detail-label">☉ 额头</text>
             <text class="detail-value">{{ selectedItem?.forehead || '暂无分析' }}</text>
           </view>
           <view class="detail-section">
-            <text class="detail-label">眼睛</text>
+            <text class="detail-label">◉ 眼睛</text>
             <text class="detail-value">{{ selectedItem?.eyes || '暂无分析' }}</text>
           </view>
           <view class="detail-section">
-            <text class="detail-label">鼻子</text>
+            <text class="detail-label">☶ 鼻子</text>
             <text class="detail-value">{{ selectedItem?.nose || '暂无分析' }}</text>
           </view>
           <view class="detail-section">
-            <text class="detail-label">嘴巴</text>
+            <text class="detail-label">☱ 嘴巴</text>
             <text class="detail-value">{{ selectedItem?.mouth || '暂无分析' }}</text>
           </view>
           <view class="detail-section">
-            <text class="detail-label">综合运势</text>
+            <text class="detail-label">✧ 综合运势</text>
             <text class="detail-value">{{ selectedItem?.overall || '暂无分析' }}</text>
           </view>
         </view>
         <view class="detail-footer">
           <text class="detail-time">{{ formatDate(selectedItem?.createdAt) }}</text>
-          <button class="btn-share-detail" @click="shareHistoryItem">
-            <text>📤 分享</text>
-          </button>
+          <StardButton variant="outline" size="sm" @click="shareHistoryItem">✉ 分享</StardButton>
         </view>
       </view>
     </view>
@@ -191,6 +201,9 @@ import { useUserStore } from '@/store/user'
 import { api } from '@/api'
 import { share } from '@/utils/wechatShare'
 import { compressImageForUpload } from '@/utils/image'
+import StardCard from '@/components/stard-card/stard-card.vue'
+import StardButton from '@/components/stard-button/stard-button.vue'
+import EmptyState from '@/components/empty-state/empty-state.vue'
 
 const userStore = useUserStore()
 const activeTab = ref('analyze')
@@ -388,286 +401,216 @@ async function shareHistoryItem() {
 
 <style lang="scss" scoped>
 .container {
-  padding: 30rpx;
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f5f7fa 0%, #e8ecf1 100%);
+  overflow: hidden;
+  background: $sd-bg;
 }
 
-// 标签切换
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+/* ---- 胶囊 Tab（§6.7） ---- */
 .tabs {
   display: flex;
-  background: white;
-  border-radius: 16rpx;
+  background: $sd-bg-nav;
+  border: 1rpx solid $sd-stroke;
+  border-radius: $sd-radius-pill;
   padding: 8rpx;
-  margin-bottom: 30rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  margin-bottom: 32rpx;
 
   .tab {
     flex: 1;
     text-align: center;
-    padding: 20rpx;
-    border-radius: 12rpx;
-    font-size: 28rpx;
-    color: #666;
-    transition: all 0.3s;
+    padding: 18rpx 0;
+    border-radius: $sd-radius-pill;
+    font-size: 26rpx;
+    color: $sd-text-2;
+    transition: all 0.25s ease;
 
     &.active {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
+      background: $sd-gold-grad;
+      color: $sd-gold-ink;
       font-weight: bold;
+    }
+
+    &:active {
+      opacity: 0.85;
     }
   }
 }
 
-// 看面相页面
+/* ---- 看面相 ---- */
 .analyze-view {
   .upload-section {
-    margin-bottom: 30rpx;
+    margin-bottom: 32rpx;
+  }
 
-    .upload-box {
-      background: white;
-      border-radius: 24rpx;
-      overflow: hidden;
-      box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.08);
-      margin-bottom: 24rpx;
+  /* 星夜祭坛：虚线金边 + ◉ 徽章 */
+  .upload-box {
+    position: relative;
+    border-radius: $sd-radius-xl;
+    border: 2rpx dashed rgba(232, 195, 106, 0.42);
+    background:
+      radial-gradient(340rpx 240rpx at 50% -10%, rgba(232, 195, 106, 0.1), transparent 70%),
+      $sd-bg-elev;
+    box-shadow: $sd-shadow-card;
+    overflow: hidden;
+    margin-bottom: 24rpx;
 
-      .preview-image {
-        width: 100%;
-        height: 500rpx;
-      }
-
-      .upload-placeholder {
-        height: 500rpx;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-
-        .upload-icon {
-          font-size: 120rpx;
-          margin-bottom: 20rpx;
-        }
-
-        .upload-text {
-          font-size: 32rpx;
-          color: white;
-          font-weight: bold;
-          margin-bottom: 10rpx;
-        }
-
-        .upload-hint {
-          font-size: 24rpx;
-          color: rgba(255, 255, 255, 0.8);
-        }
-      }
+    &:active {
+      opacity: 0.88;
     }
 
-    .tips {
-      background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
-      border-radius: 16rpx;
-      padding: 24rpx;
+    .preview-image {
+      display: block;
+      width: 100%;
+      height: 500rpx;
+    }
 
-      .tips-title {
-        display: block;
-        font-size: 26rpx;
+    .upload-placeholder {
+      height: 500rpx;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upload-sigil {
+      margin-bottom: 26rpx;
+    }
+
+    .upload-text {
+      font-family: $sd-font-display;
+      font-size: 32rpx;
+      font-weight: bold;
+      color: $sd-gold-bright;
+      letter-spacing: 3rpx;
+      margin-bottom: 12rpx;
+    }
+
+    .upload-hint {
+      font-size: 24rpx;
+      color: $sd-text-3;
+      letter-spacing: 1rpx;
+    }
+  }
+
+  .tips {
+    border-radius: $sd-radius;
+    border: 1rpx solid $sd-stroke;
+    background: $sd-bg-elev;
+    padding: 26rpx 28rpx;
+
+    .tips-title {
+      display: block;
+      font-family: $sd-font-display;
+      font-size: 26rpx;
+      font-weight: bold;
+      color: $sd-gold;
+      letter-spacing: 2rpx;
+      margin-bottom: 12rpx;
+    }
+
+    .tips-item {
+      display: block;
+      font-size: 24rpx;
+      color: $sd-text-2;
+      line-height: 40rpx;
+    }
+  }
+
+  .analyze-cta {
+    margin-bottom: 40rpx;
+  }
+
+  /* ---- 解读结果：古籍卷轴 ---- */
+  .result-section {
+    .scroll-card {
+      padding: 40rpx 34rpx 36rpx;
+    }
+
+    .scroll-head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .scroll-head-sigil {
+        margin-bottom: 20rpx;
+      }
+
+      .scroll-title {
+        font-family: $sd-font-display;
+        font-size: 40rpx;
         font-weight: bold;
-        color: #856404;
+        letter-spacing: 4rpx;
+        @include sd-gold-text();
         margin-bottom: 12rpx;
       }
 
-      .tips-item {
-        display: block;
-        font-size: 24rpx;
-        color: #856404;
-        line-height: 38rpx;
-      }
-    }
-  }
-
-  .btn-analyze {
-    width: 100%;
-    height: 96rpx;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    border-radius: 48rpx;
-    font-size: 32rpx;
-    font-weight: bold;
-    margin-bottom: 40rpx;
-    box-shadow: 0 8rpx 25rpx rgba(240, 147, 251, 0.4);
-
-    &[disabled] {
-      background: linear-gradient(135deg, #ccc 0%, #999 100%);
-      box-shadow: none;
-    }
-  }
-
-  .result-section {
-    background: white;
-    border-radius: 20rpx;
-    overflow: hidden;
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
-
-    .result-header {
-      text-align: center;
-      margin-bottom: 30rpx;
-
-      .result-title {
-        display: block;
-        font-size: 40rpx;
-        font-weight: bold;
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 8rpx;
-      }
-
-      .result-subtitle {
-        display: block;
-        font-size: 24rpx;
-        color: #999;
+      .scroll-subtitle {
+        font-size: 22rpx;
+        color: $sd-text-3;
+        letter-spacing: 2rpx;
       }
     }
 
-    .result-content {
-      display: flex;
-      flex-direction: column;
-      gap: 20rpx;
-    }
-
-    .result-card {
-      background: white;
-      border-radius: 20rpx;
-      padding: 30rpx;
-      box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
-      position: relative;
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 6rpx;
-        height: 100%;
-      }
-
-      &.forehead::before {
-        background: linear-gradient(180deg, #9C27B0 0%, #BA68C8 100%);
-      }
-
-      &.eyes::before {
-        background: linear-gradient(180deg, #2196F3 0%, #64B5F6 100%);
-      }
-
-      &.nose::before {
-        background: linear-gradient(180deg, #FF9800 0%, #FFB74D 100%);
-      }
-
-      &.mouth::before {
-        background: linear-gradient(180deg, #E91E63 0%, #EC407A 100%);
-      }
-
-      &.overall::before {
-        background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
-      }
-
-      .card-header {
+    .scroll-section {
+      .section-head {
         display: flex;
         align-items: center;
-        gap: 16rpx;
-        margin-bottom: 16rpx;
-
-        .icon-wrapper {
-          width: 56rpx;
-          height: 56rpx;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-        }
-
-        .card-icon {
-          font-size: 32rpx;
-        }
-
-        .card-title {
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #333;
-        }
+        gap: 18rpx;
+        margin-bottom: 14rpx;
       }
 
-      .card-content {
+      .section-sigil {
+        flex-shrink: 0;
+      }
+
+      .section-title {
+        font-family: $sd-font-display;
+        font-size: 30rpx;
+        font-weight: bold;
+        color: $sd-gold-bright;
+        letter-spacing: 3rpx;
+      }
+
+      .section-text {
         display: block;
-        font-size: 28rpx;
-        color: #555;
-        line-height: 46rpx;
-        padding-left: 72rpx;
+        font-size: 27rpx;
+        color: $sd-text-2;
+        line-height: 1.75;
       }
     }
 
     .action-buttons {
-      margin-top: 30rpx;
+      margin-top: 28rpx;
       display: flex;
       gap: 20rpx;
 
-      .btn-reanalyze {
+      .action-btn {
         flex: 1;
-        height: 88rpx;
-        background: white;
-        color: #f093fb;
-        border: 2rpx solid #f093fb;
-        border-radius: 44rpx;
-        font-size: 28rpx;
-        font-weight: bold;
-      }
-
-      .btn-share {
-        flex: 1;
-        height: 88rpx;
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        color: white;
-        border: none;
-        border-radius: 44rpx;
-        font-size: 28rpx;
-        font-weight: bold;
       }
     }
   }
 }
 
-// 历史记录页面
+/* ---- 历史记录 ---- */
 .history-view {
-  .empty-state {
-    text-align: center;
-    padding: 120rpx 40rpx;
-
-    .empty-icon {
-      display: block;
-      font-size: 120rpx;
-      margin-bottom: 30rpx;
-    }
-
-    .empty-text {
-      display: block;
-      font-size: 32rpx;
-      color: #666;
-      margin-bottom: 16rpx;
-    }
-
-    .empty-hint {
-      display: block;
-      font-size: 24rpx;
-      color: #999;
-    }
-  }
-
   .loading-state {
-    text-align: center;
-    padding: 120rpx 40rpx;
-    color: #999;
+    display: flex;
+    justify-content: center;
+    padding: 120rpx 0;
+
+    .loading-text {
+      font-size: 26rpx;
+      color: $sd-text-3;
+      letter-spacing: 2rpx;
+    }
   }
 
   .history-list {
@@ -679,60 +622,70 @@ async function shareHistoryItem() {
   .history-item {
     display: flex;
     align-items: center;
-    background: white;
-    border-radius: 20rpx;
-    padding: 20rpx;
-    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+    @include sd-card-surface();
+    padding: 22rpx;
+
+    &:active {
+      opacity: 0.85;
+    }
 
     .history-image {
       width: 120rpx;
       height: 120rpx;
-      border-radius: 12rpx;
+      border-radius: $sd-radius-sm;
+      border: 1rpx solid $sd-stroke;
       margin-right: 20rpx;
+      flex-shrink: 0;
     }
 
     .history-info {
       flex: 1;
+      min-width: 0;
 
       .history-date {
         display: block;
-        font-size: 24rpx;
-        color: #999;
+        font-size: 22rpx;
+        color: $sd-text-3;
+        letter-spacing: 1rpx;
         margin-bottom: 8rpx;
       }
 
       .history-preview {
-        display: block;
-        font-size: 26rpx;
-        color: #333;
-        line-height: 40rpx;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        font-size: 25rpx;
+        color: $sd-text-2;
+        line-height: 38rpx;
       }
     }
 
     .history-actions {
       .btn-delete {
         padding: 12rpx 24rpx;
-        background: #ffebee;
-        color: #f44336;
-        border-radius: 20rpx;
-        font-size: 24rpx;
+        border-radius: $sd-radius-pill;
+        border: 1rpx solid rgba(237, 90, 107, 0.4);
+        background: rgba(237, 90, 107, 0.08);
+        color: $sd-cinnabar;
+        font-size: 22rpx;
+
+        &:active {
+          opacity: 0.7;
+        }
       }
     }
   }
 }
 
-// 历史记录详情弹窗
+/* ---- 历史详情弹窗 ---- */
 .detail-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(4, 6, 18, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -741,40 +694,46 @@ async function shareHistoryItem() {
   .detail-content {
     width: 660rpx;
     max-height: 80vh;
-    background: white;
-    border-radius: 24rpx;
-    overflow: hidden;
+    @include sd-card-surface();
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 
     .detail-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 30rpx;
-      border-bottom: 1rpx solid #f0f0f0;
+      padding: 28rpx 30rpx;
+      border-bottom: 1rpx solid $sd-stroke;
 
       .detail-title {
+        font-family: $sd-font-display;
         font-size: 32rpx;
         font-weight: bold;
-        color: #333;
+        color: $sd-gold-bright;
+        letter-spacing: 3rpx;
       }
 
       .detail-close {
-        font-size: 40rpx;
-        color: #999;
+        font-size: 36rpx;
+        line-height: 1;
+        color: $sd-text-3;
         padding: 0 10rpx;
+
+        &:active {
+          opacity: 0.6;
+        }
       }
     }
 
     .detail-image-wrapper {
       padding: 20rpx;
-      background: #f5f7fa;
+      background: $sd-bg-raise;
 
       .detail-image {
         width: 100%;
         height: 400rpx;
-        border-radius: 12rpx;
+        border-radius: $sd-radius-sm;
       }
     }
 
@@ -784,44 +743,41 @@ async function shareHistoryItem() {
       overflow-y: auto;
 
       .detail-section {
-        margin-bottom: 30rpx;
+        margin-bottom: 28rpx;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
 
         .detail-label {
           display: block;
+          font-family: $sd-font-display;
           font-size: 26rpx;
-          color: #f093fb;
           font-weight: bold;
-          margin-bottom: 12rpx;
+          color: $sd-gold;
+          letter-spacing: 2rpx;
+          margin-bottom: 10rpx;
         }
 
         .detail-value {
           display: block;
           font-size: 26rpx;
-          color: #555;
-          line-height: 40rpx;
+          color: $sd-text-2;
+          line-height: 1.75;
         }
       }
     }
 
     .detail-footer {
       padding: 20rpx 30rpx;
-      border-top: 1rpx solid #f0f0f0;
+      border-top: 1rpx solid $sd-stroke;
       display: flex;
       align-items: center;
       justify-content: space-between;
 
       .detail-time {
-        font-size: 24rpx;
-        color: #999;
-      }
-
-      .btn-share-detail {
-        padding: 12rpx 24rpx;
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-        color: white;
-        border: none;
-        border-radius: 20rpx;
-        font-size: 24rpx;
+        font-size: 22rpx;
+        color: $sd-text-3;
       }
     }
   }

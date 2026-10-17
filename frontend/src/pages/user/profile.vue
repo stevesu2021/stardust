@@ -1,15 +1,19 @@
 <template>
   <view class="container">
+    <!-- 氛围层（纯 CSS，不可交互） -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+
     <!-- 未登录状态 -->
     <view v-if="!isLoggedin" class="login-required">
-      <view class="login-icon">👋</view>
+      <view class="login-icon">✦</view>
       <text class="title">欢迎来到星契集</text>
       <text class="subtitle">登录后享受更多个性化服务</text>
 
       <view class="login-options">
         <!-- 微信登录按钮 -->
         <view class="wechat-login-btn" @click="handleWechatLogin">
-          <text class="wechat-icon">💬</text>
+          <text class="wechat-icon">✉</text>
           <text>微信一键登录</text>
         </view>
 
@@ -36,11 +40,11 @@
         <view class="avatar" @click="showAvatarOptions">
           <image v-if="userInfo?.avatar" :src="userInfo.avatar" class="avatar-image" mode="aspectFill" />
           <text v-else class="avatar-text">{{ userInfo?.nickname?.charAt(0) || 'U' }}</text>
-          <view class="avatar-edit-icon">📷</view>
+          <view class="avatar-edit-icon">◉</view>
         </view>
         <text class="nickname">{{ userInfo?.nickname || '未设置' }}</text>
         <text class="phone-number" v-if="userInfo?.phone">{{ userInfo.phone }}</text>
-        <text class="user-id" v-if="userInfo?.wechatOpenId">💬 已绑定微信</text>
+        <text class="user-id" v-if="userInfo?.wechatOpenId">✉ 已绑定微信</text>
       </view>
 
       <view class="info" v-if="userInfo">
@@ -393,6 +397,8 @@ function deleteAvatar() {
 
 <style lang="scss" scoped>
 .container {
+  position: relative;
+  overflow: hidden;
   padding: 40rpx;
   min-height: 100vh;
   background: $sd-bg;
@@ -400,13 +406,17 @@ function deleteAvatar() {
 
 // 未登录状态
 .login-required {
+  position: relative;
+  z-index: 1;
   text-align: center;
   padding-top: 120rpx;
 
   .login-icon {
-    font-size: 120rpx;
-    margin-bottom: 30rpx;
-    color: $sd-gold;
+    @include sd-sigil-base();
+    width: 160rpx;
+    height: 160rpx;
+    font-size: 72rpx;
+    margin: 0 auto 30rpx;
   }
 
   .title {
@@ -436,15 +446,15 @@ function deleteAvatar() {
     .wechat-login-btn {
       width: 100%;
       height: 96rpx;
-      background: #07c160;
-      color: white;
+      background: linear-gradient(135deg, #08c668 0%, #07c160 52%, #06ad56 100%);
+      color: #ffffff;
       border-radius: 48rpx;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 32rpx;
       font-weight: bold;
-      box-shadow: 0 4rpx 20rpx rgba(7, 193, 96, 0.3);
+      box-shadow: 0 6rpx 24rpx rgba(7, 193, 96, 0.28);
       margin-bottom: 30rpx;
 
       &:active {
@@ -504,6 +514,9 @@ function deleteAvatar() {
 
 // 已登录状态
 .logged-in {
+  position: relative;
+  z-index: 1;
+
   .profile {
     text-align: center;
     margin-bottom: 60rpx;
@@ -637,14 +650,14 @@ function deleteAvatar() {
     }
 
     .btn-wechat {
-      background: #07c160;
-      color: white;
+      background: linear-gradient(135deg, #08c668 0%, #07c160 52%, #06ad56 100%);
+      color: #ffffff;
     }
 
     .btn-wechat-unbind {
       background: transparent;
-      color: #ffb056;
-      border: 1rpx solid rgba(255, 152, 0, 0.5);
+      color: $sd-gold;
+      border: 1rpx solid rgba(232, 195, 106, 0.5);
     }
 
     .btn-logout {

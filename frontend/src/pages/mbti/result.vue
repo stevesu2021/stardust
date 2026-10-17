@@ -1,123 +1,139 @@
 <template>
-  <view class="result-page">
-    <view class="header">
-      <text class="title">MBTI 测试结果</text>
-    </view>
+  <view class="container">
+    <!-- 星夜氛围层 -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
 
-    <view v-if="loading" class="loading">
-      <text class="loading-text">加载中...</text>
-    </view>
-
-    <view v-else-if="result" class="result-container">
-      <!-- MBTI 类型展示 -->
-      <view class="type-card">
-        <text class="type-badge">{{ result.mbtiType }}</text>
-        <text class="type-name">{{ result.description?.name || '未知类型' }}</text>
-        <text class="type-desc">{{ result.description?.description || '' }}</text>
+    <view class="content sd-reveal">
+      <!-- 自定义导航头 -->
+      <view class="page-header">
+        <view class="back-sigil" @click="goBack">‹</view>
+        <text class="header-title">MBTI 测试结果</text>
       </view>
 
-      <!-- 维度得分 -->
-      <view class="scores-card">
-        <text class="card-title">维度得分</text>
+      <view v-if="loading" class="loading">
+        <text class="loading-text">加载中...</text>
+      </view>
 
-        <view class="score-item">
-          <view class="score-label">
-            <text :class="{ active: result.eScore >= result.iScore }">E 外向</text>
-            <text class="score-count">{{ result.eScore }}</text>
+      <view v-else-if="result" class="sd-reveal-1">
+        <!-- MBTI 类型展示 -->
+        <view class="type-card">
+          <view class="sd-sigil sd-sigil--purple sd-sigil--lg type-sigil">
+            <text>◈</text>
           </view>
-          <view class="score-bar">
-            <view class="bar-left" :style="{ width: (result.eScore / (result.eScore + result.iScore) * 100) + '%' }"></view>
-            <view class="bar-right" :style="{ width: (result.iScore / (result.eScore + result.iScore) * 100) + '%' }"></view>
+          <text class="type-badge sd-gold-text">{{ result.mbtiType }}</text>
+          <text class="type-name">{{ result.description?.name || '未知类型' }}</text>
+          <view class="sd-divider" />
+          <text class="type-desc">{{ result.description?.description || '' }}</text>
+        </view>
+
+        <!-- 维度得分 -->
+        <view class="scores-card">
+          <text class="card-title">✦ 维度得分</text>
+
+          <view class="score-item">
+            <view class="score-label">
+              <text :class="{ active: result.eScore >= result.iScore }">E 外向</text>
+              <text class="score-count">{{ result.eScore }}</text>
+            </view>
+            <view class="score-bar">
+              <view class="bar-left" :style="{ width: (result.eScore / (result.eScore + result.iScore) * 100) + '%' }"></view>
+              <view class="bar-right" :style="{ width: (result.iScore / (result.eScore + result.iScore) * 100) + '%' }"></view>
+            </view>
+            <view class="score-label">
+              <text :class="{ active: result.iScore > result.eScore }">I 内向</text>
+              <text class="score-count">{{ result.iScore }}</text>
+            </view>
           </view>
-          <view class="score-label">
-            <text :class="{ active: result.iScore > result.eScore }">I 内向</text>
-            <text class="score-count">{{ result.iScore }}</text>
+
+          <view class="score-item">
+            <view class="score-label">
+              <text :class="{ active: result.sScore >= result.nScore }">S 实感</text>
+              <text class="score-count">{{ result.sScore }}</text>
+            </view>
+            <view class="score-bar">
+              <view class="bar-left" :style="{ width: (result.sScore / (result.sScore + result.nScore) * 100) + '%' }"></view>
+              <view class="bar-right" :style="{ width: (result.nScore / (result.sScore + result.nScore) * 100) + '%' }"></view>
+            </view>
+            <view class="score-label">
+              <text :class="{ active: result.nScore > result.sScore }">N 直觉</text>
+              <text class="score-count">{{ result.nScore }}</text>
+            </view>
+          </view>
+
+          <view class="score-item">
+            <view class="score-label">
+              <text :class="{ active: result.tScore >= result.fScore }">T 思考</text>
+              <text class="score-count">{{ result.tScore }}</text>
+            </view>
+            <view class="score-bar">
+              <view class="bar-left" :style="{ width: (result.tScore / (result.tScore + result.fScore) * 100) + '%' }"></view>
+              <view class="bar-right" :style="{ width: (result.fScore / (result.tScore + result.fScore) * 100) + '%' }"></view>
+            </view>
+            <view class="score-label">
+              <text :class="{ active: result.fScore > result.tScore }">F 情感</text>
+              <text class="score-count">{{ result.fScore }}</text>
+            </view>
+          </view>
+
+          <view class="score-item">
+            <view class="score-label">
+              <text :class="{ active: result.jScore >= result.pScore }">J 判断</text>
+              <text class="score-count">{{ result.jScore }}</text>
+            </view>
+            <view class="score-bar">
+              <view class="bar-left" :style="{ width: (result.jScore / (result.jScore + result.pScore) * 100) + '%' }"></view>
+              <view class="bar-right" :style="{ width: (result.pScore / (result.jScore + result.pScore) * 100) + '%' }"></view>
+            </view>
+            <view class="score-label">
+              <text :class="{ active: result.pScore > result.jScore }">P 感知</text>
+              <text class="score-count">{{ result.pScore }}</text>
+            </view>
           </view>
         </view>
 
-        <view class="score-item">
-          <view class="score-label">
-            <text :class="{ active: result.sScore >= result.nScore }">S 实感</text>
-            <text class="score-count">{{ result.sScore }}</text>
-          </view>
-          <view class="score-bar">
-            <view class="bar-left" :style="{ width: (result.sScore / (result.sScore + result.nScore) * 100) + '%' }"></view>
-            <view class="bar-right" :style="{ width: (result.nScore / (result.sScore + result.nScore) * 100) + '%' }"></view>
-          </view>
-          <view class="score-label">
-            <text :class="{ active: result.nScore > result.sScore }">N 直觉</text>
-            <text class="score-count">{{ result.nScore }}</text>
+        <!-- 特质标签 -->
+        <view class="traits-card" v-if="result.description?.traits?.length">
+          <text class="card-title">✦ 性格特质</text>
+          <view class="traits-list">
+            <text class="sd-chip is-purple" v-for="(trait, index) in result.description.traits" :key="index">
+              {{ trait }}
+            </text>
           </view>
         </view>
 
-        <view class="score-item">
-          <view class="score-label">
-            <text :class="{ active: result.tScore >= result.fScore }">T 思考</text>
-            <text class="score-count">{{ result.tScore }}</text>
-          </view>
-          <view class="score-bar">
-            <view class="bar-left" :style="{ width: (result.tScore / (result.tScore + result.fScore) * 100) + '%' }"></view>
-            <view class="bar-right" :style="{ width: (result.fScore / (result.tScore + result.fScore) * 100) + '%' }"></view>
-          </view>
-          <view class="score-label">
-            <text :class="{ active: result.fScore > result.tScore }">F 情感</text>
-            <text class="score-count">{{ result.fScore }}</text>
+        <!-- 适合职业 -->
+        <view class="career-card" v-if="result.description?.career?.length">
+          <text class="card-title">✦ 适合职业</text>
+          <view class="career-list">
+            <text class="sd-chip is-gold" v-for="(career, index) in result.description.career" :key="index">
+              {{ career }}
+            </text>
           </view>
         </view>
 
-        <view class="score-item">
-          <view class="score-label">
-            <text :class="{ active: result.jScore >= result.pScore }">J 判断</text>
-            <text class="score-count">{{ result.jScore }}</text>
-          </view>
-          <view class="score-bar">
-            <view class="bar-left" :style="{ width: (result.jScore / (result.jScore + result.pScore) * 100) + '%' }"></view>
-            <view class="bar-right" :style="{ width: (result.pScore / (result.jScore + result.pScore) * 100) + '%' }"></view>
-          </view>
-          <view class="score-label">
-            <text :class="{ active: result.pScore > result.jScore }">P 感知</text>
-            <text class="score-count">{{ result.pScore }}</text>
-          </view>
+        <!-- 感情描述 -->
+        <view class="relationship-card" v-if="result.description?.relationship">
+          <text class="card-title"><text class="title-mark">❥</text> 感情观</text>
+          <text class="relationship-text">{{ result.description.relationship }}</text>
+        </view>
+
+        <!-- 重新测试按钮 -->
+        <view class="actions">
+          <button class="btn btn-primary" @click="retakeTest">重新测试</button>
+          <button class="btn btn-secondary" @click="goBack">返回首页</button>
         </view>
       </view>
 
-      <!-- 特质标签 -->
-      <view class="traits-card" v-if="result.description?.traits?.length">
-        <text class="card-title">性格特质</text>
-        <view class="traits-list">
-          <text class="trait-tag" v-for="(trait, index) in result.description.traits" :key="index">
-            {{ trait }}
-          </text>
-        </view>
-      </view>
-
-      <!-- 适合职业 -->
-      <view class="career-card" v-if="result.description?.career?.length">
-        <text class="card-title">适合职业</text>
-        <view class="career-list">
-          <text class="career-item" v-for="(career, index) in result.description.career" :key="index">
-            {{ career }}
-          </text>
-        </view>
-      </view>
-
-      <!-- 感情描述 -->
-      <view class="relationship-card" v-if="result.description?.relationship">
-        <text class="card-title">感情观</text>
-        <text class="relationship-text">{{ result.description.relationship }}</text>
-      </view>
-
-      <!-- 重新测试按钮 -->
-      <view class="actions">
-        <button class="btn btn-primary" @click="retakeTest">重新测试</button>
-        <button class="btn btn-secondary" @click="goBack">返回首页</button>
-      </view>
-    </view>
-
-    <view v-else class="empty">
-      <text class="empty-icon">📋</text>
-      <text class="empty-text">还没有测试记录</text>
-      <button class="btn btn-primary" @click="startTest">开始测试</button>
+      <!-- 无记录空态 -->
+      <EmptyState
+        v-else
+        icon="❖"
+        title="还没有测试记录"
+        desc="完成十六型人格问答，解读你的星象人格"
+        action-text="开始测试"
+        @action="startTest"
+      />
     </view>
   </view>
 </template>
@@ -126,6 +142,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/api'
 import { goToTab } from '@/utils/navigation'
+import EmptyState from '@/components/empty-state/empty-state.vue'
 
 const result = ref<any>(null)
 const loading = ref(true)
@@ -169,25 +186,50 @@ function goBack() {
 </script>
 
 <style lang="scss" scoped>
-.result-page {
+.container {
+  position: relative;
   min-height: 100vh;
-  background: #f5f6fa;
-  padding: 40rpx;
-  padding-bottom: 160rpx;
+  overflow: hidden;
+  background: $sd-bg;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 40rpx;
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 0 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 56rpx);
+}
 
-  .title {
-    display: block;
-    font-size: 44rpx;
-    font-weight: bold;
-    color: #333;
+/* ---- 自定义导航头 ---- */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  padding: calc(env(safe-area-inset-top) + 24rpx) 0 28rpx;
+}
+
+.back-sigil {
+  @include sd-sigil-base();
+  width: 64rpx;
+  height: 64rpx;
+  font-size: 40rpx;
+  line-height: 1;
+
+  &:active {
+    transform: scale(0.96);
+    opacity: 0.88;
   }
 }
 
+.header-title {
+  font-family: $sd-font-display;
+  font-size: 36rpx;
+  font-weight: bold;
+  letter-spacing: 3rpx;
+  @include sd-gold-text();
+}
+
+/* ---- 加载 ---- */
 .loading {
   display: flex;
   justify-content: center;
@@ -196,83 +238,79 @@ function goBack() {
 
   .loading-text {
     font-size: 28rpx;
-    color: #999;
+    color: $sd-text-3;
+    letter-spacing: 2rpx;
   }
 }
 
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 40rpx;
-
-  .empty-icon {
-    font-size: 120rpx;
-    margin-bottom: 30rpx;
-  }
-
-  .empty-text {
-    font-size: 32rpx;
-    color: #666;
-    margin-bottom: 40rpx;
-  }
-}
-
+/* ---- 类型主卡：大字衬线 + 鎏金 ---- */
 .type-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20rpx;
-  padding: 60rpx 40rpx;
+  @include sd-card-surface(purple);
+  padding: 48rpx 36rpx 44rpx;
   text-align: center;
-  margin-bottom: 30rpx;
-  box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
+  margin-bottom: 28rpx;
+
+  .type-sigil {
+    margin: 0 auto 22rpx;
+  }
 
   .type-badge {
-    display: inline-block;
-    font-size: 72rpx;
+    display: block;
+    font-family: $sd-font-display;
+    font-size: 88rpx;
     font-weight: bold;
-    color: white;
-    margin-bottom: 20rpx;
-    text-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+    letter-spacing: 8rpx;
+    line-height: 1.15;
+    margin-bottom: 14rpx;
   }
 
   .type-name {
     display: block;
-    font-size: 36rpx;
+    font-family: $sd-font-display;
+    font-size: 34rpx;
     font-weight: bold;
-    color: white;
-    margin-bottom: 16rpx;
+    color: $sd-text;
+    letter-spacing: 2rpx;
+    margin-bottom: 4rpx;
   }
 
   .type-desc {
     display: block;
     font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.6;
+    color: $sd-text-2;
+    line-height: 1.8;
+    text-align: justify;
   }
 }
 
+/* ---- 古籍卷轴式段落卡 ---- */
 .scores-card,
 .traits-card,
 .career-card,
 .relationship-card {
-  background: white;
-  border-radius: 20rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  @include sd-card-surface();
+  padding: 34rpx 30rpx;
+  margin-bottom: 24rpx;
 
   .card-title {
     display: block;
+    font-family: $sd-font-display;
     font-size: 30rpx;
     font-weight: bold;
-    color: #333;
-    margin-bottom: 24rpx;
+    color: $sd-gold-bright;
+    letter-spacing: 3rpx;
+    margin-bottom: 26rpx;
+
+    .title-mark {
+      color: $sd-cinnabar;
+      margin-right: 6rpx;
+    }
   }
 }
 
+/* ---- 维度得分：紫 / 金双渐变 ---- */
 .score-item {
-  margin-bottom: 24rpx;
+  margin-bottom: 28rpx;
 
   &:last-child {
     margin-bottom: 0;
@@ -281,100 +319,98 @@ function goBack() {
   .score-label {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8rpx;
+    align-items: center;
+    margin-bottom: 12rpx;
 
     text {
       font-size: 24rpx;
-      color: #666;
-      transition: all 0.3s;
+      color: $sd-text-3;
+      transition: color 0.3s;
 
       &.active {
-        color: #667eea;
+        color: $sd-purple-bright;
         font-weight: bold;
       }
     }
 
     .score-count {
+      margin-left: 10rpx;
       font-size: 22rpx;
-      color: #999;
+      font-weight: bold;
+      color: $sd-gold-bright;
     }
   }
 
   .score-bar {
     display: flex;
     height: 12rpx;
-    border-radius: 6rpx;
+    background: $sd-bg-raise;
+    border-radius: $sd-radius-pill;
     overflow: hidden;
 
     .bar-left {
-      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      background: $sd-purple-grad;
+      box-shadow: $sd-glow-purple;
       transition: width 0.5s;
     }
 
     .bar-right {
-      background: #e5e5e5;
+      background: $sd-gold-grad;
+      box-shadow: $sd-glow-gold;
       transition: width 0.5s;
     }
   }
 }
 
-.traits-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-
-  .trait-tag {
-    padding: 12rpx 24rpx;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-    border-radius: 24rpx;
-    font-size: 24rpx;
-    color: #667eea;
-  }
-}
-
+/* ---- 标签列表 ---- */
+.traits-list,
 .career-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
-
-  .career-item {
-    padding: 16rpx 28rpx;
-    background: #f8f9fa;
-    border-radius: 12rpx;
-    font-size: 26rpx;
-    color: #333;
-  }
+  gap: 14rpx;
 }
 
+/* ---- 感情观段落 ---- */
 .relationship-text {
   display: block;
-  font-size: 28rpx;
-  color: #666;
+  font-size: 27rpx;
+  color: $sd-text-2;
   line-height: 1.8;
+  text-align: justify;
 }
 
+/* ---- 操作按钮 ---- */
 .actions {
   display: flex;
   flex-direction: column;
   gap: 20rpx;
-  margin-top: 20rpx;
+  margin-top: 12rpx;
 
   .btn {
     height: 88rpx;
-    border-radius: 16rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $sd-radius-pill;
     font-size: 30rpx;
     font-weight: bold;
     border: none;
+    margin: 0;
+
+    &::after {
+      border: none;
+    }
 
     &.btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: $sd-purple-grad;
+      color: $sd-text;
+      box-shadow: $sd-glow-purple;
     }
 
     &.btn-secondary {
-      background: white;
-      color: #667eea;
-      border: 2rpx solid #667eea;
+      background: $sd-bg-raise;
+      color: $sd-text-2;
+      border: 1rpx solid $sd-stroke;
     }
   }
 }

@@ -1,385 +1,443 @@
 <template>
   <view class="container">
-    <!-- 计算按钮 -->
-    <view class="action-bar">
-      <button class="btn-calculate" @click="handleCalculate" :loading="calculating">
-        <text v-if="!calculating">✨ 重新计算星盘</text>
-        <text v-else>计算中...</text>
-      </button>
-      <view class="btn-interpret-wrapper">
-        <button class="btn-interpret" @click="handleGenerateInterpretation" :disabled="!hasBasicData || interpreting || remainingAttempts <= 0">
-          <text v-if="!interpreting">{{ remainingAttempts > 0 ? '🔮 生成AI解读' : '🔮 今日次数已用完' }}</text>
-          <text v-else>解读中... {{ formatProgress() }}%</text>
-        </button>
-        <view v-if="interpreting" class="progress-bar">
-          <view class="progress-fill" :style="{ width: `${interpretProgress}%` }"></view>
-        </view>
-      </view>
-      <button class="btn-share" @click="handleShare" :disabled="!hasBasicData">
-        <text>📤 分享</text>
-      </button>
-    </view>
+    <!-- 氛围层：星云 + 星野 + 流星（不可交互） -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+    <view class="sd-shooting-star" />
 
-    <!-- Tab 切换 -->
-    <view class="tabs" v-if="hasBasicData">
-      <view
-        class="tab-item"
-        :class="{ active: currentTab === 'zodiac' }"
-        @click="currentTab = 'zodiac'"
-      >
-        <text class="tab-icon">⭐</text>
-        <text class="tab-text">星座</text>
-      </view>
-      <view
-        class="tab-item"
-        :class="{ active: currentTab === 'bazi' }"
-        @click="currentTab = 'bazi'"
-      >
-        <text class="tab-icon">☯️</text>
-        <text class="tab-text">八字</text>
-      </view>
-      <view
-        class="tab-item"
-        :class="{ active: currentTab === 'kline' }"
-        @click="currentTab = 'kline'"
-      >
-        <text class="tab-icon">📈</text>
-        <text class="tab-text">人生K线</text>
-      </view>
-    </view>
+    <view class="content sd-reveal">
+      <!-- 操作区 -->
+      <view class="action-panel sd-reveal-1">
+        <!-- 主 CTA：生成AI解读 -->
+        <StardButton
+          variant="gold"
+          size="lg"
+          block
+          :loading="interpreting"
+          :disabled="!hasBasicData || interpreting || remainingAttempts <= 0"
+          @click="handleGenerateInterpretation"
+        >
+          <text>{{ interpreting ? `解读中 ${formatProgress()}%` : remainingAttempts > 0 ? '✦ 生成AI解读' : '✦ 今日次数已用完' }}</text>
+        </StardButton>
 
-    <!-- 星座 Tab -->
-    <view class="tab-content" v-if="currentTab === 'zodiac' && hasBasicData">
-      <!-- 星座基础信息卡片 -->
-      <view class="card zodiac-card">
-        <view class="card-header">
-          <text class="card-icon">🌟</text>
-          <text class="card-title">{{ zodiacSign }}</text>
+        <!-- 解读进度条 -->
+        <view v-if="interpreting" class="progress-track">
+          <view class="progress-fill" :style="{ width: `${interpretProgress}%` }" />
         </view>
-        <view class="zodiac-info">
-          <view class="info-row">
-            <text class="info-label">农历生日</text>
-            <text class="info-value">{{ lunarDate }}</text>
+
+        <!-- 今日次数 -->
+        <view class="attempts-row">
+          <view class="sd-chip is-gold">
+            <text>今日剩余 ✧ {{ remainingAttempts }} / {{ totalAttempts }}</text>
           </view>
-          <view class="info-row">
-            <text class="info-label">幸运元素</text>
-            <text class="info-value">{{ luckyElement }}</text>
+          <view v-if="usedAttempts > 0" class="sd-chip">
+            <text>已解读 ✶ {{ usedAttempts }}</text>
+          </view>
+        </view>
+
+        <!-- 副操作：重新计算 / 分享 -->
+        <view class="sub-actions">
+          <view class="sub-action-item">
+            <StardButton variant="ghost" block :loading="calculating" @click="handleCalculate">
+              <text>{{ calculating ? '计算中' : '☉ 重新计算星盘' }}</text>
+            </StardButton>
+          </view>
+          <view class="sub-action-item">
+            <StardButton variant="outline" block :disabled="!hasBasicData" @click="handleShare">
+              <text>❖ 分享星盘</text>
+            </StardButton>
           </view>
         </view>
       </view>
 
-      <!-- 五行展示 -->
-      <view class="card elements-card">
-        <view class="card-header">
-          <text class="card-icon">🎨</text>
-          <text class="card-title">五行分析</text>
+      <!-- Tab 切换：星座 / 八字 / 人生K线 -->
+      <view class="tabs sd-reveal-2" v-if="hasBasicData">
+        <view
+          class="tab-item"
+          :class="{ active: currentTab === 'zodiac' }"
+          @click="currentTab = 'zodiac'"
+        >
+          <text class="tab-icon">✧</text>
+          <text class="tab-text">星座</text>
         </view>
-        <view class="elements-chart">
-          <view class="element-item" v-for="(count, element) in fiveElements" :key="element">
-            <view class="element-bar" :class="`element-${element}`">
-              <view class="element-fill" :style="{ width: `${(count / 8) * 100}%` }"></view>
+        <view
+          class="tab-item"
+          :class="{ active: currentTab === 'bazi' }"
+          @click="currentTab = 'bazi'"
+        >
+          <text class="tab-icon">☰</text>
+          <text class="tab-text">八字</text>
+        </view>
+        <view
+          class="tab-item"
+          :class="{ active: currentTab === 'kline' }"
+          @click="currentTab = 'kline'"
+        >
+          <text class="tab-icon">✴</text>
+          <text class="tab-text">人生K线</text>
+        </view>
+      </view>
+
+      <!-- 星座 Tab -->
+      <view class="tab-content" v-if="currentTab === 'zodiac' && hasBasicData">
+        <!-- 星座基础信息卡片 -->
+        <view class="card zodiac-card">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>☉</text></view>
+            <text class="card-title">{{ zodiacSign }}</text>
+          </view>
+          <view class="zodiac-info">
+            <view class="info-row">
+              <text class="info-label">农历生日</text>
+              <text class="info-value">{{ lunarDate }}</text>
             </view>
-            <text class="element-label">{{ getElementName(element) }}: {{ count }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 星座 AI 解读 -->
-      <view class="card interpretation-card" v-if="zodiacInterpretation">
-        <view class="card-header">
-          <text class="card-icon">📖</text>
-          <text class="card-title">星座解读</text>
-        </view>
-        <view class="interpretation-content">
-          <view class="interpretation-section" v-if="zodiacInterpretation.personality">
-            <view class="section-title">✨ 性格特点</view>
-            <text class="section-text">{{ zodiacInterpretation.personality }}</text>
-          </view>
-          <view class="interpretation-section" v-if="zodiacInterpretation.love">
-            <view class="section-title">💕 爱情感情</view>
-            <text class="section-text">{{ zodiacInterpretation.love }}</text>
-          </view>
-          <view class="interpretation-section" v-if="zodiacInterpretation.career">
-            <view class="section-title">💼 事业发展</view>
-            <text class="section-text">{{ zodiacInterpretation.career }}</text>
-          </view>
-          <view class="interpretation-section" v-if="zodiacInterpretation.guardianStar">
-            <view class="section-title">⭐ 守护星</view>
-            <text class="section-text">{{ zodiacInterpretation.guardianStar }}</text>
-          </view>
-          <view class="interpretation-section" v-if="zodiacInterpretation.luckyElements">
-            <view class="section-title">🍀 幸运元素</view>
-            <text class="section-text">{{ zodiacInterpretation.luckyElements }}</text>
-          </view>
-          <view class="interpretation-section" v-if="zodiacInterpretation.overall">
-            <view class="section-title">🔮 综合运势</view>
-            <text class="section-text">{{ zodiacInterpretation.overall }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- AI 解读提示 -->
-      <view class="card hint-card" v-else>
-        <text class="hint-text">点击"生成AI解读"获取详细的星座分析</text>
-      </view>
-    </view>
-
-    <!-- 八字 Tab -->
-    <view class="tab-content" v-if="currentTab === 'bazi' && hasBasicData">
-      <!-- 八字四柱展示 -->
-      <view class="card bazi-card">
-        <view class="card-header">
-          <text class="card-icon">☯️</text>
-          <text class="card-title">八字四柱</text>
-        </view>
-        <view class="bazi-pillars">
-          <view class="pillar-item">
-            <view class="pillar-label">年柱</view>
-            <view class="pillar-value year-pillar">{{ baZiPillars.yearPillar }}</view>
-          </view>
-          <view class="pillar-divider">→</view>
-          <view class="pillar-item">
-            <view class="pillar-label">月柱</view>
-            <view class="pillar-value month-pillar">{{ baZiPillars.monthPillar }}</view>
-          </view>
-          <view class="pillar-divider">→</view>
-          <view class="pillar-item">
-            <view class="pillar-label">日柱</view>
-            <view class="pillar-value day-pillar">{{ baZiPillars.dayPillar }}</view>
-          </view>
-          <view class="pillar-divider">→</view>
-          <view class="pillar-item">
-            <view class="pillar-label">时柱</view>
-            <view class="pillar-value hour-pillar">{{ baZiPillars.hourPillar }}</view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 八字 AI 解读 -->
-      <view class="card interpretation-card" v-if="baziInterpretation">
-        <view class="card-header">
-          <text class="card-icon">📖</text>
-          <text class="card-title">八字解读</text>
-        </view>
-        <view class="interpretation-content">
-          <view class="interpretation-section" v-if="baziInterpretation.mingJu">
-            <view class="section-title">🏔️ 命局分析</view>
-            <text class="section-text">{{ baziInterpretation.mingJu }}</text>
-          </view>
-          <view class="interpretation-section" v-if="baziInterpretation.wuXing">
-            <view class="section-title">⚖️ 五行喜忌</view>
-            <text class="section-text">{{ baziInterpretation.wuXing }}</text>
-          </view>
-          <view class="interpretation-section" v-if="baziInterpretation.character">
-            <view class="section-title">👤 性格特质</view>
-            <text class="section-text">{{ baziInterpretation.character }}</text>
-          </view>
-          <view class="interpretation-section" v-if="baziInterpretation.career">
-            <view class="section-title">💰 事业财运</view>
-            <text class="section-text">{{ baziInterpretation.career }}</text>
-          </view>
-          <view class="interpretation-section" v-if="baziInterpretation.marriage">
-            <view class="section-title">💑 婚姻感情</view>
-            <text class="section-text">{{ baziInterpretation.marriage }}</text>
-          </view>
-          <view class="interpretation-section" v-if="baziInterpretation.health">
-            <view class="section-title">🏥 健康运势</view>
-            <text class="section-text">{{ baziInterpretation.health }}</text>
-          </view>
-          <view class="interpretation-section" v-if="baziInterpretation.yearlyFortune">
-            <view class="section-title">📈 流年运势</view>
-            <text class="section-text">{{ baziInterpretation.yearlyFortune }}</text>
-          </view>
-          <view class="interpretation-section" v-if="baziInterpretation.advice">
-            <view class="section-title">💡 开运建议</view>
-            <text class="section-text">{{ baziInterpretation.advice }}</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- AI 解读提示 -->
-      <view class="card hint-card" v-else>
-        <text class="hint-text">点击"生成AI解读"获取详细的八字分析</text>
-      </view>
-    </view>
-
-    <!-- 人生K线 Tab -->
-    <view class="tab-content" v-if="currentTab === 'kline' && hasBasicData">
-      <!-- K线图表 -->
-      <view class="card kline-card">
-        <view class="card-header">
-          <text class="card-icon">📈</text>
-          <text class="card-title">人生运势K线图</text>
-        </view>
-
-        <!-- K线图表展示 -->
-        <view class="kline-chart" v-if="klineInterpretation?.lifeStages">
-          <view class="chart-container">
-            <!-- Y轴刻度 -->
-            <view class="y-axis">
-              <view class="y-label" v-for="i in 5" :key="i">
-                <text class="y-text">{{ 100 - (i - 1) * 25 }}</text>
+            <view class="info-row">
+              <text class="info-label">幸运元素</text>
+              <view class="sd-chip is-gold">
+                <text>{{ luckyElement }}</text>
               </view>
             </view>
+          </view>
+        </view>
 
-            <!-- 图表区域 -->
-            <view class="chart-area">
-              <!-- 网格线 -->
-              <view class="grid-lines">
-                <view class="grid-line" v-for="i in 5" :key="'grid-' + i" :style="{ bottom: `${(i - 1) * 25}%` }"></view>
-              </view>
-
-              <!-- K线曲线 (SVG) -->
-              <view class="kline-curve-container">
-                <svg class="kline-curve-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
-                  <!-- 填充渐变区域 -->
-                  <defs>
-                    <linearGradient id="curveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style="stop-color:rgba(102, 126, 234, 0.3);stop-opacity:1" />
-                      <stop offset="100%" style="stop-color:rgba(102, 126, 234, 0.05);stop-opacity:1" />
-                    </linearGradient>
-                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-                      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-                    </linearGradient>
-                  </defs>
-                  <!-- 填充区域 -->
-                  <path
-                    :d="getCurvePath(klineInterpretation.lifeStages, true)"
-                    fill="url(#curveGradient)"
-                    stroke="none"
-                  />
-                  <!-- 曲线 -->
-                  <path
-                    :d="getCurvePath(klineInterpretation.lifeStages, false)"
-                    fill="none"
-                    stroke="url(#lineGradient)"
-                    stroke-width="3"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <!-- 数据点 -->
-                  <circle
-                    v-for="(stage, index) in klineInterpretation.lifeStages"
-                    :key="'point-' + index"
-                    :cx="getPointX(index, klineInterpretation.lifeStages.length)"
-                    :cy="getPointY(stage.fortune)"
-                    r="6"
-                    fill="#667eea"
-                    stroke="white"
-                    stroke-width="2"
-                  />
-                  <!-- 数值标签 -->
-                  <text
-                    v-for="(stage, index) in klineInterpretation.lifeStages"
-                    :key="'label-' + index"
-                    :x="getPointX(index, klineInterpretation.lifeStages.length)"
-                    :y="getPointY(stage.fortune) - 15"
-                    text-anchor="middle"
-                    class="fortune-label"
-                    fill="#667eea"
-                    font-size="14"
-                    font-weight="bold"
-                  >{{ stage.fortune }}</text>
-                </svg>
-              </view>
-
-              <!-- K线柱状图 -->
-              <view class="kline-bars">
+        <!-- 五行展示 -->
+        <view class="card elements-card">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>✳</text></view>
+            <text class="card-title">五行分析</text>
+          </view>
+          <view class="elements-chart">
+            <view class="element-item" v-for="(count, element) in fiveElements" :key="element">
+              <view class="element-bar">
                 <view
-                  class="kline-bar-group"
-                  v-for="(stage, index) in klineInterpretation.lifeStages"
-                  :key="index"
-                  @click="showStageDetail(stage)"
+                  class="element-fill"
+                  :class="`element-${element}`"
+                  :style="{ width: `${(count / 8) * 100}%` }"
+                />
+              </view>
+              <text class="element-label">{{ getElementName(element) }} · {{ count }}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 星座 AI 解读（古籍卷轴） -->
+        <view class="card interpretation-card" v-if="zodiacInterpretation">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>☽</text></view>
+            <text class="card-title">星座解读</text>
+          </view>
+          <view class="interpretation-content">
+            <view class="interpretation-section" v-if="zodiacInterpretation.personality">
+              <view class="section-title">✦ 性格特点</view>
+              <text class="section-text">{{ zodiacInterpretation.personality }}</text>
+            </view>
+            <view class="interpretation-section" v-if="zodiacInterpretation.love">
+              <view class="section-title">❥ 爱情感情</view>
+              <text class="section-text">{{ zodiacInterpretation.love }}</text>
+            </view>
+            <view class="interpretation-section" v-if="zodiacInterpretation.career">
+              <view class="section-title">☰ 事业发展</view>
+              <text class="section-text">{{ zodiacInterpretation.career }}</text>
+            </view>
+            <view class="interpretation-section" v-if="zodiacInterpretation.guardianStar">
+              <view class="section-title">✧ 守护星</view>
+              <text class="section-text">{{ zodiacInterpretation.guardianStar }}</text>
+            </view>
+            <view class="interpretation-section" v-if="zodiacInterpretation.luckyElements">
+              <view class="section-title">❀ 幸运元素</view>
+              <view class="lucky-chips">
+                <view
+                  v-for="(seg, i) in String(zodiacInterpretation.luckyElements).split(/[，,、；;\n]/).map(s => s.trim()).filter(s => s)"
+                  :key="i"
+                  class="sd-chip is-gold lucky-chip"
                 >
-                  <!-- K线柱 -->
-                  <view class="kline-bar-wrapper" :style="{ height: `${stage.fortune}%` }">
-                    <view class="kline-bar" :class="getFortuneClass(stage.fortune)"></view>
+                  <text>{{ seg }}</text>
+                </view>
+              </view>
+            </view>
+            <view class="interpretation-section" v-if="zodiacInterpretation.overall">
+              <view class="section-title">✶ 综合运势</view>
+              <text class="section-text">{{ zodiacInterpretation.overall }}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- AI 解读提示 -->
+        <EmptyState
+          v-else
+          icon="☽"
+          title="尚未生成星座解读"
+          desc="点击上方「生成AI解读」获取详细的星座分析"
+        />
+      </view>
+
+      <!-- 八字 Tab -->
+      <view class="tab-content" v-if="currentTab === 'bazi' && hasBasicData">
+        <!-- 八字四柱展示 -->
+        <view class="card bazi-card">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>☰</text></view>
+            <text class="card-title">八字四柱</text>
+          </view>
+          <view class="bazi-pillars">
+            <view class="pillar-item">
+              <view class="pillar-sigil"><text>☰</text></view>
+              <view class="pillar-label">年柱</view>
+              <view class="pillar-value year-pillar">{{ baZiPillars.yearPillar }}</view>
+            </view>
+            <view class="pillar-divider"><text>·</text></view>
+            <view class="pillar-item">
+              <view class="pillar-sigil"><text>☱</text></view>
+              <view class="pillar-label">月柱</view>
+              <view class="pillar-value month-pillar">{{ baZiPillars.monthPillar }}</view>
+            </view>
+            <view class="pillar-divider"><text>·</text></view>
+            <view class="pillar-item">
+              <view class="pillar-sigil"><text>☲</text></view>
+              <view class="pillar-label">日柱</view>
+              <view class="pillar-value day-pillar">{{ baZiPillars.dayPillar }}</view>
+            </view>
+            <view class="pillar-divider"><text>·</text></view>
+            <view class="pillar-item">
+              <view class="pillar-sigil"><text>☳</text></view>
+              <view class="pillar-label">时柱</view>
+              <view class="pillar-value hour-pillar">{{ baZiPillars.hourPillar }}</view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 八字 AI 解读 -->
+        <view class="card interpretation-card" v-if="baziInterpretation">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>☽</text></view>
+            <text class="card-title">八字解读</text>
+          </view>
+          <view class="interpretation-content">
+            <view class="interpretation-section" v-if="baziInterpretation.mingJu">
+              <view class="section-title">☷ 命局分析</view>
+              <text class="section-text">{{ baziInterpretation.mingJu }}</text>
+            </view>
+            <view class="interpretation-section" v-if="baziInterpretation.wuXing">
+              <view class="section-title">☴ 五行喜忌</view>
+              <text class="section-text">{{ baziInterpretation.wuXing }}</text>
+            </view>
+            <view class="interpretation-section" v-if="baziInterpretation.character">
+              <view class="section-title">☲ 性格特质</view>
+              <text class="section-text">{{ baziInterpretation.character }}</text>
+            </view>
+            <view class="interpretation-section" v-if="baziInterpretation.career">
+              <view class="section-title">✦ 事业财运</view>
+              <text class="section-text">{{ baziInterpretation.career }}</text>
+            </view>
+            <view class="interpretation-section" v-if="baziInterpretation.marriage">
+              <view class="section-title">❥ 婚姻感情</view>
+              <text class="section-text">{{ baziInterpretation.marriage }}</text>
+            </view>
+            <view class="interpretation-section" v-if="baziInterpretation.health">
+              <view class="section-title">✚ 健康运势</view>
+              <text class="section-text">{{ baziInterpretation.health }}</text>
+            </view>
+            <view class="interpretation-section" v-if="baziInterpretation.yearlyFortune">
+              <view class="section-title">✴ 流年运势</view>
+              <text class="section-text">{{ baziInterpretation.yearlyFortune }}</text>
+            </view>
+            <view class="interpretation-section" v-if="baziInterpretation.advice">
+              <view class="section-title">❋ 开运建议</view>
+              <text class="section-text">{{ baziInterpretation.advice }}</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- AI 解读提示 -->
+        <EmptyState
+          v-else
+          icon="☰"
+          title="尚未生成八字解读"
+          desc="点击上方「生成AI解读」获取详细的八字分析"
+        />
+      </view>
+
+      <!-- 人生K线 Tab -->
+      <view class="tab-content" v-if="currentTab === 'kline' && hasBasicData">
+        <!-- K线图表 -->
+        <view class="card kline-card">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>✴</text></view>
+            <text class="card-title">人生运势K线图</text>
+          </view>
+
+          <!-- K线图表展示 -->
+          <view class="kline-chart" v-if="klineInterpretation?.lifeStages">
+            <view class="chart-container">
+              <!-- Y轴刻度 -->
+              <view class="y-axis">
+                <view class="y-label" v-for="i in 5" :key="i">
+                  <text class="y-text">{{ 100 - (i - 1) * 25 }}</text>
+                </view>
+              </view>
+
+              <!-- 图表区域 -->
+              <view class="chart-area">
+                <!-- 网格线 -->
+                <view class="grid-lines">
+                  <view class="grid-line" v-for="i in 5" :key="'grid-' + i" :style="{ bottom: `${(i - 1) * 25}%` }" />
+                </view>
+
+                <!-- K线曲线 (SVG) -->
+                <view class="kline-curve-container">
+                  <svg class="kline-curve-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+                    <!-- 填充渐变区域 -->
+                    <defs>
+                      <linearGradient id="curveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" class="grad-fill-top" />
+                        <stop offset="100%" class="grad-fill-bottom" />
+                      </linearGradient>
+                      <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" class="grad-line-start" />
+                        <stop offset="100%" class="grad-line-end" />
+                      </linearGradient>
+                    </defs>
+                    <!-- 填充区域 -->
+                    <path
+                      :d="getCurvePath(klineInterpretation.lifeStages, true)"
+                      fill="url(#curveGradient)"
+                      stroke="none"
+                    />
+                    <!-- 曲线 -->
+                    <path
+                      :d="getCurvePath(klineInterpretation.lifeStages, false)"
+                      fill="none"
+                      stroke="url(#lineGradient)"
+                      stroke-width="3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <!-- 数据点 -->
+                    <circle
+                      v-for="(stage, index) in klineInterpretation.lifeStages"
+                      :key="'point-' + index"
+                      :cx="getPointX(index, klineInterpretation.lifeStages.length)"
+                      :cy="getPointY(stage.fortune)"
+                      r="6"
+                      stroke-width="2"
+                      class="data-point"
+                    />
+                    <!-- 数值标签 -->
+                    <text
+                      v-for="(stage, index) in klineInterpretation.lifeStages"
+                      :key="'label-' + index"
+                      :x="getPointX(index, klineInterpretation.lifeStages.length)"
+                      :y="getPointY(stage.fortune) - 15"
+                      text-anchor="middle"
+                      font-size="14"
+                      class="fortune-label"
+                    >{{ stage.fortune }}</text>
+                  </svg>
+                </view>
+
+                <!-- K线柱状图 -->
+                <view class="kline-bars">
+                  <view
+                    class="kline-bar-group"
+                    v-for="(stage, index) in klineInterpretation.lifeStages"
+                    :key="index"
+                    @click="showStageDetail(stage)"
+                  >
+                    <!-- K线柱 -->
+                    <view class="kline-bar-wrapper" :style="{ height: `${stage.fortune}%` }">
+                      <view class="kline-bar" :class="getFortuneClass(stage.fortune)" />
+                    </view>
+                    <!-- 阶段标签 -->
+                    <view class="stage-label">
+                      <text class="stage-age">{{ stage.age }}岁</text>
+                    </view>
                   </view>
-                  <!-- 阶段标签 -->
-                  <view class="stage-label">
-                    <text class="stage-age">{{ stage.age }}岁</text>
-                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 整体趋势 -->
+          <view class="overall-trend" v-if="klineInterpretation?.overallTrend">
+            <view class="trend-title">✳ 整体运势趋势</view>
+            <text class="trend-text">{{ klineInterpretation.overallTrend }}</text>
+          </view>
+        </view>
+
+        <!-- 人生阶段详情 -->
+        <view class="card stages-card" v-if="klineInterpretation?.lifeStages">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>☾</text></view>
+            <text class="card-title">人生阶段详情</text>
+          </view>
+          <view class="stages-list">
+            <view
+              class="stage-item"
+              v-for="(stage, index) in klineInterpretation.lifeStages"
+              :key="index"
+            >
+              <view class="stage-header">
+                <view class="stage-info">
+                  <text class="stage-age-large">{{ stage.age }}岁</text>
+                  <text class="stage-years">{{ stage.years }}</text>
+                </view>
+                <view class="fortune-badge" :class="getFortuneClass(stage.fortune)">
+                  <text class="fortune-value">{{ stage.fortune }}</text>
+                  <text class="fortune-text">运势指数</text>
+                </view>
+              </view>
+              <view class="stage-details">
+                <view class="stage-detail-row" v-if="stage.career">
+                  <view class="detail-icon"><text>☰</text></view>
+                  <text class="detail-text">{{ stage.career }}</text>
+                </view>
+                <view class="stage-detail-row" v-if="stage.wealth">
+                  <view class="detail-icon"><text>✦</text></view>
+                  <text class="detail-text">{{ stage.wealth }}</text>
+                </view>
+                <view class="stage-detail-row" v-if="stage.love">
+                  <view class="detail-icon"><text>❥</text></view>
+                  <text class="detail-text">{{ stage.love }}</text>
+                </view>
+                <view class="stage-detail-row" v-if="stage.health">
+                  <view class="detail-icon"><text>✚</text></view>
+                  <text class="detail-text">{{ stage.health }}</text>
+                </view>
+                <view class="stage-detail-row key-event" v-if="stage.keyEvents">
+                  <view class="detail-icon"><text>☄</text></view>
+                  <text class="detail-text">{{ stage.keyEvents }}</text>
                 </view>
               </view>
             </view>
           </view>
         </view>
 
-        <!-- 整体趋势 -->
-        <view class="overall-trend" v-if="klineInterpretation?.overallTrend">
-          <view class="trend-title">📊 整体运势趋势</view>
-          <text class="trend-text">{{ klineInterpretation.overallTrend }}</text>
-        </view>
-      </view>
-
-      <!-- 人生阶段详情 -->
-      <view class="card stages-card" v-if="klineInterpretation?.lifeStages">
-        <view class="card-header">
-          <text class="card-icon">📅</text>
-          <text class="card-title">人生阶段详情</text>
-        </view>
-        <view class="stages-list">
-          <view
-            class="stage-item"
-            v-for="(stage, index) in klineInterpretation.lifeStages"
-            :key="index"
-          >
-            <view class="stage-header">
-              <view class="stage-info">
-                <text class="stage-age-large">{{ stage.age }}岁</text>
-                <text class="stage-years">{{ stage.years }}</text>
-              </view>
-              <view class="fortune-badge" :class="getFortuneClass(stage.fortune)">
-                <text class="fortune-value">{{ stage.fortune }}</text>
-                <text class="fortune-text">运势指数</text>
-              </view>
-            </view>
-            <view class="stage-details">
-              <view class="stage-detail-row" v-if="stage.career">
-                <text class="detail-icon">💼</text>
-                <text class="detail-text">{{ stage.career }}</text>
-              </view>
-              <view class="stage-detail-row" v-if="stage.wealth">
-                <text class="detail-icon">💰</text>
-                <text class="detail-text">{{ stage.wealth }}</text>
-              </view>
-              <view class="stage-detail-row" v-if="stage.love">
-                <text class="detail-icon">💕</text>
-                <text class="detail-text">{{ stage.love }}</text>
-              </view>
-              <view class="stage-detail-row" v-if="stage.health">
-                <text class="detail-icon">🏥</text>
-                <text class="detail-text">{{ stage.health }}</text>
-              </view>
-              <view class="stage-detail-row key-event" v-if="stage.keyEvents">
-                <text class="detail-icon">⚡</text>
-                <text class="detail-text">{{ stage.keyEvents }}</text>
-              </view>
-            </view>
+        <!-- 综合建议 -->
+        <view class="card advice-card" v-if="klineInterpretation?.advice">
+          <view class="card-header">
+            <view class="sd-sigil sd-sigil--sm"><text>❋</text></view>
+            <text class="card-title">人生建议</text>
           </view>
+          <text class="advice-text">{{ klineInterpretation.advice }}</text>
         </view>
+
+        <!-- AI 解读提示 -->
+        <EmptyState
+          v-else
+          icon="✴"
+          title="尚未生成人生K线"
+          desc="点击上方「生成AI解读」获取人生K线分析"
+        />
       </view>
 
-      <!-- 综合建议 -->
-      <view class="card advice-card" v-if="klineInterpretation?.advice">
-        <view class="card-header">
-          <text class="card-icon">💡</text>
-          <text class="card-title">人生建议</text>
-        </view>
-        <text class="advice-text">{{ klineInterpretation.advice }}</text>
-      </view>
-
-      <!-- AI 解读提示 -->
-      <view class="card hint-card" v-else>
-        <text class="hint-text">点击"生成AI解读"获取人生K线分析</text>
-      </view>
-    </view>
-
-    <!-- 初始状态提示 -->
-    <view class="empty-state" v-if="!hasBasicData && !calculating">
-      <text class="empty-icon">🌙</text>
-      <text class="empty-text">点击"重新计算星盘"开始分析</text>
+      <!-- 初始状态：计算中骨架 / 未计算引导 -->
+      <LoadingSkeleton v-if="!hasBasicData && calculating" :rows="3" height="200rpx" gap="24rpx" />
+      <EmptyState
+        v-else-if="!hasBasicData"
+        icon="☽"
+        title="尚未计算星盘"
+        desc="点击「重新计算星盘」开始你的星象分析"
+      />
     </view>
   </view>
 </template>
@@ -389,6 +447,9 @@ import { ref, computed } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
 import { share, copyShareLink } from '@/utils/wechatShare'
+import StardButton from '@/components/stard-button/stard-button.vue'
+import EmptyState from '@/components/empty-state/empty-state.vue'
+import LoadingSkeleton from '@/components/loading-skeleton/loading-skeleton.vue'
 
 const userStore = useUserStore()
 
@@ -704,87 +765,64 @@ init()
 
 <style lang="scss" scoped>
 .container {
-  padding: 30rpx;
+  position: relative;
   min-height: 100vh;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  overflow: hidden;
+  background: $sd-bg;
 }
 
-// 操作按钮栏
-.action-bar {
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
+}
+
+/* ---- 操作区 ---- */
+.action-panel {
+  margin-bottom: 30rpx;
+}
+
+.progress-track {
+  height: 10rpx;
+  margin-top: 18rpx;
+  background: $sd-bg-raise;
+  border: 1rpx solid $sd-stroke;
+  border-radius: $sd-radius-pill;
+  overflow: hidden;
+
+  .progress-fill {
+    height: 100%;
+    background: $sd-gold-grad;
+    box-shadow: $sd-glow-gold;
+    border-radius: $sd-radius-pill;
+    transition: width 0.4s ease;
+  }
+}
+
+.attempts-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-top: 18rpx;
+}
+
+.sub-actions {
   display: flex;
   gap: 20rpx;
-  margin-bottom: 30rpx;
+  margin-top: 20rpx;
 
-  button {
+  .sub-action-item {
     flex: 1;
-    height: 88rpx;
-    border-radius: 16rpx;
-    font-size: 28rpx;
-    border: none;
-
-    &.btn-calculate {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    &.btn-share {
-      flex: 0 0 auto;
-      min-width: 140rpx;
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-      color: white;
-
-      &[disabled] {
-        opacity: 0.5;
-      }
-    }
-  }
-
-  .btn-interpret-wrapper {
-    flex: 1;
-    position: relative;
-
-    button {
-      width: 100%;
-      height: 88rpx;
-      border-radius: 16rpx;
-      font-size: 28rpx;
-      border: none;
-
-      &.btn-interpret {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        color: white;
-
-        &[disabled] {
-          opacity: 0.5;
-        }
-      }
-    }
-
-    .progress-bar {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 6rpx;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 0 0 16rpx 16rpx;
-      overflow: hidden;
-
-      .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
-        transition: width 0.3s ease;
-        box-shadow: 0 0 10rpx rgba(255, 215, 0, 0.8);
-      }
-    }
   }
 }
 
-// Tab 切换
+/* ---- Tab 切换（胶囊配方 §6.7） ---- */
 .tabs {
   display: flex;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 20rpx;
+  background: $sd-bg-nav;
+  border: 1rpx solid $sd-stroke;
+  border-radius: $sd-radius-pill;
   padding: 8rpx;
   margin-bottom: 30rpx;
 
@@ -793,227 +831,285 @@ init()
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20rpx;
-    border-radius: 16rpx;
-    transition: all 0.3s;
+    padding: 14rpx 0;
+    border-radius: $sd-radius-pill;
+    transition: background 0.25s ease;
 
-    &.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    &:active {
+      transform: scale(0.96);
+      opacity: 0.88;
     }
 
     .tab-icon {
-      font-size: 36rpx;
-      margin-bottom: 8rpx;
+      font-size: 30rpx;
+      line-height: 1.2;
+      color: $sd-text-3;
+      margin-bottom: 4rpx;
     }
 
     .tab-text {
-      font-size: 26rpx;
-      color: white;
+      font-size: 24rpx;
+      color: $sd-text-2;
+      letter-spacing: 2rpx;
+    }
+
+    &.active {
+      background: $sd-gold-grad;
+      box-shadow: $sd-glow-gold;
+
+      .tab-icon {
+        color: $sd-gold-ink;
+      }
+
+      .tab-text {
+        color: $sd-gold-ink;
+        font-weight: bold;
+      }
     }
   }
 }
 
-// 卡片通用样式
+/* ---- Tab 内容切换入场 ---- */
+.tab-content {
+  animation: tab-fade-in 0.4s ease both;
+}
+
+@keyframes tab-fade-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16rpx, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* ---- 卡片通用（星夜卡片面） ---- */
 .card {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 24rpx;
+  @include sd-card-surface();
   padding: 32rpx;
   margin-bottom: 24rpx;
 
   .card-header {
     display: flex;
     align-items: center;
-    margin-bottom: 24rpx;
-
-    .card-icon {
-      font-size: 40rpx;
-      margin-right: 12rpx;
-    }
+    gap: 18rpx;
+    margin-bottom: 26rpx;
 
     .card-title {
+      font-family: $sd-font-display;
       font-size: 32rpx;
       font-weight: bold;
-      color: #333;
+      letter-spacing: 3rpx;
+      color: $sd-gold-bright;
     }
   }
 }
 
-// 星座卡片
+/* ---- 星座基础信息 ---- */
 .zodiac-card {
   .zodiac-info {
     .info-row {
       display: flex;
+      align-items: center;
       justify-content: space-between;
       padding: 20rpx 0;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1rpx solid $sd-stroke;
 
       &:last-child {
         border-bottom: none;
       }
 
       .info-label {
-        font-size: 28rpx;
-        color: #999;
+        font-size: 26rpx;
+        color: $sd-text-3;
+        letter-spacing: 2rpx;
       }
 
       .info-value {
-        font-size: 30rpx;
-        font-weight: bold;
-        color: #667eea;
+        font-family: $sd-font-display;
+        font-size: 28rpx;
+        font-weight: 600;
+        color: $sd-text;
       }
     }
   }
 }
 
-// 五行图表
+/* ---- 五行分析（轨道 §6.4 + 五行色令牌） ---- */
 .elements-card {
   .elements-chart {
     .element-item {
-      margin-bottom: 20rpx;
+      margin-bottom: 22rpx;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
 
       .element-bar {
-        height: 24rpx;
-        background: #f0f0f0;
-        border-radius: 12rpx;
+        height: 18rpx;
+        background: $sd-bg-raise;
+        border: 1rpx solid $sd-stroke;
+        border-radius: $sd-radius-pill;
         overflow: hidden;
-        margin-bottom: 8rpx;
+        margin-bottom: 10rpx;
 
         .element-fill {
           height: 100%;
-          border-radius: 12rpx;
+          border-radius: $sd-radius-pill;
           transition: width 0.5s ease;
-        }
 
-        &.element-wood .element-fill {
-          background: linear-gradient(90deg, #4ade80, #22c55e);
-        }
-        &.element-fire .element-fill {
-          background: linear-gradient(90deg, #fb923c, #f97316);
-        }
-        &.element-earth .element-fill {
-          background: linear-gradient(90deg, #fcd34d, #f59e0b);
-        }
-        &.element-metal .element-fill {
-          background: linear-gradient(90deg, #e2e8f0, #94a3b8);
-        }
-        &.element-water .element-fill {
-          background: linear-gradient(90deg, #60a5fa, #3b82f6);
+          &.element-wood {
+            background: $sd-wood;
+            box-shadow: 0 0 16rpx rgba(111, 191, 143, 0.3);
+          }
+
+          &.element-fire {
+            background: $sd-fire;
+            box-shadow: 0 0 16rpx rgba(232, 115, 94, 0.3);
+          }
+
+          &.element-earth {
+            background: $sd-earth;
+            box-shadow: 0 0 16rpx rgba(192, 154, 107, 0.3);
+          }
+
+          &.element-metal {
+            background: $sd-metal;
+            box-shadow: 0 0 16rpx rgba(217, 192, 138, 0.3);
+          }
+
+          &.element-water {
+            background: $sd-water;
+            box-shadow: 0 0 16rpx rgba(106, 155, 216, 0.3);
+          }
         }
       }
 
       .element-label {
-        font-size: 26rpx;
-        color: #666;
-      }
-    }
-  }
-}
-
-// 八字四柱
-.bazi-card {
-  .bazi-pillars {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    .pillar-item {
-      flex: 1;
-      text-align: center;
-
-      .pillar-label {
         font-size: 24rpx;
-        color: #999;
-        margin-bottom: 12rpx;
+        color: $sd-text-2;
+        letter-spacing: 1rpx;
       }
-
-      .pillar-value {
-        font-size: 36rpx;
-        font-weight: bold;
-        padding: 16rpx 8rpx;
-        border-radius: 12rpx;
-
-        &.year-pillar {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-        }
-        &.month-pillar {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          color: white;
-        }
-        &.day-pillar {
-          background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-          color: white;
-        }
-        &.hour-pillar {
-          background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-          color: white;
-        }
-      }
-    }
-
-    .pillar-divider {
-      color: #ccc;
-      font-size: 24rpx;
     }
   }
 }
 
-// AI 解读
+/* ---- AI 解读（古籍卷轴气质） ---- */
 .interpretation-card {
   .interpretation-content {
     .interpretation-section {
-      margin-bottom: 32rpx;
+      margin-bottom: 30rpx;
 
       &:last-child {
         margin-bottom: 0;
       }
 
       .section-title {
+        font-family: $sd-font-display;
         font-size: 28rpx;
         font-weight: bold;
-        color: #667eea;
-        margin-bottom: 12rpx;
+        color: $sd-gold-bright;
+        letter-spacing: 3rpx;
+        margin-bottom: 14rpx;
+        padding-bottom: 12rpx;
+        border-bottom: 1rpx solid rgba(232, 195, 106, 0.22);
       }
 
       .section-text {
+        font-family: $sd-font-display;
         font-size: 26rpx;
-        color: #666;
+        color: $sd-text-2;
         line-height: 1.8;
+        text-align: justify;
+      }
+
+      .lucky-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14rpx;
+
+        .lucky-chip {
+          white-space: normal;
+          text-align: left;
+        }
       }
     }
   }
 }
 
-// 提示卡片
-.hint-card {
-  text-align: center;
+/* ---- 八字四柱（八卦符号 + 五行色令牌） ---- */
+.bazi-card {
+  .bazi-pillars {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10rpx;
 
-  .hint-text {
-    font-size: 28rpx;
-    color: #999;
+    .pillar-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10rpx;
+
+      .pillar-sigil {
+        @include sd-sigil-base();
+        width: 52rpx;
+        height: 52rpx;
+        font-size: 26rpx;
+      }
+
+      .pillar-label {
+        font-size: 22rpx;
+        color: $sd-text-3;
+        letter-spacing: 2rpx;
+      }
+
+      .pillar-value {
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center;
+        font-family: $sd-font-display;
+        font-size: 28rpx;
+        font-weight: bold;
+        padding: 14rpx 4rpx;
+        border-radius: $sd-radius-sm;
+        background: $sd-bg-raise;
+        border: 1rpx solid $sd-stroke;
+
+        &.year-pillar {
+          color: $sd-water;
+          border-color: rgba(106, 155, 216, 0.4);
+        }
+
+        &.month-pillar {
+          color: $sd-wood;
+          border-color: rgba(111, 191, 143, 0.4);
+        }
+
+        &.day-pillar {
+          color: $sd-earth;
+          border-color: rgba(192, 154, 107, 0.42);
+        }
+
+        &.hour-pillar {
+          color: $sd-metal;
+          border-color: rgba(217, 192, 138, 0.42);
+        }
+      }
+    }
+
+    .pillar-divider {
+      font-size: 22rpx;
+      color: $sd-text-3;
+    }
   }
 }
 
-// 空状态
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 100rpx 0;
-
-  .empty-icon {
-    font-size: 100rpx;
-    margin-bottom: 20rpx;
-  }
-
-  .empty-text {
-    font-size: 28rpx;
-    color: rgba(255, 255, 255, 0.6);
-  }
-}
-
-// 人生K线图表
+/* ---- 人生K线图表 ---- */
 .kline-card {
   .kline-chart {
     margin-bottom: 32rpx;
@@ -1025,7 +1121,7 @@ init()
     }
 
     .y-axis {
-      width: 60rpx;
+      width: 56rpx;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -1034,7 +1130,7 @@ init()
       .y-label {
         .y-text {
           font-size: 20rpx;
-          color: #999;
+          color: $sd-text-3;
         }
       }
     }
@@ -1042,8 +1138,8 @@ init()
     .chart-area {
       flex: 1;
       position: relative;
-      border-left: 1px solid #eee;
-      border-bottom: 1px solid #eee;
+      border-left: 1rpx solid $sd-stroke;
+      border-bottom: 1rpx solid $sd-stroke;
     }
 
     .kline-curve-container {
@@ -1059,12 +1155,31 @@ init()
         width: 100%;
         height: 100%;
         overflow: visible;
-      }
 
-      .fortune-label {
-        font-family: sans-serif;
-        font-weight: 600;
-        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+        .grad-fill-top {
+          stop-color: rgba(232, 195, 106, 0.3);
+        }
+
+        .grad-fill-bottom {
+          stop-color: rgba(232, 195, 106, 0.03);
+        }
+
+        .grad-line-start {
+          stop-color: $sd-gold-bright;
+        }
+
+        .grad-line-end {
+          stop-color: $sd-purple-bright;
+        }
+
+        .data-point {
+          fill: $sd-gold;
+          stroke: $sd-bg-elev;
+        }
+
+        .fortune-label {
+          fill: $sd-gold-bright;
+        }
       }
     }
 
@@ -1079,8 +1194,8 @@ init()
         position: absolute;
         left: 0;
         right: 0;
-        height: 1px;
-        background: #f0f0f0;
+        height: 1rpx;
+        background: $sd-stroke;
       }
     }
 
@@ -1096,9 +1211,12 @@ init()
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 100%;
         justify-content: flex-end;
-        cursor: pointer;
+        height: 100%;
+
+        &:active {
+          opacity: 0.85;
+        }
 
         .kline-bar-wrapper {
           width: 100%;
@@ -1116,19 +1234,28 @@ init()
           transition: all 0.3s ease;
 
           &.fortune-excellent {
-            background: linear-gradient(180deg, #4ade80, #22c55e);
+            background: $sd-wood;
+            box-shadow: 0 0 16rpx rgba(111, 191, 143, 0.28);
           }
+
           &.fortune-good {
-            background: linear-gradient(180deg, #60a5fa, #3b82f6);
+            background: $sd-water;
+            box-shadow: 0 0 16rpx rgba(106, 155, 216, 0.28);
           }
+
           &.fortune-medium {
-            background: linear-gradient(180deg, #fcd34d, #f59e0b);
+            background: $sd-gold;
+            box-shadow: 0 0 16rpx rgba(232, 195, 106, 0.28);
           }
+
           &.fortune-low {
-            background: linear-gradient(180deg, #fb923c, #f97316);
+            background: $sd-fire;
+            box-shadow: 0 0 16rpx rgba(232, 115, 94, 0.28);
           }
+
           &.fortune-poor {
-            background: linear-gradient(180deg, #f87171, #ef4444);
+            background: $sd-cinnabar;
+            box-shadow: 0 0 16rpx rgba(237, 90, 107, 0.28);
           }
         }
 
@@ -1137,7 +1264,7 @@ init()
 
           .stage-age {
             font-size: 20rpx;
-            color: #666;
+            color: $sd-text-3;
           }
         }
       }
@@ -1145,32 +1272,36 @@ init()
   }
 
   .overall-trend {
-    padding: 24rpx;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-    border-radius: 16rpx;
+    padding: 26rpx;
+    background: $sd-bg-raise;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius;
 
     .trend-title {
+      font-family: $sd-font-display;
       font-size: 28rpx;
       font-weight: bold;
-      color: #667eea;
+      color: $sd-gold-bright;
+      letter-spacing: 2rpx;
       margin-bottom: 12rpx;
     }
 
     .trend-text {
       font-size: 26rpx;
-      color: #666;
+      color: $sd-text-2;
       line-height: 1.8;
     }
   }
 }
 
-// 人生阶段列表
+/* ---- 人生阶段列表 ---- */
 .stages-card {
   .stages-list {
     .stage-item {
-      padding: 24rpx;
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      border-radius: 16rpx;
+      padding: 26rpx;
+      background: $sd-bg-raise;
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius;
       margin-bottom: 20rpx;
 
       &:last-child {
@@ -1188,14 +1319,15 @@ init()
           flex-direction: column;
 
           .stage-age-large {
+            font-family: $sd-font-display;
             font-size: 36rpx;
             font-weight: bold;
-            color: #667eea;
+            color: $sd-gold-bright;
           }
 
           .stage-years {
-            font-size: 24rpx;
-            color: #999;
+            font-size: 22rpx;
+            color: $sd-text-3;
           }
         }
 
@@ -1203,34 +1335,48 @@ init()
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 12rpx 20rpx;
-          border-radius: 12rpx;
+          padding: 10rpx 20rpx;
+          border-radius: $sd-radius-sm;
+          border: 1rpx solid transparent;
 
           &.fortune-excellent {
-            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: $sd-wood;
+            background: rgba(111, 191, 143, 0.12);
+            border-color: rgba(111, 191, 143, 0.35);
           }
+
           &.fortune-good {
-            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            color: $sd-water;
+            background: rgba(106, 155, 216, 0.12);
+            border-color: rgba(106, 155, 216, 0.35);
           }
+
           &.fortune-medium {
-            background: linear-gradient(135deg, #fcd34d, #f59e0b);
+            color: $sd-gold-bright;
+            background: rgba(232, 195, 106, 0.12);
+            border-color: rgba(232, 195, 106, 0.35);
           }
+
           &.fortune-low {
-            background: linear-gradient(135deg, #fb923c, #f97316);
+            color: $sd-fire;
+            background: rgba(232, 115, 94, 0.12);
+            border-color: rgba(232, 115, 94, 0.35);
           }
+
           &.fortune-poor {
-            background: linear-gradient(135deg, #f87171, #ef4444);
+            color: $sd-cinnabar;
+            background: rgba(237, 90, 107, 0.12);
+            border-color: rgba(237, 90, 107, 0.35);
           }
 
           .fortune-value {
-            font-size: 32rpx;
+            font-size: 30rpx;
             font-weight: bold;
-            color: white;
           }
 
           .fortune-text {
             font-size: 20rpx;
-            color: rgba(255, 255, 255, 0.9);
+            opacity: 0.8;
           }
         }
       }
@@ -1239,30 +1385,33 @@ init()
         .stage-detail-row {
           display: flex;
           align-items: flex-start;
-          margin-bottom: 12rpx;
+          margin-bottom: 14rpx;
 
           &:last-child {
             margin-bottom: 0;
           }
 
           &.key-event {
-            padding: 12rpx;
-            background: rgba(255, 193, 7, 0.1);
-            border-radius: 8rpx;
-            border-left: 4rpx solid #ffc107;
+            padding: 14rpx;
+            background: rgba(232, 195, 106, 0.08);
+            border-radius: $sd-radius-sm;
+            border-left: 4rpx solid $sd-gold;
           }
 
           .detail-icon {
-            font-size: 28rpx;
-            margin-right: 12rpx;
+            @include sd-sigil-base();
+            width: 44rpx;
+            height: 44rpx;
+            font-size: 22rpx;
+            margin-right: 14rpx;
             flex-shrink: 0;
           }
 
           .detail-text {
             flex: 1;
-            font-size: 26rpx;
-            color: #555;
-            line-height: 1.6;
+            font-size: 25rpx;
+            color: $sd-text-2;
+            line-height: 1.7;
           }
         }
       }
@@ -1270,15 +1419,18 @@ init()
   }
 }
 
-// 综合建议卡片
+/* ---- 人生建议 ---- */
 .advice-card {
   .advice-text {
-    font-size: 28rpx;
-    color: #555;
+    font-family: $sd-font-display;
+    font-size: 26rpx;
+    color: $sd-text-2;
     line-height: 1.8;
-    padding: 24rpx;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-    border-radius: 16rpx;
+    text-align: justify;
+    padding: 26rpx;
+    background: $sd-bg-raise;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius;
   }
 }
 </style>

@@ -1,17 +1,38 @@
 <template>
   <view class="container">
-    <view class="form">
-      <view class="form-item">
-        <text class="label">祈愿内容</text>
-        <textarea class="textarea" v-model="content" placeholder="写下你的祈愿..." />
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+
+    <view class="content sd-reveal">
+      <view class="form-card sd-reveal-1">
+        <view class="form-item">
+          <text class="label">祈愿内容</text>
+          <textarea
+            class="textarea"
+            v-model="content"
+            placeholder="写下你的祈愿..."
+            placeholder-style="color: #8d95bd"
+          />
+        </view>
+
+        <view class="sd-divider" />
+
+        <view class="form-item">
+          <text class="label">对象姓名（可选）</text>
+          <input
+            class="input"
+            v-model="targetName"
+            placeholder="对方的名字"
+            placeholder-style="color: #8d95bd"
+          />
+        </view>
       </view>
 
-      <view class="form-item">
-        <text class="label">对象姓名（可选）</text>
-        <input class="input" v-model="targetName" placeholder="对方的名字" />
+      <view class="submit-wrap sd-reveal-2">
+        <StardButton variant="gold" size="lg" block :loading="loading" @click="submit">
+          ✦ 发布祈愿
+        </StardButton>
       </view>
-
-      <button class="btn" @click="submit" :loading="loading">发布祈愿</button>
     </view>
   </view>
 </template>
@@ -20,6 +41,7 @@
 import { ref } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import StardButton from '@/components/stard-button/stard-button.vue'
 
 const content = ref('')
 const targetName = ref('')
@@ -53,48 +75,62 @@ async function submit() {
 
 <style lang="scss" scoped>
 .container {
-  padding: 40rpx;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: $sd-bg;
 }
 
-.form {
-  .form-item {
-    margin-bottom: 40rpx;
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 32rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx);
+}
 
-    .label {
-      display: block;
-      font-size: 28rpx;
-      color: #333;
-      margin-bottom: 20rpx;
-    }
+.form-card {
+  @include sd-card-surface();
+  padding: 36rpx 32rpx;
+}
 
-    .textarea {
-      width: 100%;
-      min-height: 200rpx;
-      background: white;
-      border-radius: 12rpx;
-      padding: 20rpx;
-      font-size: 28rpx;
-      border: 1rpx solid #e5e5e5;
-    }
-
-    .input {
-      width: 100%;
-      height: 88rpx;
-      background: white;
-      border-radius: 12rpx;
-      padding: 0 30rpx;
-      font-size: 28rpx;
-      border: 1rpx solid #e5e5e5;
-    }
+.form-item {
+  .label {
+    display: block;
+    font-family: $sd-font-display;
+    font-size: 28rpx;
+    font-weight: bold;
+    color: $sd-gold-bright;
+    letter-spacing: 3rpx;
+    margin-bottom: 18rpx;
   }
 
-  .btn {
+  .textarea {
+    width: 100%;
+    min-height: 220rpx;
+    background: $sd-bg-raise;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius;
+    padding: 20rpx 24rpx;
+    font-size: 28rpx;
+    color: $sd-text;
+    line-height: 1.7;
+    box-sizing: border-box;
+  }
+
+  .input {
     width: 100%;
     height: 88rpx;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12rpx;
-    font-size: 32rpx;
+    background: $sd-bg-raise;
+    border: 1rpx solid $sd-stroke;
+    border-radius: $sd-radius;
+    padding: 0 24rpx;
+    font-size: 28rpx;
+    color: $sd-text;
+    box-sizing: border-box;
   }
+}
+
+.submit-wrap {
+  margin-top: 36rpx;
 }
 </style>

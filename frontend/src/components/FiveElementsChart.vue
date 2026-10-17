@@ -119,7 +119,7 @@ const elements = computed(() => {
 // 计算主导元素
 const dominantElement = computed(() => {
   const sorted = [...elements.value].sort((a, b) => b.count - a.count)
-  return sorted[0] || { name: '未计算', icon: '❓', count: 0 }
+  return sorted[0] || { name: '未计算', icon: '✧', count: 0 }
 })
 
 // 计算环形图片段

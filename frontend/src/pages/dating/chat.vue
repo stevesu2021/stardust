@@ -1,5 +1,9 @@
 <template>
   <view class="chat-page">
+    <!-- 氛围层（星云 + 星野，不可交互） -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+
     <!-- 消息列表区域 -->
     <scroll-view
       class="messages-container"
@@ -7,39 +11,43 @@
       :scroll-into-view="scrollIntoView"
       :scroll-with-animation="true"
     >
-      <view class="messages-list">
+      <view class="messages-list sd-reveal">
         <view
           v-for="msg in messages"
           :key="msg.id"
+          :id="'msg-' + msg.id"
           class="message-item"
           :class="{ 'own': msg.senderId === currentUserId }"
         >
-          <view class="message-bubble">
-            <text class="message-text">{{ msg.content }}</text>
+          <view class="avatar sd-sigil sd-sigil--sm">
+            <text>{{ msg.senderId === currentUserId ? '☉' : '☽' }}</text>
           </view>
-          <text class="message-time">{{ formatTime(msg.createdAt) }}</text>
+          <view class="message-main">
+            <view class="message-bubble">
+              <text class="message-text">{{ msg.content }}</text>
+            </view>
+            <text class="message-time">{{ formatTime(msg.createdAt) }}</text>
+          </view>
         </view>
 
         <!-- 空状态提示 -->
-        <view v-if="messages.length === 0" class="empty-state">
-          <text class="empty-icon">💬</text>
-          <text class="empty-text">开始聊天吧</text>
-        </view>
+        <EmptyState v-if="messages.length === 0" icon="✉" title="开始聊天吧" />
       </view>
     </scroll-view>
 
-    <!-- 输入区域 - 固定在底部 -->
+    <!-- 输入区域 - 悬浮于底部 -->
     <view class="input-container">
       <view class="input-wrapper">
         <input
           class="message-input"
           v-model="messageText"
           placeholder="说点什么..."
+          placeholder-style="color: #8d95bd"
           :confirm-type="'send'"
           @confirm="sendMessage"
         />
         <view class="send-btn" @click="sendMessage">
-          <text class="send-icon">发送</text>
+          <text class="send-icon">✦ 发送</text>
         </view>
       </view>
     </view>
@@ -50,6 +58,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import EmptyState from '@/components/empty-state/empty-state.vue'
 
 const messages = ref<any[]>([])
 const messageText = ref('')
@@ -129,145 +138,149 @@ function formatTime(time: string) {
 
 <style lang="scss" scoped>
 .chat-page {
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 70vh;
-  background: #f5f6fa;
+  height: 100vh;
+  overflow: hidden;
+  background: $sd-bg;
+
+  /* #ifdef H5 */
+  height: calc(100vh - var(--window-top, 44px));
+  /* #endif */
 }
 
 // 消息列表区域
 .messages-container {
+  position: relative;
+  z-index: 1;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
 .messages-list {
-  padding: 16rpx;
-  min-height: 100%;
+  box-sizing: border-box;
+  padding: 28rpx 32rpx 48rpx;
 }
 
+// 消息条目（sigil 头像 + 气泡）
 .message-item {
   display: flex;
-  flex-direction: column;
-  margin-bottom: 20rpx;
+  align-items: flex-start;
+  gap: 16rpx;
+  margin-bottom: 30rpx;
 
-  &.own {
-    align-items: flex-end;
-
-    .message-bubble {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-bottom-right-radius: 8rpx;
-    }
-
-    .message-time {
-      text-align: right;
-    }
+  .avatar {
+    flex-shrink: 0;
   }
 
-  &:not(.own) {
+  .message-main {
+    display: flex;
+    flex-direction: column;
     align-items: flex-start;
+    max-width: 68%;
+  }
+
+  .message-bubble {
+    padding: 18rpx 26rpx;
+    border-radius: $sd-radius-lg;
+    box-shadow: 0 6rpx 18rpx rgba(4, 6, 18, 0.24);
+  }
+
+  .message-text {
+    font-size: 26rpx;
+    line-height: 1.6;
+    color: $sd-text;
+    word-break: break-all;
+  }
+
+  .message-time {
+    margin-top: 8rpx;
+    padding: 0 6rpx;
+    font-size: 20rpx;
+    color: $sd-text-3;
+  }
+
+  // 我的消息：金调气泡（悬浮面 + 金描边）
+  &.own {
+    flex-direction: row-reverse;
+
+    .message-main {
+      align-items: flex-end;
+    }
 
     .message-bubble {
-      background: white;
-      color: #333;
-      border-bottom-left-radius: 8rpx;
-      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-    }
-
-    .message-time {
-      text-align: left;
+      background: $sd-bg-raise;
+      border: 1rpx solid rgba(232, 195, 106, 0.26);
+      border-bottom-right-radius: $sd-radius-sm;
     }
   }
-}
 
-.message-bubble {
-  padding: 16rpx 20rpx;
-  border-radius: 16rpx;
-  max-width: 70%;
-  word-break: break-all;
-}
-
-.message-text {
-  font-size: 26rpx;
-  line-height: 1.5;
-}
-
-.message-time {
-  font-size: 20rpx;
-  color: #999;
-  margin-top: 6rpx;
-  padding: 0 6rpx;
-}
-
-// 空状态
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60rpx 0;
-
-  .empty-icon {
-    font-size: 70rpx;
-    margin-bottom: 16rpx;
-    opacity: 0.5;
-  }
-
-  .empty-text {
-    font-size: 26rpx;
-    color: #999;
+  // 对方消息：卡片面 + 淡描边
+  &:not(.own) {
+    .message-bubble {
+      background: $sd-bg-elev;
+      border: 1rpx solid $sd-stroke;
+      border-bottom-left-radius: $sd-radius-sm;
+    }
   }
 }
 
-// 输入区域 - 固定在底部
+// 输入区域 - 悬浮于底部
 .input-container {
+  position: relative;
+  z-index: 2;
   flex-shrink: 0;
-  background: white;
-  border-top: 1rpx solid #e5e5e5;
-  padding: 44rpx 20rpx 12rpx 20rpx;
-  padding-bottom: calc(12rpx + env(safe-area-inset-bottom));
+  background: $sd-bg-nav;
+  border-top: 1rpx solid $sd-stroke;
+  padding: 20rpx 24rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20rpx);
 }
 
 .input-wrapper {
   display: flex;
   align-items: center;
-  gap: 12rpx;
+  gap: 16rpx;
 }
 
 .message-input {
   flex: 1;
-  height: 64rpx;
-  background: #f5f5f5;
-  border-radius: 32rpx;
-  padding: 0 24rpx;
+  height: 72rpx;
+  background: $sd-bg-raise;
+  border: 1rpx solid $sd-stroke;
+  border-radius: $sd-radius-pill;
+  padding: 0 28rpx;
   font-size: 26rpx;
-  color: #333;
+  color: $sd-text;
+  caret-color: $sd-gold-bright;
 
   &::placeholder {
-    color: #999;
+    color: $sd-placeholder;
   }
 }
 
 .send-btn {
   flex-shrink: 0;
-  width: 100rpx;
-  height: 64rpx;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 32rpx;
+  min-width: 116rpx;
+  height: 72rpx;
+  background: $sd-gold-grad;
+  border-radius: $sd-radius-pill;
+  box-shadow: $sd-glow-gold;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 
   &:active {
-    opacity: 0.8;
+    transform: scale(0.96);
+    opacity: 0.88;
   }
 
   .send-icon {
     font-size: 24rpx;
-    color: white;
-    font-weight: 500;
+    font-weight: bold;
+    color: $sd-gold-ink;
   }
 }
 </style>

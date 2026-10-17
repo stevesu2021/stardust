@@ -8,7 +8,9 @@
 
       <!-- 标题 -->
       <view class="modal-header">
-        <text class="header-icon">💕</text>
+        <view class="sd-sigil sd-sigil--cinnabar sd-sigil--lg modal-sigil">
+          <text>❥</text>
+        </view>
         <text class="header-title">缘分匹配</text>
         <text class="header-subtitle">从100位异性中为你精选最佳匹配</text>
       </view>
@@ -67,23 +69,22 @@
           </view>
 
           <!-- 聊天按钮 -->
-          <view class="chat-btn" @tap="startChat(match.user)">
-            <text class="chat-icon">💬</text>
-            <text class="chat-text">发起聊天</text>
-          </view>
+          <StardButton variant="cinnabar" size="sm" class="chat-btn" @click="startChat(match.user)">
+            ✉ 发起聊天
+          </StardButton>
         </view>
       </view>
 
       <!-- 无结果状态 -->
       <view class="no-results" v-else>
-        <text class="no-results-icon">😔</text>
+        <text class="no-results-icon">✧</text>
         <text class="no-results-text">暂无匹配用户</text>
         <text class="no-results-hint">请先完善您的个人资料</text>
       </view>
 
       <!-- 底部提示 -->
       <view class="modal-footer" v-if="!loading && matches.length > 0">
-        <text class="footer-text">基于星座配对 + 五行八字综合计算</text>
+        <text class="footer-text">✧ 基于星座配对 + 五行八字综合计算</text>
       </view>
     </view>
   </view>
@@ -92,6 +93,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { api } from '@/api'
+import StardButton from '@/components/stard-button/stard-button.vue'
 
 const props = defineProps<{
   visible: boolean
@@ -122,7 +124,7 @@ const zodiacIcons: Record<string, string> = {
 }
 
 function getZodiacIcon(sign: string) {
-  return zodiacIcons[sign] || '⭐'
+  return zodiacIcons[sign] || '✧'
 }
 
 async function loadMatches() {
@@ -167,7 +169,7 @@ import { watch } from 'vue'
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(4, 6, 18, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -184,15 +186,32 @@ import { watch } from 'vue'
   }
 }
 
+/* 弹窗卡片：星夜卡面 + 顶部金渐变光带 */
 .modal-content {
   width: 680rpx;
   max-height: 80vh;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 32rpx;
-  padding: 40rpx 30rpx;
+  padding: 44rpx 30rpx 36rpx;
   position: relative;
   overflow-y: auto;
   animation: slideUp 0.4s ease;
+  @include sd-card-surface();
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4rpx;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(232, 195, 106, 0.9) 32%,
+      rgba(232, 195, 106, 0.35) 68%,
+      transparent 100%
+    );
+    box-shadow: 0 0 24rpx rgba(232, 195, 106, 0.45);
+  }
 }
 
 @keyframes slideUp {
@@ -218,20 +237,22 @@ import { watch } from 'vue'
   z-index: 10;
 
   .close-icon {
-    font-size: 60rpx;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 56rpx;
+    color: $sd-text-3;
     line-height: 1;
+  }
+
+  &:active {
+    opacity: 0.7;
   }
 }
 
 .modal-header {
   text-align: center;
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
 
-  .header-icon {
-    display: block;
-    font-size: 80rpx;
-    margin-bottom: 16rpx;
+  .modal-sigil {
+    margin: 0 auto 16rpx;
     animation: heartbeat 1.5s ease-in-out infinite;
   }
 
@@ -246,16 +267,18 @@ import { watch } from 'vue'
 
   .header-title {
     display: block;
+    font-family: $sd-font-display;
     font-size: 40rpx;
     font-weight: bold;
-    color: #fff;
+    letter-spacing: 4rpx;
     margin-bottom: 8rpx;
+    @include sd-gold-text();
   }
 
   .header-subtitle {
     display: block;
     font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.6);
+    color: $sd-text-3;
   }
 }
 
@@ -268,8 +291,8 @@ import { watch } from 'vue'
   .loading-spinner {
     width: 80rpx;
     height: 80rpx;
-    border: 4rpx solid rgba(255, 255, 255, 0.1);
-    border-top-color: #ff6b9d;
+    border: 4rpx solid $sd-stroke;
+    border-top-color: $sd-cinnabar;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -283,7 +306,7 @@ import { watch } from 'vue'
   .loading-text {
     margin-top: 24rpx;
     font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.8);
+    color: $sd-text-2;
   }
 }
 
@@ -295,29 +318,28 @@ import { watch } from 'vue'
 
 .match-card {
   position: relative;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 24rpx;
   padding: 24rpx;
   display: flex;
   align-items: center;
   gap: 20rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
   animation: cardAppear 0.5s ease forwards;
   opacity: 0;
+  @include sd-card-surface();
 
   &.card-0 {
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 107, 157, 0.15) 100%);
-    border-color: rgba(255, 215, 0, 0.3);
+    border-color: rgba(237, 90, 107, 0.4);
+    background:
+      linear-gradient(160deg, rgba(237, 90, 107, 0.1) 0%, rgba(237, 90, 107, 0.02) 46%),
+      $sd-card-grad;
+    box-shadow: $sd-glow-cinnabar;
   }
 
   &.card-1 {
-    background: linear-gradient(135deg, rgba(192, 192, 192, 0.15) 0%, rgba(156, 39, 176, 0.15) 100%);
-    border-color: rgba(192, 192, 192, 0.3);
+    border-color: $sd-stroke-strong;
   }
 
   &.card-2 {
-    background: linear-gradient(135deg, rgba(205, 127, 50, 0.15) 0%, rgba(255, 87, 34, 0.15) 100%);
-    border-color: rgba(205, 127, 50, 0.3);
+    border-color: $sd-stroke-strong;
   }
 }
 
@@ -332,6 +354,7 @@ import { watch } from 'vue'
   }
 }
 
+/* 排名徽章：金 → 银 → 铜 */
 .rank-badge {
   position: absolute;
   top: -8rpx;
@@ -347,62 +370,72 @@ import { watch } from 'vue'
   z-index: 2;
 
   &.rank-0 {
-    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    box-shadow: 0 4rpx 12rpx rgba(255, 215, 0, 0.5);
+    background: $sd-gold-grad;
+    box-shadow: 0 4rpx 16rpx rgba(232, 195, 106, 0.45);
+
     .rank-number {
-      color: #8b4513;
+      color: $sd-gold-ink;
     }
   }
 
   &.rank-1 {
-    background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-    box-shadow: 0 4rpx 12rpx rgba(192, 192, 192, 0.5);
+    background: linear-gradient(135deg, rgba(237, 239, 250, 0.92) 0%, rgba(166, 174, 203, 0.85) 100%);
+    box-shadow: 0 4rpx 16rpx rgba(166, 174, 203, 0.4);
+
     .rank-number {
-      color: #555;
+      color: $sd-bg-nav;
     }
   }
 
   &.rank-2 {
-    background: linear-gradient(135deg, #cd7f32 0%, #ffa726 100%);
-    box-shadow: 0 4rpx 12rpx rgba(205, 127, 50, 0.5);
+    background: linear-gradient(135deg, rgba(192, 154, 107, 0.95) 0%, rgba(184, 148, 74, 0.85) 100%);
+    box-shadow: 0 4rpx 16rpx rgba(184, 148, 74, 0.4);
+
     .rank-number {
-      color: #fff;
+      color: $sd-gold-ink;
     }
   }
 }
 
+/* 匹配度分数 */
 .match-score {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 80rpx;
-  height: 80rpx;
+  width: 88rpx;
+  height: 88rpx;
   border-radius: 50%;
   flex-shrink: 0;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(232, 195, 106, 0.18) 0%, rgba(232, 195, 106, 0.04) 58%, transparent 72%),
+    $sd-bg-raise;
+  border: 1rpx solid rgba(232, 195, 106, 0.4);
 
   &.score-0 {
-    background: linear-gradient(135deg, #ffd700 0%, #ff6b9d 100%);
+    border-color: rgba(232, 195, 106, 0.58);
+    box-shadow: $sd-glow-gold;
   }
 
   &.score-1 {
-    background: linear-gradient(135deg, #c0c0c0 0%, #9c27b0 100%);
+    border-color: rgba(232, 195, 106, 0.42);
   }
 
   &.score-2 {
-    background: linear-gradient(135deg, #cd7f32 0%, #ff5722 100%);
+    border-color: rgba(232, 195, 106, 0.34);
   }
 
   .score-value {
-    font-size: 32rpx;
+    font-size: 30rpx;
     font-weight: bold;
-    color: #fff;
+    color: $sd-gold-bright;
     line-height: 1;
   }
 
   .score-label {
     font-size: 16rpx;
-    color: rgba(255, 255, 255, 0.8);
+    color: $sd-text-3;
+    line-height: 1;
   }
 }
 
@@ -414,7 +447,7 @@ import { watch } from 'vue'
     width: 100rpx;
     height: 100rpx;
     border-radius: 50%;
-    border: 3rpx solid rgba(255, 255, 255, 0.2);
+    border: 3rpx solid rgba(232, 195, 106, 0.35);
 
     &.placeholder {
       background: linear-gradient(135deg, rgba(232, 195, 106, 0.35) 0%, rgba(47, 66, 138, 0.6) 100%);
@@ -425,7 +458,7 @@ import { watch } from 'vue'
       .avatar-text {
         font-size: 40rpx;
         font-weight: bold;
-        color: #f5d98b;
+        color: $sd-gold-bright;
       }
     }
   }
@@ -436,13 +469,14 @@ import { watch } from 'vue'
     right: -4rpx;
     width: 36rpx;
     height: 36rpx;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(11, 14, 31, 0.78);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20rpx;
-    border: 2rpx solid rgba(255, 255, 255, 0.3);
+    color: $sd-gold-bright;
+    border: 2rpx solid rgba(232, 195, 106, 0.45);
   }
 }
 
@@ -454,7 +488,7 @@ import { watch } from 'vue'
     display: block;
     font-size: 28rpx;
     font-weight: bold;
-    color: #fff;
+    color: $sd-text;
     margin-bottom: 8rpx;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -472,13 +506,13 @@ import { watch } from 'vue'
       font-size: 20rpx;
 
       &.zodiac-tag {
-        background: rgba(103, 126, 234, 0.3);
-        color: #a8b4ff;
+        background: rgba(139, 124, 232, 0.16);
+        color: $sd-purple-bright;
       }
 
       &.gender-tag {
-        background: rgba(255, 107, 157, 0.3);
-        color: #ffb3d1;
+        background: rgba(237, 90, 107, 0.14);
+        color: $sd-cinnabar-soft;
       }
     }
   }
@@ -486,7 +520,7 @@ import { watch } from 'vue'
   .user-bio {
     display: block;
     font-size: 22rpx;
-    color: rgba(255, 255, 255, 0.6);
+    color: $sd-text-3;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -494,27 +528,7 @@ import { watch } from 'vue'
 }
 
 .chat-btn {
-  padding: 16rpx 24rpx;
-  background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
-  border-radius: 20rpx;
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
   flex-shrink: 0;
-
-  &:active {
-    opacity: 0.8;
-  }
-
-  .chat-icon {
-    font-size: 28rpx;
-  }
-
-  .chat-text {
-    font-size: 24rpx;
-    color: #fff;
-    font-weight: bold;
-  }
 }
 
 .no-results {
@@ -526,17 +540,19 @@ import { watch } from 'vue'
   .no-results-icon {
     font-size: 100rpx;
     margin-bottom: 24rpx;
+    color: $sd-gold;
+    opacity: 0.6;
   }
 
   .no-results-text {
     font-size: 28rpx;
-    color: #fff;
+    color: $sd-text;
     margin-bottom: 12rpx;
   }
 
   .no-results-hint {
     font-size: 24rpx;
-    color: rgba(255, 255, 255, 0.6);
+    color: $sd-text-3;
   }
 }
 
@@ -544,11 +560,11 @@ import { watch } from 'vue'
   text-align: center;
   margin-top: 32rpx;
   padding-top: 24rpx;
-  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
+  border-top: 1rpx solid $sd-stroke;
 
   .footer-text {
     font-size: 22rpx;
-    color: rgba(255, 255, 255, 0.5);
+    color: $sd-text-3;
   }
 }
 </style>

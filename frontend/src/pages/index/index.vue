@@ -147,7 +147,7 @@ const features: FeatureItem[] = [
   { title: '虔诚祈祷', desc: '向神灵祈愿', url: '/pages/prayer/devout-list', symbol: '☾', accent: false },
   { title: '商城', desc: '星座周边商品', url: '/pages/shop/list', symbol: '❖', accent: false },
   { title: '树洞', desc: '匿名分享心情', url: '/pages/treehole/list', symbol: '✎', accent: false },
-  { title: '缘分匹配', desc: '基于星座五行的交友', url: '/pages/dating/matches', symbol: '❤', accent: false },
+  { title: '缘分匹配', desc: '基于星座五行的交友', url: '/pages/dating/matches', symbol: '❥', accent: false },
   { title: '看手相', desc: 'AI 手相分析', url: '/pages/palm/reading', symbol: '✋', accent: false },
   { title: '看面相', desc: 'AI 面相分析', url: '/pages/face/reading', symbol: '☯', accent: false },
   { title: 'MBTI 测试', desc: '人格类型分析', url: '/pages/mbti/result', symbol: '◈', accent: false },

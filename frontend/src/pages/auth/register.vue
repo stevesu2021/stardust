@@ -1,73 +1,110 @@
 <template>
   <view class="container">
-    <view class="form">
-      <view class="form-item">
-        <text class="label">昵称</text>
-        <input class="input" v-model="nickname" placeholder="请输入昵称" placeholder-style="color: #9aa3b8" />
+    <!-- 氛围层（星云 + 星野，不可交互） -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+
+    <view class="content sd-reveal">
+      <!-- 品牌区（与登录页呼应） -->
+      <view class="brand">
+        <view class="sd-sigil sd-sigil--lg"><text>✦</text></view>
+        <text class="brand-name sd-gold-text">星契集</text>
+        <text class="brand-slogan">录入生辰 · 缔结星契</text>
       </view>
 
-      <view class="form-item">
-        <text class="label">匿名昵称</text>
-        <view class="anonymous-input-wrapper">
-          <input class="input anonymous-input" v-model="anonymousNickname" placeholder="用于树洞等场景" placeholder-style="color: #9aa3b8" />
-          <button class="refresh-btn" @click="refreshAnonymousNickname">🎲</button>
+      <!-- 账号信息 -->
+      <view class="form-section">
+        <text class="section-title">✦ 账号信息</text>
+
+        <view class="form-item">
+          <text class="label">昵称</text>
+          <input class="input" v-model="nickname" placeholder="请输入昵称" placeholder-style="color: #8d95bd" />
         </view>
-        <text class="hint">点击🎲可以随机更换昵称</text>
+
+        <view class="form-item">
+          <text class="label">匿名昵称</text>
+          <view class="anonymous-input-wrapper">
+            <input class="input anonymous-input" v-model="anonymousNickname" placeholder="用于树洞等场景" placeholder-style="color: #8d95bd" />
+            <view class="refresh-btn" @click="refreshAnonymousNickname"><text>☄</text></view>
+          </view>
+          <text class="hint">点击 ☄ 可随机更换昵称</text>
+        </view>
+
+        <view class="form-item">
+          <text class="label">手机号</text>
+          <input class="input" v-model="phone" placeholder="请输入手机号" placeholder-style="color: #8d95bd" />
+        </view>
+
+        <view class="form-item">
+          <text class="label">密码</text>
+          <input class="input" v-model="password" type="password" placeholder="请输入密码" placeholder-style="color: #8d95bd" />
+        </view>
       </view>
 
-      <view class="form-item">
-        <text class="label">手机号</text>
-        <input class="input" v-model="phone" placeholder="请输入手机号" placeholder-style="color: #9aa3b8" />
+      <!-- 生辰命理 -->
+      <view class="form-section">
+        <text class="section-title">✦ 生辰命理</text>
+
+        <view class="form-item">
+          <text class="label">性别</text>
+          <radio-group class="gender-switch" @change="onGenderChange">
+            <label class="gender-option" :class="{ 'is-active': gender === 'male' }">
+              <radio class="gender-radio" value="male" :checked="gender === 'male'" color="#4a3813" />
+              <text>♂ 男</text>
+            </label>
+            <label class="gender-option" :class="{ 'is-active': gender === 'female' }">
+              <radio class="gender-radio" value="female" :checked="gender === 'female'" color="#4a3813" />
+              <text>♀ 女</text>
+            </label>
+          </radio-group>
+        </view>
+
+        <view class="form-item">
+          <text class="label">出生日期</text>
+          <picker mode="date" :value="birthDate || '1996-01-01'" @change="onDateChange">
+            <view class="picker" :class="{ 'is-placeholder': !birthDate }">
+              <text class="picker-value">{{ birthDate || '请选择出生日期' }}</text>
+              <text class="picker-arrow">▾</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">出生时辰</text>
+          <picker mode="selector" :range="hours" @change="onHourChange">
+            <view class="picker" :class="{ 'is-placeholder': birthHourIndex === null }">
+              <text class="picker-value">{{ birthHourIndex !== null ? hours[birthHourIndex] : '请选择出生时辰' }}</text>
+              <text class="picker-arrow">▾</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">出生省份</text>
+          <picker mode="selector" :range="provinces" @change="onProvinceChange">
+            <view class="picker" :class="{ 'is-placeholder': !birthProvince }">
+              <text class="picker-value">{{ birthProvince || '请选择出生省份' }}</text>
+              <text class="picker-arrow">▾</text>
+            </view>
+          </picker>
+        </view>
+
+        <view class="form-item">
+          <text class="label">现居地省份</text>
+          <picker mode="selector" :range="provinces" @change="onCurrentProvinceChange">
+            <view class="picker" :class="{ 'is-placeholder': !currentProvince }">
+              <text class="picker-value">{{ currentProvince || '请选择现居地省份' }}</text>
+              <text class="picker-arrow">▾</text>
+            </view>
+          </picker>
+        </view>
       </view>
 
-      <view class="form-item">
-        <text class="label">密码</text>
-        <input class="input" v-model="password" type="password" placeholder="请输入密码" placeholder-style="color: #9aa3b8" />
+      <view class="cta-row">
+        <StardButton variant="gold" size="lg" block :loading="loading" @click="handleRegister">
+          <text>✦ 注册</text>
+        </StardButton>
       </view>
-
-      <view class="form-item">
-        <text class="label">性别</text>
-        <radio-group @change="onGenderChange">
-          <label class="radio">
-            <radio value="male" :checked="gender === 'male'" />
-            <text>男</text>
-          </label>
-          <label class="radio">
-            <radio value="female" :checked="gender === 'female'" />
-            <text>女</text>
-          </label>
-        </radio-group>
-      </view>
-
-      <view class="form-item">
-        <text class="label">出生日期</text>
-        <picker mode="date" :value="birthDate || '1996-01-01'" @change="onDateChange">
-          <view class="picker">{{ birthDate || '请选择出生日期' }}</view>
-        </picker>
-      </view>
-
-      <view class="form-item">
-        <text class="label">出生时辰</text>
-        <picker mode="selector" :range="hours" @change="onHourChange">
-          <view class="picker">{{ birthHourIndex !== null ? hours[birthHourIndex] : '请选择出生时辰' }}</view>
-        </picker>
-      </view>
-
-      <view class="form-item">
-        <text class="label">出生省份</text>
-        <picker mode="selector" :range="provinces" @change="onProvinceChange">
-          <view class="picker">{{ birthProvince || '请选择出生省份' }}</view>
-        </picker>
-      </view>
-
-      <view class="form-item">
-        <text class="label">现居地省份</text>
-        <picker mode="selector" :range="provinces" @change="onCurrentProvinceChange">
-          <view class="picker">{{ currentProvince || '请选择现居地省份' }}</view>
-        </picker>
-      </view>
-
-      <button class="btn" @click="handleRegister" :loading="loading">注册</button>
 
       <view class="links">
         <text class="link" @click="goToLogin">已有账号？去登录</text>
@@ -80,6 +117,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/api'
 import { useUserStore } from '@/store/user'
+import StardButton from '@/components/stard-button/stard-button.vue'
 
 const nickname = ref('')
 const anonymousNickname = ref('')
@@ -292,104 +330,197 @@ async function handleRegister() {
 
 <style lang="scss" scoped>
 .container {
-  padding: 60rpx 40rpx;
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: $sd-bg;
 }
 
-.form {
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 60rpx 40rpx 48rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 48rpx);
+}
+
+// 品牌区（与登录页呼应）
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 48rpx;
+
+  .brand-name {
+    font-family: $sd-font-display;
+    font-size: 44rpx;
+    font-weight: bold;
+    letter-spacing: 8rpx;
+    line-height: 1.2;
+    margin: 22rpx 0 12rpx;
+    /* 补偿末字字距，保持视觉居中 */
+    padding-left: 8rpx;
+  }
+
+  .brand-slogan {
+    font-size: 24rpx;
+    color: $sd-text-3;
+    letter-spacing: 3rpx;
+  }
+}
+
+// 表单区块
+.form-section {
+  @include sd-card-surface();
+  padding: 36rpx 32rpx;
+  margin-bottom: 28rpx;
+
+  .section-title {
+    display: block;
+    font-family: $sd-font-display;
+    font-size: 30rpx;
+    letter-spacing: 3rpx;
+    margin-bottom: 30rpx;
+    @include sd-gold-text();
+  }
+
   .form-item {
-    margin-bottom: 40rpx;
+    margin-bottom: 32rpx;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
 
     .label {
       display: block;
-      font-size: 28rpx;
-      color: #c7cde4; // 深色背景上 label 用亮灰
-      margin-bottom: 20rpx;
+      font-size: 26rpx;
+      color: $sd-text-2;
+      letter-spacing: 2rpx;
+      margin-bottom: 14rpx;
     }
 
     .input {
       width: 100%;
       height: 88rpx;
-      background: white;
-      border-radius: 12rpx;
-      padding: 0 30rpx;
+      box-sizing: border-box;
+      background: $sd-bg-raise;
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius;
+      padding: 0 28rpx;
       font-size: 28rpx;
-      color: #1a1d29; // 白底输入框必须显式给近黑色文字，否则继承主题白色看不见
-      caret-color: #667eea; // 光标高亮可见，可感知移动
-      border: 1rpx solid #e5e5e5;
-
-      &:focus {
-        border-color: #667eea;
-      }
+      color: $sd-text;
+      caret-color: $sd-gold-bright;
     }
 
+    .hint {
+      display: block;
+      font-size: 22rpx;
+      color: $sd-text-3;
+      margin-top: 12rpx;
+    }
+
+    // 匿名昵称随机按钮：金印章
     .anonymous-input-wrapper {
       display: flex;
       align-items: center;
-      gap: 20rpx;
+      gap: 16rpx;
 
       .anonymous-input {
         flex: 1;
       }
 
       .refresh-btn {
+        @include sd-sigil-base();
         width: 88rpx;
         height: 88rpx;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12rpx;
         font-size: 40rpx;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        padding: 0;
-        line-height: 1;
+        flex-shrink: 0;
+
+        &:active {
+          transform: scale(0.94);
+          opacity: 0.85;
+        }
       }
     }
 
-    .hint {
-      display: block;
-      font-size: 24rpx;
-      color: #999;
-      margin-top: 10rpx;
+    // 性别选择：胶囊式切换
+    .gender-switch {
+      display: flex;
+      gap: 8rpx;
+      padding: 8rpx;
+      background: $sd-bg-nav;
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius-pill;
+
+      .gender-option {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8rpx;
+        padding: 14rpx 0;
+        border-radius: $sd-radius-pill;
+        font-size: 26rpx;
+        color: $sd-text-2;
+
+        &:active {
+          opacity: 0.85;
+        }
+
+        &.is-active {
+          background: $sd-gold-grad;
+          color: $sd-gold-ink;
+          font-weight: bold;
+          box-shadow: $sd-glow-gold;
+        }
+
+        .gender-radio {
+          transform: scale(0.8);
+        }
+      }
     }
 
+    // 选择器：输入面 + 尾部箭头
     .picker {
-      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       height: 88rpx;
-      background: white;
-      border-radius: 12rpx;
-      padding: 0 30rpx;
-      font-size: 28rpx;
-      color: #1a1d29; // 与输入框一致：选中值近黑色清晰可读
-      border: 1rpx solid #e5e5e5;
-      line-height: 88rpx;
-    }
+      padding: 0 28rpx;
+      background: $sd-bg-raise;
+      border: 1rpx solid $sd-stroke;
+      border-radius: $sd-radius;
 
-    .radio {
-      margin-right: 40rpx;
-      font-size: 28rpx;
+      .picker-value {
+        font-size: 28rpx;
+        color: $sd-text;
+      }
+
+      .picker-arrow {
+        font-size: 22rpx;
+        color: $sd-text-3;
+      }
+
+      &.is-placeholder .picker-value {
+        color: $sd-text-3;
+      }
     }
   }
+}
 
-  .btn {
-    width: 100%;
-    height: 88rpx;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 12rpx;
-    font-size: 32rpx;
-    margin-top: 40rpx;
-  }
+// 主 CTA
+.cta-row {
+  margin-top: 8rpx;
+}
 
-  .links {
-    text-align: center;
-    margin-top: 30rpx;
+// 登录跳转
+.links {
+  text-align: center;
+  margin-top: 36rpx;
 
-    .link {
-      font-size: 28rpx;
-      color: #667eea;
-    }
+  .link {
+    font-size: 26rpx;
+    color: $sd-gold;
+    letter-spacing: 2rpx;
   }
 }
 </style>

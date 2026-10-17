@@ -1,13 +1,17 @@
 <template>
   <view class="container">
+    <!-- 星夜氛围层 -->
+    <view class="sd-nebula" />
+    <view class="sd-stars" />
+
     <!-- 顶部banner -->
-    <view class="banner">
-      <text class="banner-title">🌟 星契商城</text>
+    <view class="banner sd-reveal">
+      <text class="banner-title sd-gold-text">✦ 星契商城</text>
       <text class="banner-subtitle">精选星座周边，为你带来好运</text>
     </view>
 
     <!-- 分类筛选 -->
-    <scroll-view scroll-x class="categories">
+    <scroll-view scroll-x class="categories sd-reveal-1">
       <view class="categories-inner">
         <view
           v-for="cat in categoryList"
@@ -29,9 +33,10 @@
 
     <view v-else class="products">
       <view
-        v-for="product in productList"
+        v-for="(product, index) in productList"
         :key="product.id"
         class="product-item"
+        :class="'sd-reveal-' + ((index % 4) + 1)"
         @click="goToDetail(product)"
       >
         <view class="product-image">
@@ -41,7 +46,7 @@
             class="product-img"
             mode="aspectFill"
           />
-          <text v-else class="product-placeholder">📦</text>
+          <text v-else class="product-placeholder">❖</text>
         </view>
         <view class="product-info">
           <text class="product-name">{{ product.title }}</text>
@@ -54,7 +59,7 @@
       </view>
 
       <view v-if="productList.length === 0" class="empty">
-        <text class="empty-icon">📦</text>
+        <text class="empty-icon">❖</text>
         <text class="empty-text">暂无商品</text>
       </view>
 
@@ -78,28 +83,28 @@ const skip = ref(0)
 const take = 20
 const hasMore = ref(true)
 
-// 分类配置（图标映射）
+// 分类配置（图标映射，§4 商品分类符号表）
 const categoryIcons: Record<string, string> = {
-  '全部': '🏪',
-  '手串': '⚪',
-  '吊坠': '📿',
-  '香薰': '🕯️',
-  '水晶': '💎',
-  '星座手链': '⭐',
-  '玛瑙': '🔴',
+  '全部': '✦',
+  '手串': '◉',
+  '吊坠': '◇',
+  '香薰': '☾',
+  '水晶': '◈',
+  '星座手链': '⚹',
+  '玛瑙': '◆',
 }
 
 // 分类列表（包含动态加载的分类）
 const categoryList = computed(() => {
   const baseCategories = [
-    { id: 'all', name: '全部', icon: '🏪' }
+    { id: 'all', name: '全部', icon: '✦' }
   ]
 
   // 添加从后端获取的分类
   const dynamicCategories = categories.value.map(cat => ({
     id: cat,
     name: cat,
-    icon: categoryIcons[cat] || '📦'
+    icon: categoryIcons[cat] || '❖'
   }))
 
   return [...baseCategories, ...dynamicCategories]
@@ -204,8 +209,19 @@ onShow(() => {
 
 <style lang="scss" scoped>
 .container {
+  position: relative;
   min-height: 100vh;
   background: $sd-bg;
+  overflow: hidden;
+}
+
+/* 内容区压在氛围层之上 */
+.banner,
+.categories,
+.loading,
+.products {
+  position: relative;
+  z-index: 1;
 }
 
 .banner {

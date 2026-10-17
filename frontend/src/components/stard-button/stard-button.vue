@@ -14,8 +14,8 @@
 <script setup lang="ts">
 const props = withDefaults(
   defineProps<{
-    /** gold=星光金主按钮 / cinnabar=朱砂 / ghost=暗夜实底 / outline=描边 */
-    variant?: 'gold' | 'cinnabar' | 'ghost' | 'outline'
+    /** gold=星光金主按钮 / cinnabar=朱砂 / wechat=微信品牌绿 / ghost=暗夜实底 / outline=描边 */
+    variant?: 'gold' | 'cinnabar' | 'wechat' | 'ghost' | 'outline'
     size?: 'sm' | 'md' | 'lg'
     block?: boolean
     disabled?: boolean
@@ -79,6 +79,12 @@ function onClick(ev: unknown) {
     background: linear-gradient(135deg, #f0788a 0%, $sd-cinnabar 56%, $sd-cinnabar-deep 100%);
     color: #ffeef1;
     box-shadow: 0 6rpx 24rpx rgba(237, 90, 107, 0.26);
+  }
+
+  &.is-wechat {
+    background: linear-gradient(135deg, #08c668 0%, #07c160 52%, #06ad56 100%);
+    color: #ffffff;
+    box-shadow: 0 6rpx 24rpx rgba(7, 193, 96, 0.28);
   }
 
   &.is-ghost {
