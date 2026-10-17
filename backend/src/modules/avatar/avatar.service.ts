@@ -5,22 +5,21 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AvatarService {
-  private readonly dashscopeApiKey: string;
-  private dashscopeBaseUrl: string;
-  private dashscopeApiHost: string;
-  private text2ImageModel: string;
+  private readonly t2iApiKey: string;
+  private t2iUrl: string;
+  private t2iModel: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly minio: MinioService,
     private readonly configService: ConfigService,
   ) {
-    this.dashscopeApiKey = this.configService.get<string>('DASHSCOPE_API_KEY') || '';
-    this.dashscopeBaseUrl = this.configService.get<string>('DASHSCOPE_BASE_URL') || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
-    // DashScope 原生 API 域名（异步文生图任务用），可用 DASHSCOPE_API_HOST 覆盖
-    this.dashscopeApiHost =
-      this.configService.get<string>('DASHSCOPE_API_HOST') || 'https://dashscope.aliyuncs.com/api/v1';
-    this.text2ImageModel = this.configService.get<string>('DASHSCOPE_T2I_MODEL') || 'wanx-v1';
+    // 文生图：火山方舟 豆包 doubao-seedream（OpenAI images 格式，同步返回）
+    this.t2iApiKey = this.configService.get<string>('ARK_T2I_API_KEY') || '';
+    this.t2iUrl =
+      this.configService.get<string>('ARK_T2I_URL') ||
+      'https://ark.cn-beijing.volces.com/api/plan/v3/images/generations';
+    this.t2iModel = this.configService.get<string>('ARK_T2I_MODEL') || 'doubao-seedream-5.0-pro';
   }
 
   /**
@@ -112,92 +111,39 @@ export class AvatarService {
     console.log('[AvatarService] Prompt length:', prompt.length);
 
     try {
-      // 步骤1: 创建异步任务
-      console.log('[AvatarService] Step 1: Creating async task...');
-      const createTaskResponse = await this.fetchWithTimeout(
-        `${this.dashscopeApiHost}/services/aigc/text2image/image-synthesis`,
+      // 调用火山方舟文生图（同步接口，通常 5~30 秒返回）
+      console.log('[AvatarService] Generating image via Ark...');
+      const genResponse = await this.fetchWithTimeout(
+        this.t2iUrl,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.dashscopeApiKey}`,
-            'X-DashScope-Async': 'enable',
+            Authorization: `Bearer ${this.t2iApiKey}`,
           },
           body: JSON.stringify({
-            model: this.text2ImageModel,
-            input: {
-              prompt: prompt,
-            },
-            parameters: {
-              size: '1024*1024',
-              n: 1,
-              style: '<photography>',
-            },
+            model: this.t2iModel,
+            prompt,
+            size: '1024x1024',
+            response_format: 'url',
+            watermark: false,
           }),
         },
-        30000,
+        120000,
       );
 
-      if (!createTaskResponse.ok) {
-        const errorText = await createTaskResponse.text();
-        console.error('[AvatarService] Create task failed:', errorText);
-        throw new BadRequestException(`AI生成失败: HTTP ${createTaskResponse.status}`);
+      if (!genResponse.ok) {
+        const errorText = await genResponse.text();
+        console.error('[AvatarService] Image generation failed:', errorText);
+        throw new BadRequestException(`AI生成失败: HTTP ${genResponse.status}`);
       }
 
-      const taskData = await createTaskResponse.json();
-      const taskId = taskData?.output?.task_id;
-
-      if (!taskId) {
-        console.error('[AvatarService] Invalid task response:', JSON.stringify(taskData));
-        throw new BadRequestException('AI生成失败，无法获取任务ID');
-      }
-
-      console.log('[AvatarService] Task created:', taskId);
-
-      // 步骤2: 轮询查询任务结果
-      console.log('[AvatarService] Step 2: Polling task result...');
-      let imageUrl: string | null = null;
-      const maxAttempts = 30; // 最多轮询30次
-      const pollInterval = 2000; // 每次间隔2秒
-
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-
-        const queryResponse = await this.fetchWithTimeout(
-          `${this.dashscopeApiHost}/tasks/${taskId}`,
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${this.dashscopeApiKey}`,
-            },
-          },
-          10000,
-        );
-
-        if (!queryResponse.ok) {
-          console.error('[AvatarService] Query task failed:', await queryResponse.text());
-          continue;
-        }
-
-        const queryData = await queryResponse.json();
-        const taskStatus = queryData?.output?.task_status;
-
-        console.log(`[AvatarService] Task status (attempt ${attempt + 1}):`, taskStatus);
-
-        if (taskStatus === 'SUCCEEDED') {
-          imageUrl = queryData?.output?.results?.[0]?.url;
-          break;
-        } else if (taskStatus === 'FAILED' || taskStatus === 'CANCELED') {
-          const code = queryData?.output?.code;
-          const message = queryData?.output?.message;
-          console.error('[AvatarService] Task failed:', { code, message });
-          throw new BadRequestException(`AI生成失败: ${message || '未知错误'}`);
-        }
-        // PENDING 或 RUNNING 则继续轮询
-      }
+      const genData = await genResponse.json();
+      const imageUrl: string | null = genData?.data?.[0]?.url || null;
 
       if (!imageUrl) {
-        throw new BadRequestException('AI生成超时，请稍后重试');
+        console.error('[AvatarService] Invalid image response:', JSON.stringify(genData));
+        throw new BadRequestException('AI生成失败，未返回图片');
       }
 
       console.log('[AvatarService] Image generated:', imageUrl);
@@ -217,7 +163,11 @@ export class AvatarService {
 
       const arrayBuffer = await imageResponse.arrayBuffer();
       const imageBuffer = Buffer.from(arrayBuffer);
-      const fileName = `${userId}-ai-${Date.now()}.png`;
+      // Ark 默认输出 jpeg，按返回 URL 扩展名判定真实格式
+      const isJpeg = /\.jpe?g(\?|$)/i.test(imageUrl);
+      const fileExt = isJpeg ? 'jpg' : 'png';
+      const fileMime = isJpeg ? 'image/jpeg' : 'image/png';
+      const fileName = `${userId}-ai-${Date.now()}.${fileExt}`;
 
       // 如果用户已有头像，先删除旧头像
       if (user.avatar) {
@@ -235,7 +185,7 @@ export class AvatarService {
       const avatarUrl = await this.minio.uploadFile(
         imageBuffer,
         fileName,
-        'image/png',
+        fileMime,
         'avatars',
       );
 

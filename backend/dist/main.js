@@ -4810,11 +4810,11 @@ let AvatarService = class AvatarService {
         this.prisma = prisma;
         this.minio = minio;
         this.configService = configService;
-        this.dashscopeApiKey = this.configService.get('DASHSCOPE_API_KEY') || '';
-        this.dashscopeBaseUrl = this.configService.get('DASHSCOPE_BASE_URL') || 'https://dashscope.aliyuncs.com/compatible-mode/v1';
-        this.dashscopeApiHost =
-            this.configService.get('DASHSCOPE_API_HOST') || 'https://dashscope.aliyuncs.com/api/v1';
-        this.text2ImageModel = this.configService.get('DASHSCOPE_T2I_MODEL') || 'wanx-v1';
+        this.t2iApiKey = this.configService.get('ARK_T2I_API_KEY') || '';
+        this.t2iUrl =
+            this.configService.get('ARK_T2I_URL') ||
+                'https://ark.cn-beijing.volces.com/api/plan/v3/images/generations';
+        this.t2iModel = this.configService.get('ARK_T2I_MODEL') || 'doubao-seedream-5.0-pro';
     }
     async uploadAvatar(userId, file) {
         console.log('[AvatarService] Uploading avatar for user:', userId);
@@ -4873,70 +4873,31 @@ let AvatarService = class AvatarService {
         console.log('[AvatarService] Generated prompt:', prompt);
         console.log('[AvatarService] Prompt length:', prompt.length);
         try {
-            console.log('[AvatarService] Step 1: Creating async task...');
-            const createTaskResponse = await this.fetchWithTimeout(`${this.dashscopeApiHost}/services/aigc/text2image/image-synthesis`, {
+            console.log('[AvatarService] Generating image via Ark...');
+            const genResponse = await this.fetchWithTimeout(this.t2iUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.dashscopeApiKey}`,
-                    'X-DashScope-Async': 'enable',
+                    Authorization: `Bearer ${this.t2iApiKey}`,
                 },
                 body: JSON.stringify({
-                    model: this.text2ImageModel,
-                    input: {
-                        prompt: prompt,
-                    },
-                    parameters: {
-                        size: '1024*1024',
-                        n: 1,
-                        style: '<photography>',
-                    },
+                    model: this.t2iModel,
+                    prompt,
+                    size: '1024x1024',
+                    response_format: 'url',
+                    watermark: false,
                 }),
-            }, 30000);
-            if (!createTaskResponse.ok) {
-                const errorText = await createTaskResponse.text();
-                console.error('[AvatarService] Create task failed:', errorText);
-                throw new common_1.BadRequestException(`AI生成失败: HTTP ${createTaskResponse.status}`);
+            }, 120000);
+            if (!genResponse.ok) {
+                const errorText = await genResponse.text();
+                console.error('[AvatarService] Image generation failed:', errorText);
+                throw new common_1.BadRequestException(`AI生成失败: HTTP ${genResponse.status}`);
             }
-            const taskData = await createTaskResponse.json();
-            const taskId = taskData?.output?.task_id;
-            if (!taskId) {
-                console.error('[AvatarService] Invalid task response:', JSON.stringify(taskData));
-                throw new common_1.BadRequestException('AI生成失败，无法获取任务ID');
-            }
-            console.log('[AvatarService] Task created:', taskId);
-            console.log('[AvatarService] Step 2: Polling task result...');
-            let imageUrl = null;
-            const maxAttempts = 30;
-            const pollInterval = 2000;
-            for (let attempt = 0; attempt < maxAttempts; attempt++) {
-                await new Promise(resolve => setTimeout(resolve, pollInterval));
-                const queryResponse = await this.fetchWithTimeout(`${this.dashscopeApiHost}/tasks/${taskId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${this.dashscopeApiKey}`,
-                    },
-                }, 10000);
-                if (!queryResponse.ok) {
-                    console.error('[AvatarService] Query task failed:', await queryResponse.text());
-                    continue;
-                }
-                const queryData = await queryResponse.json();
-                const taskStatus = queryData?.output?.task_status;
-                console.log(`[AvatarService] Task status (attempt ${attempt + 1}):`, taskStatus);
-                if (taskStatus === 'SUCCEEDED') {
-                    imageUrl = queryData?.output?.results?.[0]?.url;
-                    break;
-                }
-                else if (taskStatus === 'FAILED' || taskStatus === 'CANCELED') {
-                    const code = queryData?.output?.code;
-                    const message = queryData?.output?.message;
-                    console.error('[AvatarService] Task failed:', { code, message });
-                    throw new common_1.BadRequestException(`AI生成失败: ${message || '未知错误'}`);
-                }
-            }
+            const genData = await genResponse.json();
+            const imageUrl = genData?.data?.[0]?.url || null;
             if (!imageUrl) {
-                throw new common_1.BadRequestException('AI生成超时，请稍后重试');
+                console.error('[AvatarService] Invalid image response:', JSON.stringify(genData));
+                throw new common_1.BadRequestException('AI生成失败，未返回图片');
             }
             console.log('[AvatarService] Image generated:', imageUrl);
             const imageResponse = await this.fetchWithTimeout(imageUrl, {
@@ -4947,7 +4908,10 @@ let AvatarService = class AvatarService {
             }
             const arrayBuffer = await imageResponse.arrayBuffer();
             const imageBuffer = Buffer.from(arrayBuffer);
-            const fileName = `${userId}-ai-${Date.now()}.png`;
+            const isJpeg = /\.jpe?g(\?|$)/i.test(imageUrl);
+            const fileExt = isJpeg ? 'jpg' : 'png';
+            const fileMime = isJpeg ? 'image/jpeg' : 'image/png';
+            const fileName = `${userId}-ai-${Date.now()}.${fileExt}`;
             if (user.avatar) {
                 const objectName = this.minio.extractObjectNameFromUrl(user.avatar);
                 if (objectName) {
@@ -4959,7 +4923,7 @@ let AvatarService = class AvatarService {
                     }
                 }
             }
-            const avatarUrl = await this.minio.uploadFile(imageBuffer, fileName, 'image/png', 'avatars');
+            const avatarUrl = await this.minio.uploadFile(imageBuffer, fileName, fileMime, 'avatars');
             await this.prisma.user.update({
                 where: { id: userId },
                 data: {
@@ -5646,23 +5610,42 @@ let DailyFortuneService = class DailyFortuneService {
         }
         const fortune = await this.callAIFortune(user, astrology);
         const today = this.getTodayDate();
-        const result = await this.prisma.dailyFortune.create({
-            data: {
-                userId,
-                fortuneDate: today,
-                overallScore: fortune.overallScore,
-                summary: fortune.summary,
-                precautions: fortune.precautions,
-                career: fortune.career,
-                love: fortune.love,
-                wealth: fortune.wealth,
-                health: fortune.health,
-                luckyColor: fortune.luckyColor,
-                luckyNumber: fortune.luckyNumber,
-                luckyDirection: fortune.luckyDirection,
-                advice: fortune.advice,
-            },
-        });
+        let result;
+        try {
+            result = await this.prisma.dailyFortune.create({
+                data: {
+                    userId,
+                    fortuneDate: today,
+                    overallScore: fortune.overallScore,
+                    summary: fortune.summary,
+                    precautions: fortune.precautions,
+                    career: fortune.career,
+                    love: fortune.love,
+                    wealth: fortune.wealth,
+                    health: fortune.health,
+                    luckyColor: fortune.luckyColor,
+                    luckyNumber: fortune.luckyNumber,
+                    luckyDirection: fortune.luckyDirection,
+                    advice: fortune.advice,
+                },
+            });
+        }
+        catch (error) {
+            if (error?.code === 'P2002') {
+                const existing = await this.prisma.dailyFortune.findUnique({
+                    where: {
+                        userId_fortuneDate: {
+                            userId,
+                            fortuneDate: today,
+                        },
+                    },
+                });
+                if (existing) {
+                    return existing;
+                }
+            }
+            throw error;
+        }
         return result;
     }
     async callAIFortune(user, astrology) {

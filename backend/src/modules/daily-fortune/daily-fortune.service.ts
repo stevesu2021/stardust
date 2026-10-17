@@ -82,23 +82,42 @@ export class DailyFortuneService {
 
     // 保存到数据库
     const today = this.getTodayDate();
-    const result = await this.prisma.dailyFortune.create({
-      data: {
-        userId,
-        fortuneDate: today,
-        overallScore: fortune.overallScore,
-        summary: fortune.summary,
-        precautions: fortune.precautions,
-        career: fortune.career,
-        love: fortune.love,
-        wealth: fortune.wealth,
-        health: fortune.health,
-        luckyColor: fortune.luckyColor,
-        luckyNumber: fortune.luckyNumber,
-        luckyDirection: fortune.luckyDirection,
-        advice: fortune.advice,
-      },
-    });
+    let result;
+    try {
+      result = await this.prisma.dailyFortune.create({
+        data: {
+          userId,
+          fortuneDate: today,
+          overallScore: fortune.overallScore,
+          summary: fortune.summary,
+          precautions: fortune.precautions,
+          career: fortune.career,
+          love: fortune.love,
+          wealth: fortune.wealth,
+          health: fortune.health,
+          luckyColor: fortune.luckyColor,
+          luckyNumber: fortune.luckyNumber,
+          luckyDirection: fortune.luckyDirection,
+          advice: fortune.advice,
+        },
+      });
+    } catch (error) {
+      // 并发场景：另一请求已抢先写入同一天的运势，直接返回已存在记录
+      if ((error as { code?: string })?.code === 'P2002') {
+        const existing = await this.prisma.dailyFortune.findUnique({
+          where: {
+            userId_fortuneDate: {
+              userId,
+              fortuneDate: today,
+            },
+          },
+        });
+        if (existing) {
+          return existing;
+        }
+      }
+      throw error;
+    }
 
     return result;
   }
