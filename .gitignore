@@ -4,3 +4,4 @@ backend/.env
 extra_info/*
 machine_info.txt
 frontend/.theme-work/
+*.env*
