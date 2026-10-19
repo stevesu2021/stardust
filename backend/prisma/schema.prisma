@@ -314,6 +314,8 @@ model ContentTopic {
   sortOrder Int       @default(0)
   createdAt DateTime  @default(now())
   contents  Content[]
+
+  @@map("content_topics")
 }
 
 model Content {
@@ -341,6 +343,7 @@ model Content {
   @@index([status, publishAt])
   @@index([type, publishAt])
   @@index([serializeGroupId, orderNum])
+  @@map("contents")
 }
 
 model UserContentProgress {
@@ -352,6 +355,7 @@ model UserContentProgress {
 
   @@unique([userId, contentId])
   @@index([userId, lastReadAt])
+  @@map("user_content_progress")
 }
 
 model UserContentLike {
@@ -361,12 +365,15 @@ model UserContentLike {
   createdAt DateTime @default(now())
 
   @@unique([userId, contentId])
+  @@map("user_content_like")
 }
 
 model UserFeedCursor {
   userId    String    @id
   cursor    String? // 上次浏览到的最后一篇 contentId
   updatedAt DateTime  @updatedAt
+
+  @@map("user_feed_cursor")
 }
 
 model DailySign {
@@ -377,6 +384,8 @@ model DailySign {
   interpretation String
   luckyAction    String // 宜
   avoidAction    String // 忌
+
+  @@map("daily_signs")
 }
 
 model UserDailySign {
@@ -387,4 +396,5 @@ model UserDailySign {
   drawnAt DateTime @default(now())
 
   @@unique([userId, date])
+  @@map("user_daily_signs")
 }
