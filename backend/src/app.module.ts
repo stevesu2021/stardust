@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { MinioModule } from './common/minio/minio.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -20,6 +21,7 @@ import { MbtiModule } from './modules/mbti/mbti.module';
 import { DailyFortuneModule } from './modules/daily-fortune/daily-fortune.module';
 import { FamousPeopleModule } from './modules/famous-people/famous-people.module';
 import { ProductModule } from './modules/product/product.module';
+import { ContentModule } from './modules/content/content.module';
 
 @Module({
   imports: [
@@ -27,6 +29,7 @@ import { ProductModule } from './modules/product/product.module';
       isGlobal: true,
       envFilePath: '.env',
     }),
+    ScheduleModule.forRoot(),
     // 全局限流：同一 IP 每 60 秒最多 60 次请求（nginx 层另有 30r/s 粗过滤）
     ThrottlerModule.forRoot([
       {
@@ -53,6 +56,7 @@ import { ProductModule } from './modules/product/product.module';
     DailyFortuneModule,
     FamousPeopleModule,
     ProductModule,
+    ContentModule,
   ],
   // 登录态前即可触发的公共端点全部受全局限流保护
   providers: [
