@@ -93,3 +93,28 @@ describe('scoreFeed 补充断言（自审）', () => {
     expect(r1.ranked.map((c) => c.id)).toEqual(r2.ranked.map((c) => c.id));
   });
 });
+
+describe('scoreFeed 边界用例', () => {
+  it('空候选集返回空列表', () => {
+    const { ranked, excludedFinished } = scoreFeed([], ctx(), new Date());
+    expect(ranked).toEqual([]);
+    expect(excludedFinished).toBe(0);
+  });
+  it('全部已读时全部排除', () => {
+    const { ranked, excludedFinished } = scoreFeed(
+      [mk({ id: 'a' }), mk({ id: 'b' })],
+      ctx({ finishedIds: new Set(['a', 'b']) }),
+      new Date(),
+    );
+    expect(ranked).toEqual([]);
+    expect(excludedFinished).toBe(2);
+  });
+  it('大分差（连载+10）在任意 seed 下恒置顶', () => {
+    for (let i = 0; i < 50; i++) {
+      const next = mk({ id: 'next' });
+      const hot = mk({ id: 'hot', likeCount: 50 });
+      const { ranked } = scoreFeed([hot, next], ctx({ userId: `u${i}`, continueId: 'next' }), new Date());
+      expect(ranked[0].id).toBe('next');
+    }
+  });
+});

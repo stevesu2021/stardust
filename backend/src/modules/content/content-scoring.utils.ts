@@ -28,13 +28,13 @@ export interface FeedContext {
 /** 确定性随机：同用户同日稳定，异用户/次日自然变化 */
 export function seededJitter(userId: string, date: string, contentId: string): number {
   const h = createHash('sha256').update(`${userId}:${date}:${contentId}`).digest('hex');
-  return parseInt(h.slice(0, 8), 16) / 0xffffffff;
+  return parseInt(h.slice(0, 8), 16) / 0x100000000;
 }
 
 export function baseScore(c: FeedCandidate, now: Date): number {
   const like = Math.log(1 + c.likeCount);
   const finishRate = c.viewCount > 0 ? c.finishCount / c.viewCount : 0;
-  const ageHours = (now.getTime() - new Date(c.publishAt).getTime()) / 3_600_000;
+  const ageHours = (now.getTime() - c.publishAt.getTime()) / 3_600_000;
   return like + finishRate * 2 + (ageHours <= 72 ? 1 : 0);
 }
 
