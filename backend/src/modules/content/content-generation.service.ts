@@ -37,6 +37,8 @@ export interface AstroFacts {
   yi: string[]; ji: string[]; mercuryRetro: boolean;
 }
 
+let retroExpiryWarned = false;
+
 @Injectable()
 export class ContentGenerationService {
   private readonly textUrl: string; private readonly textModel: string; private readonly textKey: string;
@@ -55,12 +57,17 @@ export class ContentGenerationService {
     this.imgKey = this.configService.get<string>('ARK_T2I_API_KEY') || '';
   }
 
-  /** 天文历法引擎：程序计算事实，AI 只润色不造事实 */
+  /** 天文历法引擎：程序计算事实，AI 只润色不造事实（按北京日期取农历，避免服务器时区错位） */
   getAstroFacts(date = new Date()): AstroFacts {
-    const solar = Solar.fromDate(date);
-    const lunar = solar.getLunar();
     const iso = this.beijingDate(date);
+    const [y, m, d] = iso.split('-').map(Number);
+    const lunar = Solar.fromYmd(y, m, d).getLunar();
     const mercuryRetro = MERCURY_RETRO.some(([a, b]) => iso >= a && iso <= b);
+    const lastEnd = MERCURY_RETRO[MERCURY_RETRO.length - 1][1];
+    if (!retroExpiryWarned && iso > lastEnd) {
+      console.warn('[ContentGeneration] 水星逆行年表已过期（至 ' + lastEnd + '），请更新 MERCURY_RETRO');
+      retroExpiryWarned = true;
+    }
     return {
       date: iso,
       lunarStr: `${lunar.getYearInChinese()}年${lunar.getMonthInChinese()}月${lunar.getDayInChinese()}`,
@@ -75,12 +82,20 @@ export class ContentGenerationService {
     return new Date(d.getTime() + 8 * 3600_000).toISOString().slice(0, 10);
   }
 
-  /** 每日管线：今日星象 + 黄历宜忌（日报类按 env 自动发布） */
+  /** 每日管线：今日星象 + 黄历宜忌（幂等：当日已生成的不重复生成） */
   async runDailyPipeline(date = new Date()): Promise<{ astro: string; almanac: string }> {
     const facts = this.getAstroFacts(date);
-    const auto = (this.configService.get<string>('CONTENT_AUTO_PUBLISH_DAILY') ?? 'true') === 'true';
-    const astro = await this.generateDaily(facts, 'astro', auto);
-    const almanac = await this.generateDaily(facts, 'almanac', auto);
+    const auto = (this.configService.get<string>('CONTENT_AUTO_PUBLISH_DAILY') ?? 'true').trim().toLowerCase() === 'true';
+    const todayStart = new Date(`${facts.date}T00:00:00+08:00`);
+    const existing = await this.prisma.content.findMany({
+      where: { type: 'daily_astro', publishAt: { gte: todayStart } },
+      orderBy: { publishAt: 'desc' },
+      select: { id: true, tags: true },
+    });
+    const hasAstro = existing.find((c) => (c.tags as string[]).includes('今日星象'));
+    const hasAlmanac = existing.find((c) => (c.tags as string[]).includes('黄历'));
+    const astro = hasAstro ?? (await this.generateDaily(facts, 'astro', auto));
+    const almanac = hasAlmanac ?? (await this.generateDaily(facts, 'almanac', auto));
     return { astro: astro.id, almanac: almanac.id };
   }
 
@@ -123,7 +138,20 @@ export class ContentGenerationService {
     };
     const c = conf[opts.type];
     if (!c) throw new BadRequestException(`不支持的类型: ${opts.type}`);
+    if (opts.type === 'zodiac_deep' && (!opts.zodiac || !ZODIACS.includes(opts.zodiac))) {
+      throw new BadRequestException(`zodiac_deep 必须传入有效星座（白名单: ${ZODIACS.join('、')}）`);
+    }
+    if (opts.theme && opts.theme.length > 50) {
+      throw new BadRequestException('theme 过长（≤50 字）');
+    }
     const gen = await this.callText(`${PERSONA}\n${c.task}\n${OUTPUT_RULES}`);
+    // 关键字段代码强制，不信任模型输出
+    if (opts.type === 'zodiac_deep') {
+      gen.zodiacSigns = [opts.zodiac];
+    }
+    if (opts.type === 'weekly_horoscope') {
+      gen.tags = Array.from(new Set([...(gen.tags || []), '周运']));
+    }
     const saved = await this.saveContent({
       type: opts.type, topicSlug: c.topic, gen, status: 'draft',
       serializeGroupId: opts.type === 'zodiac_deep' ? 'zodiac-deep-series' : null,
@@ -143,27 +171,84 @@ export class ContentGenerationService {
             model: this.textModel,
             messages: [{ role: 'user', content: prompt }],
             temperature: 0.8,
+            max_tokens: 4000,
           }),
-        }, 180_000);
-        if (!res.ok) throw new Error(`text api http ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        }, 180_000, 'AI写稿');
+        if (!res.ok) {
+          const errText = (await res.text()).slice(0, 200);
+          const msg = `text api http ${res.status}: ${errText}`;
+          if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+            throw Object.assign(new Error(msg), { nonRetryable: true });
+          }
+          throw new Error(msg);
+        }
         const data = await res.json();
         const parsed = this.extractJson(data?.choices?.[0]?.message?.content || '');
         if (!parsed?.title || !Array.isArray(parsed?.body)) throw new Error('AI 输出结构不符合要求');
         return parsed;
-      } catch (e) {
+      } catch (e: any) {
+        if (e?.nonRetryable) {
+          throw new BadRequestException(`AI 写稿失败: ${e.message}`);
+        }
         console.error('[ContentGeneration] text attempt', attempt, 'failed:', e.message);
         if (attempt === retries) throw new BadRequestException(`AI 写稿失败: ${e.message}`);
       }
     }
   }
 
-  /** 从模型输出中稳健提取 JSON（容忍围栏/前后杂文） */
+  /** 从模型输出中稳健提取 JSON（容忍思考草稿/围栏/前后杂文） */
   private extractJson(raw: string): any {
-    const cleaned = raw.replace(/```json|```/g, '').trim();
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
-    if (start < 0 || end <= start) throw new Error('未找到 JSON');
-    return JSON.parse(cleaned.slice(start, end + 1));
+    const cleaned = raw
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/```json|```/g, '')
+      .trim();
+    // 1) 整体解析优先
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      // 继续
+    }
+    // 2) 括号配对截取完整 JSON 对象（容忍思考草稿/前后杂文；优先含 title+body 的候选）
+    let from = 0;
+    let fallback: any;
+    for (;;) {
+      const start = cleaned.indexOf('{', from);
+      if (start < 0) {
+        if (fallback !== undefined) return fallback;
+        throw new Error('未找到 JSON');
+      }
+      let depth = 0;
+      let inStr = false;
+      let esc = false;
+      let complete = false;
+      for (let i = start; i < cleaned.length; i++) {
+        const ch = cleaned[i];
+        if (esc) { esc = false; continue; }
+        if (ch === '\\') { esc = true; continue; }
+        if (ch === '"') inStr = !inStr;
+        if (inStr) continue;
+        if (ch === '{') depth++;
+        else if (ch === '}') {
+          depth--;
+          if (depth === 0) {
+            complete = true;
+            try {
+              const obj = JSON.parse(cleaned.slice(start, i + 1));
+              if (obj?.title && Array.isArray(obj?.body)) return obj; // 正稿特征命中
+              if (fallback === undefined) fallback = obj; // 思考草稿等，留作兜底
+              from = start + 1;
+            } catch {
+              from = start + 1; // 无效片段，继续找下一个
+            }
+            break;
+          }
+        }
+      }
+      if (!complete) {
+        if (fallback !== undefined) return fallback;
+        throw new Error('JSON 不完整或无法解析');
+      }
+    }
   }
 
   /** seedream 配图 → 下载 → MinIO（contents/covers/） */
@@ -177,14 +262,14 @@ export class ContentGenerationService {
           prompt: `夜空鎏金插画风格，深靛蓝星空，金色星芒与星座连线，东方玄学氛围，梦幻细腻，无文字。${imagePrompt}`,
           size: '1024x1024', response_format: 'url', watermark: false,
         }),
-      }, 120_000);
-      if (!res.ok) throw new Error(`image api http ${res.status}`);
+      }, 120_000, 'AI配图');
+      if (!res.ok) throw new Error(`image api http ${res.status}: ${(await res.text()).slice(0, 200)}`);
       const data = await res.json();
       const url: string = data?.data?.[0]?.url;
       if (!url) throw new Error('未返回图片');
       const isJpeg = /\.jpe?g(\?|$)/i.test(url);
-      const imgRes = await this.fetchWithTimeout(url, { method: 'GET' }, 60_000);
-      if (!imgRes.ok) throw new Error('图片下载失败');
+      const imgRes = await this.fetchWithTimeout(url, { method: 'GET' }, 60_000, '封面图下载');
+      if (!imgRes.ok) throw new Error(`封面下载失败 http ${imgRes.status}`);
       const buffer = Buffer.from(await imgRes.arrayBuffer());
       const fileName = `content-cover-${Date.now()}-${crypto.randomBytes(4).toString('hex')}.${isJpeg ? 'jpg' : 'png'}`;
       return await this.minio.uploadFile(buffer, fileName, isJpeg ? 'image/jpeg' : 'image/png', 'contents/covers');
@@ -218,11 +303,16 @@ export class ContentGenerationService {
     return created;
   }
 
-  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 120_000): Promise<Response> {
+  private async fetchWithTimeout(url: string, options: RequestInit = {}, timeout = 120_000, label = '请求'): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeout);
     try {
       return await fetch(url, { ...options, signal: controller.signal });
+    } catch (error) {
+      if ((error as Error)?.name === 'AbortError') {
+        throw new Error(`请求超时(${Math.round(timeout / 1000)}s): ${label}`);
+      }
+      throw error;
     } finally {
       clearTimeout(timer);
     }
