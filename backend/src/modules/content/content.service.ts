@@ -132,7 +132,9 @@ export class ContentService {
       id: r.id, type: r.type, title: r.title, summary: r.summary, coverImage: r.coverImage,
       tags: r.tags, zodiacSigns: r.zodiacSigns, likeCount: r.likeCount, viewCount: r.viewCount,
       publishAt: r.publishAt, serializeGroupId: r.serializeGroupId, orderNum: r.orderNum,
-      topic: r.topic, isRead: ctx.finishedIds.has(r.id), isContinue: ctx.continueId === r.id,
+      topic: r.topic,
+      // feed 中 finished 已被排除，isRead 表示"打开过未读完"（前端"看过"角标）
+      isRead: ctx.openedIds.has(r.id), isContinue: ctx.continueId === r.id,
       isExplore: false,
     };
   }
@@ -142,7 +144,7 @@ export class ContentService {
     const r = await this.prisma.content.findUnique({
       where: { id }, include: { topic: { select: { slug: true, name: true } } },
     });
-    if (!r || r.status !== 'published') throw new NotFoundException('内容不存在');
+    if (!r || r.status !== 'published' || r.publishAt > new Date()) throw new NotFoundException('内容不存在');
     await this.prisma.content.update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
     const related = await this.prisma.content.findMany({
       where: { status: 'published', id: { not: id }, topicId: r.topicId, publishAt: { lte: new Date() } },
@@ -150,7 +152,7 @@ export class ContentService {
     });
     const fallback = related.length < 3
       ? await this.prisma.content.findMany({
-          where: { status: 'published', id: { notIn: [id, ...related.map((x) => x.id)] } },
+          where: { status: 'published', id: { notIn: [id, ...related.map((x) => x.id)] }, publishAt: { lte: new Date() } },
           orderBy: { likeCount: 'desc' }, take: 3 - related.length,
         })
       : [];
@@ -221,14 +223,14 @@ export class ContentService {
     const today = beijingDate();
     const todayStart = new Date(`${today}T00:00:00+08:00`);
     const todayList = await this.prisma.content.findMany({
-      where: { status: 'published', type: 'daily_astro', publishAt: { gte: todayStart } },
+      where: { status: 'published', type: 'daily_astro', publishAt: { gte: todayStart, lte: new Date() } },
       orderBy: { publishAt: 'desc' }, take: 20,
     });
     const todayAstro = todayList.find((c) => (c.tags as string[]).includes('今日星象'));
     if (todayAstro) return this.pickDailyFields(todayAstro);
     if (todayList.length) return this.pickDailyFields(todayList[0]);
     const fallback = await this.prisma.content.findFirst({
-      where: { status: 'published', type: 'daily_astro', publishAt: { gte: new Date(Date.now() - 7 * 24 * 3600_000) } },
+      where: { status: 'published', type: 'daily_astro', publishAt: { gte: new Date(Date.now() - 7 * 24 * 3600_000), lte: new Date() } },
       orderBy: { publishAt: 'desc' },
     });
     return fallback ? this.pickDailyFields(fallback) : null;
