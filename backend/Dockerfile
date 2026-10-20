@@ -15,9 +15,7 @@ RUN groupadd -g 1001 nodejs && \
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm config set registry https://registry.npmmirror.com && \
-    npm install --omit=dev
+# node_modules 直接从本地构建产物复制（本地 npm install 后已完整可用）
 
 # Copy local node_modules (from local build)
 COPY node_modules ./node_modules/
