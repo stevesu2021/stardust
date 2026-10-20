@@ -27,8 +27,9 @@ export class ContentController {
 
   @Get('sign/today')
   async signToday(@Req() req: Request, @Query('anonId') anonId?: string) {
-    // 匿名 id 钳制（防恶意膨胀 UserDailySign 表；登录用户不受影响）
-    const key = (anonId || '').slice(0, 64);
+    // 匿名 id 防护：trim + 长度 64 + 字符白名单（防 UserDailySign 表恶意膨胀；登录用户不受影响）
+    const raw = (anonId || '').trim().slice(0, 64);
+    const key = /^[\w-]+$/.test(raw) ? raw : '';
     const userKey = (req as any).user?.sub || (key ? `anon:${key}` : null);
     if (!userKey) return { sign: null, needAnonId: true };
     return this.contentService.drawSign(userKey);
