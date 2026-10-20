@@ -2,7 +2,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ContentGenerationService } from './content-generation.service';
-import { scoreFeed, FeedCandidate, FeedContext } from './content-scoring.utils';
+import { scoreFeed, FeedCandidate, FeedContext, beijingDate, locateCursor, pickExploration } from './content-scoring.utils';
 import { createHash } from 'crypto';
 
 @Injectable()
@@ -11,10 +11,6 @@ export class ContentService {
     private readonly prisma: PrismaService,
     private readonly generation: ContentGenerationService,
   ) {}
-
-  private beijingDate(d = new Date()): string {
-    return new Date(d.getTime() + 8 * 3600_000).toISOString().slice(0, 10);
-  }
 
   /** 当日星象相关标签（水逆窗口 → "水逆"） */
   private getActiveTags(): string[] {
@@ -32,10 +28,16 @@ export class ContentService {
     }
     const rows = await this.prisma.content.findMany({
       where, orderBy: { publishAt: 'desc' }, take: 300,
-      include: { topic: { select: { slug: true, name: true } } },
+      // 不拉 body Json（单篇数 KB，feed 卡片用不到）
+      select: {
+        id: true, type: true, title: true, summary: true, coverImage: true,
+        tags: true, zodiacSigns: true, likeCount: true, viewCount: true, finishCount: true,
+        publishAt: true, serializeGroupId: true, orderNum: true, topicId: true,
+        topic: { select: { slug: true, name: true } },
+      },
     });
 
-    const today = this.beijingDate();
+    const today = beijingDate();
     const ctx: FeedContext = {
       today, userId: userId || 'guest', userZodiac: null,
       finishedIds: new Set<string>(), openedIds: new Set<string>(),
@@ -84,14 +86,11 @@ export class ContentService {
     const { ranked } = scoreFeed(candidates, ctx, new Date());
 
     // cursor 分页：定位 cursor 在排序结果中的位置，取下一页
-    let start = 0;
-    if (cursor) {
-      const idx = ranked.findIndex((c) => c.id === cursor);
-      start = idx >= 0 ? idx + 1 : 0;
-    }
-    let page = ranked.slice(start, start + lim).map((c) => this.decorate(rows.find((r) => r.id === c.id)!, ctx));
+    const start = locateCursor(ranked, cursor);
+    const mainPage = ranked.slice(start, start + lim);
+    const page = mainPage.map((c) => this.decorate(rows.find((r) => r.id === c.id)!, ctx));
 
-    // 探索位（仅首页）：20% 名额从近 14 天未接触栏目随机取
+    // 探索位（仅首页）：20% 名额从近 14 天未接触栏目随机取；探索项不推进 nextCursor
     if (userId && !cursor) {
       const since = new Date(Date.now() - 14 * 24 * 3600_000);
       const touchedRows = await this.prisma.userContentProgress.findMany({
@@ -103,26 +102,29 @@ export class ContentService {
             where: { id: { in: touchedRows.map((t) => t.contentId) } }, select: { topicId: true },
           })
         : [];
-      const touched = new Set(touchedContents.map((t) => t.topicId));
-      const exploreSlots = Math.floor(lim / 5);
-      for (let i = 0; i < exploreSlots; i++) {
-        const pool = ranked.slice(start + lim).filter((c) => !touched.has(c.topicId) && !page.some((p) => p.id === c.id));
-        if (!pool.length) break;
-        const pick = pool[Math.floor(Math.random() * pool.length)];
+      const touchedTopicIds = new Set(touchedContents.map((t) => t.topicId));
+      const picks = pickExploration(
+        ranked, start, lim, Math.floor(lim / 5),
+        (c) => !touchedTopicIds.has(c.topicId),
+        new Set(page.map((p) => p.id)),
+      );
+      for (const pick of picks) {
         const item = this.decorate(rows.find((r) => r.id === pick.id)!, ctx);
         item.isExplore = true;
         page.push(item);
       }
     }
 
-    const last = page[page.length - 1];
+    // nextCursor 永远取主切片末位（探索项不推进游标，避免翻页整段跳过主列表中段）
+    const nextCursor = mainPage.length < lim ? null : mainPage[mainPage.length - 1]?.id ?? null;
+
     // 断点续读：上次浏览位置（仅当落在当前页数据内时返回；复用已查的 feedCursor）
     let resume: { contentId: string; index: number } | null = null;
     if (userId && feedCursor?.cursor) {
       const idx = page.findIndex((p) => p.id === feedCursor!.cursor);
       if (idx >= 0) resume = { contentId: feedCursor.cursor, index: idx };
     }
-    return { items: page, nextCursor: page.length < lim ? null : last?.id ?? null, resume };
+    return { items: page, nextCursor, resume };
   }
 
   private decorate(r: any, ctx: FeedContext) {
@@ -216,7 +218,7 @@ export class ContentService {
    * tags 为 Json 字段，采用代码过滤（与生成服务 runDailyPipeline 的幂等判断一致）。
    */
   async getDaily() {
-    const today = this.beijingDate();
+    const today = beijingDate();
     const todayStart = new Date(`${today}T00:00:00+08:00`);
     const todayList = await this.prisma.content.findMany({
       where: { status: 'published', type: 'daily_astro', publishAt: { gte: todayStart } },
@@ -238,7 +240,7 @@ export class ContentService {
 
   /** 每日一签：同用户同日确定（先查记录，无则 hash 抽签并落库） */
   async drawSign(userKey: string) {
-    const date = this.beijingDate();
+    const date = beijingDate();
     const existed = await this.prisma.userDailySign.findUnique({
       where: { userId_date: { userId: userKey, date } },
     }).catch(() => null);

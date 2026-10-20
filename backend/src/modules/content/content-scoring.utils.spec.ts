@@ -1,4 +1,4 @@
-import { baseScore, seededJitter, scoreFeed, FeedCandidate, FeedContext } from './content-scoring.utils';
+import { baseScore, seededJitter, scoreFeed, beijingDate, locateCursor, pickExploration, FeedCandidate, FeedContext } from './content-scoring.utils';
 
 const mk = (over: Partial<FeedCandidate> = {}): FeedCandidate => ({
   id: 'c1', likeCount: 0, viewCount: 0, finishCount: 0,
@@ -116,5 +116,64 @@ describe('scoreFeed 边界用例', () => {
       const { ranked } = scoreFeed([hot, next], ctx({ userId: `u${i}`, continueId: 'next' }), new Date());
       expect(ranked[0].id).toBe('next');
     }
+  });
+});
+
+describe('beijingDate', () => {
+  it('UTC 时间转北京日期', () => {
+    expect(beijingDate(new Date('2026-10-19T16:30:00Z'))).toBe('2026-10-20');
+    expect(beijingDate(new Date('2026-10-19T01:30:00Z'))).toBe('2026-10-19');
+  });
+});
+
+describe('locateCursor', () => {
+  const cs = [mk({ id: 'a' }), mk({ id: 'b' }), mk({ id: 'c' })];
+  it('无 cursor 回首页', () => {
+    expect(locateCursor(cs, null)).toBe(0);
+    expect(locateCursor(cs, undefined)).toBe(0);
+  });
+  it('命中返回下一位置', () => {
+    expect(locateCursor(cs, 'b')).toBe(2);
+  });
+  it('未命中回首页', () => {
+    expect(locateCursor(cs, 'zz')).toBe(0);
+  });
+});
+
+describe('pickExploration', () => {
+  const cs = Array.from({ length: 30 }, (_, i) => mk({ id: `c${i}`, topicId: i < 15 ? 't1' : 't2' }));
+  it('只从未上页与未接触栏目取，数量受 slots 限制', () => {
+    const picks = pickExploration(
+      cs, 0, 10, 2,
+      (c) => c.topicId === 't2',
+      new Set(Array.from({ length: 10 }, (_, i) => `c${i}`)),
+      () => 0.5,
+    );
+    expect(picks.length).toBe(2);
+    for (const p of picks) {
+      expect(p.topicId).toBe('t2');
+      expect(['c10', 'c11', 'c12', 'c13', 'c14']).not.toContain(p.id);
+    }
+  });
+  it('候选池空时返回空', () => {
+    const picks = pickExploration(cs.slice(0, 5), 0, 10, 2, () => true, new Set());
+    expect(picks).toEqual([]);
+  });
+});
+
+describe('翻页契约（回归：探索项不推进游标）', () => {
+  it('30 项 limit 10 翻 3 页全覆盖且无跳过', () => {
+    const cs = Array.from({ length: 30 }, (_, i) => mk({ id: `c${i}` }));
+    const seen: string[] = [];
+    let cursor: string | null = null;
+    for (let round = 0; round < 4; round++) {
+      const start = locateCursor(cs, cursor);
+      const mainPage = cs.slice(start, start + 10);
+      if (!mainPage.length) break;
+      seen.push(...mainPage.map((c) => c.id));
+      cursor = mainPage.length < 10 ? null : mainPage[mainPage.length - 1].id;
+      if (!cursor) break;
+    }
+    expect(seen).toEqual(cs.map((c) => c.id));
   });
 });

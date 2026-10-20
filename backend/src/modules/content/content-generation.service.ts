@@ -6,6 +6,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { MinioService } from '../../common/minio/minio.service';
 import { Solar } from 'lunar-javascript';
+import { beijingDate } from './content-scoring.utils';
 
 const PERSONA = `你是"星契集"的首席星象师「观星先生」，文风：东方玄学的诗意 + 温暖理性，面向 18-35 岁中文读者，篇幅克制。
 价值观边界：不做封建迷信绝对论断；不涉性别对立与敏感政治；不提供医疗、投资建议；多用"可能/建议/不妨"的开放表达。`;
@@ -59,7 +60,7 @@ export class ContentGenerationService {
 
   /** 天文历法引擎：程序计算事实，AI 只润色不造事实（按北京日期取农历，避免服务器时区错位） */
   getAstroFacts(date = new Date()): AstroFacts {
-    const iso = this.beijingDate(date);
+    const iso = beijingDate(date);
     const [y, m, d] = iso.split('-').map(Number);
     const lunar = Solar.fromYmd(y, m, d).getLunar();
     const mercuryRetro = MERCURY_RETRO.some(([a, b]) => iso >= a && iso <= b);
@@ -76,10 +77,6 @@ export class ContentGenerationService {
       ji: lunar.getDayJi().slice(0, 4),
       mercuryRetro,
     };
-  }
-
-  private beijingDate(d = new Date()): string {
-    return new Date(d.getTime() + 8 * 3600_000).toISOString().slice(0, 10);
   }
 
   /** 每日管线：今日星象 + 黄历宜忌（幂等：当日已生成的不重复生成） */
