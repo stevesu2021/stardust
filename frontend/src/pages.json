@@ -31,6 +31,25 @@
       }
     },
     {
+      "path": "pages/content/list",
+      "style": {
+        "navigationBarTitleText": "星读",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/content/detail",
+      "style": {
+        "navigationBarTitleText": "星读"
+      }
+    },
+    {
+      "path": "pages/content/sign",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/astrology/celebrities",
       "style": {
         "navigationBarTitleText": "星座名人"

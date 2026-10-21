@@ -92,6 +92,9 @@
         </view>
       </view>
 
+      <!-- 今日星读卡 -->
+      <ContentDailyCard />
+
       <!-- 功能入口 -->
       <SectionTitle title="功能入口" kicker="✦" />
 
@@ -123,6 +126,7 @@ import { useUserStore } from '@/store/user'
 import { api } from '@/api'
 import DatingMatchModal from '@/components/DatingMatchModal.vue'
 import DailyFortuneCard from '@/components/DailyFortuneCard.vue'
+import ContentDailyCard from '@/components/ContentDailyCard.vue'
 import SectionTitle from '@/components/section-title/section-title.vue'
 import { zodiacSymbol, dominantElement, activeElements } from '@/utils/astro'
 import { goToTab } from '@/utils/navigation'
@@ -152,6 +156,7 @@ const features: FeatureItem[] = [
   { title: '看面相', desc: 'AI 面相分析', url: '/pages/face/reading', symbol: '☯', accent: false },
   { title: 'MBTI 测试', desc: '人格类型分析', url: '/pages/mbti/result', symbol: '◈', accent: false },
   { title: '恋爱CP', desc: '十二星座配对', url: '/pages/love-cp/index', symbol: '❦', accent: false },
+  { title: '星读', desc: '星座·情感·她的星空', url: '/pages/content/list', symbol: '❂', accent: false },
 ]
 
 // 问候语（按当前时刻变化）

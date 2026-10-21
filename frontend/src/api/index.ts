@@ -289,5 +289,21 @@ export const api = {
     },
     getById: (id: string) => request({ url: `/products/${id}`, method: 'GET' }),
     getCategories: () => request({ url: '/products/categories/list', method: 'GET' })
+  },
+  content: {
+    getFeed: (params: { topic?: string; cursor?: string; limit?: number } = {}) => {
+      const q: string[] = []
+      if (params.topic) q.push(`topic=${encodeURIComponent(params.topic)}`)
+      if (params.cursor) q.push(`cursor=${params.cursor}`)
+      if (params.limit) q.push(`limit=${params.limit}`)
+      return request({ url: `/contents/feed${q.length ? '?' + q.join('&') : ''}` })
+    },
+    getDetail: (id: string) => request({ url: `/contents/${id}` }),
+    reportProgress: (id: string, status: 'opened' | 'finished') =>
+      request({ url: `/contents/${id}/progress`, method: 'POST', data: { status } }),
+    toggleLike: (id: string) => request({ url: `/contents/${id}/like`, method: 'POST' }),
+    getDaily: () => request({ url: '/contents/daily' }),
+    getSignToday: (anonId?: string) =>
+      request({ url: `/contents/sign/today${anonId ? `?anonId=${encodeURIComponent(anonId)}` : ''}` }),
   }
 }
