@@ -84,7 +84,10 @@ const loading = ref(false)
 const loadingMore = ref(false)
 const resumeId = ref<string | null>(null)
 
+let reqSeq = 0 // 请求序号：快速切 Tab 时丢弃过期的慢响应
+
 async function loadFeed(reset: boolean) {
+  const seq = ++reqSeq
   if (reset) {
     loading.value = true
     cursor.value = null
@@ -99,6 +102,7 @@ async function loadFeed(reset: boolean) {
       cursor: reset ? undefined : cursor.value || undefined,
       limit: 10,
     })
+    if (seq !== reqSeq) return // 过期响应（Tab 已切换），丢弃
     if (reset) {
       items.value = res.items || []
       resumeId.value = res.resume?.contentId || null
@@ -107,10 +111,14 @@ async function loadFeed(reset: boolean) {
     }
     cursor.value = res.nextCursor
   } catch (e: any) {
+    if (seq !== reqSeq) return // 过期请求的报错不提示，避免干扰当前 Tab
     uni.showToast({ title: e.message || '加载失败', icon: 'none' })
   } finally {
-    loading.value = false
-    loadingMore.value = false
+    // 有更新的请求在途时不动 loading 标志，避免骨架屏被过期响应提前撤掉
+    if (seq === reqSeq) {
+      loading.value = false
+      loadingMore.value = false
+    }
   }
 }
 

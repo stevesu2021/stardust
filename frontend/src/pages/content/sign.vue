@@ -75,6 +75,27 @@ function getAnonId(): string {
   // #endif
 }
 
+// 当日已抽标记：本地日期串（yyyy-MM-dd，本地时区），跨天键名变化即回到未抽态
+const drawnKey = `sd-sign-drawn:${new Date().toLocaleDateString('sv')}`
+
+function hasDrawnToday(): boolean {
+  // #ifdef H5
+  return localStorage.getItem(drawnKey) === '1'
+  // #endif
+  // #ifndef H5
+  return uni.getStorageSync(drawnKey) === '1'
+  // #endif
+}
+
+function markDrawnToday() {
+  // #ifdef H5
+  localStorage.setItem(drawnKey, '1')
+  // #endif
+  // #ifndef H5
+  uni.setStorageSync(drawnKey, '1')
+  // #endif
+}
+
 async function fetchSign() {
   try {
     const res: any = await api.content.getSignToday(getAnonId())
@@ -94,6 +115,8 @@ async function draw() {
     await new Promise((r) => setTimeout(r, 1200)) // 仪式感停顿
     sign.value = res.sign
     alreadyDrawn.value = !!res.alreadyDrawn
+    // 定签成功写入当日标记（含 alreadyDrawn=true 的换设备场景），下次进页恢复已抽态
+    if (res.sign) markDrawnToday()
   } catch (e: any) {
     uni.showToast({ title: e.message || '抽取失败', icon: 'none' })
   } finally {
@@ -105,7 +128,9 @@ function goBack() {
   uni.navigateBack({ fail: () => uni.reLaunch({ url: '/pages/index/index' }) })
 }
 
-fetchSign()
+// 后端 GET sign/today 语义是"无记录则立即抽签落库"，未抽前不能调，否则抽签仪式永远跳过；
+// 仅当本地已有当日标记（已抽过）时才调 fetchSign 恢复已抽态
+if (hasDrawnToday()) fetchSign()
 </script>
 
 <style lang="scss" scoped>

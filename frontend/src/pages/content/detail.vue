@@ -75,6 +75,26 @@ const scrollHeight = ref('100vh')
 // #endif
 const scrollTop = ref(0)
 
+// 视口高度（完读判定用），初始化取一次
+const viewportHeight = uni.getSystemInfoSync().windowHeight
+
+// 与 api/index.ts 同源：H5 从 localStorage['user']、非 H5 从 uni.getStorageSync('user') 取 token
+function isLoggedIn(): boolean {
+  let token = ''
+  try {
+    // #ifdef H5
+    const userStr = localStorage.getItem('user')
+    token = userStr ? JSON.parse(userStr).token || '' : ''
+    // #endif
+    // #ifndef H5
+    token = uni.getStorageSync('user')?.token || ''
+    // #endif
+  } catch (e) {
+    // ignore
+  }
+  return !!token
+}
+
 // 后端 body 契约为数组 [{h, p}]；容错：单对象形态也归一为数组
 const bodyBlocks = computed<any[]>(() => {
   const b = detail.value?.body
@@ -91,7 +111,8 @@ async function load(id: string) {
     liked.value = !!res.liked
     likeCount.value = res.likeCount ?? 0
     uni.setNavigationBarTitle({ title: res.title?.slice(0, 8) || '星读' })
-    api.content.reportProgress(id, 'opened').catch(() => {})
+    // 游客无 token，上报必 401 并被全局拦截器踢到登录页；未登录直接跳过上报
+    if (isLoggedIn()) api.content.reportProgress(id, 'opened').catch(() => {})
   } catch (e: any) {
     uni.showToast({ title: e.message || '加载失败', icon: 'none' })
   } finally {
@@ -109,14 +130,16 @@ function like() {
 
 function reportFinished() {
   if (finishedReported.value || !contentId.value) return
+  if (!isLoggedIn()) return // 游客进度无处落库，不上报
   finishedReported.value = true
   api.content.reportProgress(contentId.value, 'finished').catch(() => {})
 }
 
 // 滚动 80% 判定完读（scroll-view 事件）
+// scrollTop 上限为 scrollHeight - 视口高，需补上视口高再计算实际阅读比例
 function onScroll(e: any) {
   const { scrollTop: st, scrollHeight: sh } = e.detail
-  if (sh > 0 && st / sh >= 0.8) reportFinished()
+  if (sh > 0 && (st + viewportHeight) / sh >= 0.8) reportFinished()
 }
 
 // 兜底：原生页面滚动（H5 下 scroll-view 不触发时由 onPageScroll 兜底）
