@@ -22,6 +22,7 @@ import { DailyFortuneModule } from './modules/daily-fortune/daily-fortune.module
 import { FamousPeopleModule } from './modules/famous-people/famous-people.module';
 import { ProductModule } from './modules/product/product.module';
 import { ContentModule } from './modules/content/content.module';
+import { SeoModule } from './modules/seo/seo.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { ContentModule } from './modules/content/content.module';
     FamousPeopleModule,
     ProductModule,
     ContentModule,
+    SeoModule,
   ],
   // 登录态前即可触发的公共端点全部受全局限流保护
   providers: [

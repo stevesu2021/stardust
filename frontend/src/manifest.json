@@ -56,7 +56,10 @@
     "enable": false
   },
   "h5": {
-    "title": "星契集 - AI占星 · 面相手相解读"
+    "title": "星契集 - 星座运势·每日星象·AI占卜·面相手相解读",
+    "router": {
+      "mode": "history"
+    }
   },
   "vueVersion": "3"
 }

@@ -106,8 +106,8 @@ export function request<T = any>(options: RequestOptions): Promise<T> {
             uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
             setTimeout(() => {
               // #ifdef H5
-              // H5 下 uni.reLaunch 有静默失效的版本 bug，用 hash 导航兜底
-              window.location.hash = '#/pages/auth/login'
+              // history 路由下用整页导航（uni.reLaunch 生产构建静默失效的兜底）
+              window.location.href = '/pages/auth/login'
               // #endif
               // #ifndef H5
               uni.reLaunch({ url: '/pages/auth/login' })
