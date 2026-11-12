@@ -6326,7 +6326,7 @@ let SeoService = class SeoService {
             return { success: false, message: 'BAIDU_PUSH_TOKEN 未配置，跳过推送（于百度搜索资源平台获取后配置到服务器 env）' };
         }
         try {
-            const res = await fetch(`http://data.zz.baidu.com/urls?site=www.xingqiji.xyz&token=${this.baiduToken}`, {
+            const res = await fetch(`http://data.zz.baidu.com/urls?site=https://www.xingqiji.xyz&token=${this.baiduToken}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
                 body: urls.join('\n'),

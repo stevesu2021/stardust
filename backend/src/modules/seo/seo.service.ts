@@ -55,7 +55,7 @@ export class SeoService {
     }
     try {
       const res = await fetch(
-        `http://data.zz.baidu.com/urls?site=www.xingqiji.xyz&token=${this.baiduToken}`,
+        `http://data.zz.baidu.com/urls?site=https://www.xingqiji.xyz&token=${this.baiduToken}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain' },
