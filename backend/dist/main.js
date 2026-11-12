@@ -50,6 +50,7 @@ const daily_fortune_module_1 = __webpack_require__(63);
 const famous_people_module_1 = __webpack_require__(66);
 const product_module_1 = __webpack_require__(69);
 const content_module_1 = __webpack_require__(72);
+const seo_module_1 = __webpack_require__(73);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -87,6 +88,7 @@ exports.AppModule = AppModule = __decorate([
             famous_people_module_1.FamousPeopleModule,
             product_module_1.ProductModule,
             content_module_1.ContentModule,
+            seo_module_1.SeoModule,
         ],
         providers: [
             {
@@ -6219,17 +6221,18 @@ exports.ContentModule = void 0;
 const common_1 = __webpack_require__(2);
 const prisma_module_1 = __webpack_require__(7);
 const auth_module_1 = __webpack_require__(13);
-const content_service_1 = __webpack_require__(73);
-const content_controller_1 = __webpack_require__(78);
-const content_generation_service_1 = __webpack_require__(74);
-const content_admin_controller_1 = __webpack_require__(80);
-const content_cron_service_1 = __webpack_require__(82);
+const seo_module_1 = __webpack_require__(73);
+const content_service_1 = __webpack_require__(79);
+const content_controller_1 = __webpack_require__(83);
+const content_generation_service_1 = __webpack_require__(80);
+const content_admin_controller_1 = __webpack_require__(85);
+const content_cron_service_1 = __webpack_require__(86);
 let ContentModule = class ContentModule {
 };
 exports.ContentModule = ContentModule;
 exports.ContentModule = ContentModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule],
+        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule, seo_module_1.SeoModule],
         controllers: [content_controller_1.ContentController, content_admin_controller_1.ContentAdminController],
         providers: [content_service_1.ContentService, content_generation_service_1.ContentGenerationService, content_cron_service_1.ContentCronService],
     })
@@ -6247,6 +6250,291 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SeoModule = void 0;
+const common_1 = __webpack_require__(2);
+const prisma_module_1 = __webpack_require__(7);
+const seo_service_1 = __webpack_require__(74);
+const seo_controller_1 = __webpack_require__(75);
+const seo_admin_controller_1 = __webpack_require__(76);
+let SeoModule = class SeoModule {
+};
+exports.SeoModule = SeoModule;
+exports.SeoModule = SeoModule = __decorate([
+    (0, common_1.Module)({
+        imports: [prisma_module_1.PrismaModule],
+        controllers: [seo_controller_1.SeoController, seo_admin_controller_1.SeoAdminController],
+        providers: [seo_service_1.SeoService],
+        exports: [seo_service_1.SeoService],
+    })
+], SeoModule);
+
+
+/***/ }),
+/* 74 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SeoService = void 0;
+const common_1 = __webpack_require__(2);
+const config_1 = __webpack_require__(4);
+const prisma_service_1 = __webpack_require__(8);
+const SITE = 'https://www.xingqiji.xyz';
+let SeoService = class SeoService {
+    constructor(prisma, configService) {
+        this.prisma = prisma;
+        this.configService = configService;
+        this.logger = new common_1.Logger('Seo');
+        this.baiduToken = this.configService.get('BAIDU_PUSH_TOKEN') || '';
+    }
+    async buildSitemap() {
+        const articles = await this.prisma.content.findMany({
+            where: { status: 'published', publishAt: { lte: new Date() } },
+            orderBy: { publishAt: 'desc' },
+            take: 500,
+            select: { id: true, publishAt: true },
+        });
+        const entries = [
+            { loc: `${SITE}/`, changefreq: 'daily', priority: '1.0' },
+            { loc: `${SITE}/pages/content/list`, changefreq: 'daily', priority: '0.9' },
+            { loc: `${SITE}/pages/content/sign`, changefreq: 'daily', priority: '0.7' },
+            ...articles.map((a) => ({
+                loc: `${SITE}/pages/content/detail?id=${a.id}`,
+                lastmod: a.publishAt,
+                changefreq: 'weekly',
+                priority: '0.8',
+            })),
+        ];
+        const body = entries
+            .map((u) => `  <url><loc>${u.loc}</loc>${u.lastmod ? `<lastmod>${new Date(u.lastmod).toISOString()}</lastmod>` : ''}${u.changefreq ? `<changefreq>${u.changefreq}</changefreq>` : ''}<priority>${u.priority}</priority></url>`)
+            .join('\n');
+        return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>`;
+    }
+    async pushToBaidu(urls) {
+        if (!this.baiduToken) {
+            return { success: false, message: 'BAIDU_PUSH_TOKEN 未配置，跳过推送（于百度搜索资源平台获取后配置到服务器 env）' };
+        }
+        try {
+            const res = await fetch(`http://data.zz.baidu.com/urls?site=www.xingqiji.xyz&token=${this.baiduToken}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: urls.join('\n'),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data?.success === true) {
+                this.logger.log(`百度推送成功: remain=${data.remain} success=${data.success_count ?? ''}`);
+                return { success: true, message: JSON.stringify(data) };
+            }
+            this.logger.warn(`百度推送失败: http=${res.status} ${JSON.stringify(data).slice(0, 200)}`);
+            return { success: false, message: `http=${res.status} ${JSON.stringify(data).slice(0, 200)}` };
+        }
+        catch (e) {
+            this.logger.warn(`百度推送异常: ${e.message}`);
+            return { success: false, message: e.message };
+        }
+    }
+    async pushAllToBaidu() {
+        const articles = await this.prisma.content.findMany({
+            where: { status: 'published', publishAt: { lte: new Date() } },
+            select: { id: true },
+            take: 500,
+        });
+        const urls = [
+            `${SITE}/`,
+            `${SITE}/pages/content/list`,
+            ...articles.map((a) => `${SITE}/pages/content/detail?id=${a.id}`),
+        ];
+        const r = await this.pushToBaidu(urls);
+        return { ...r, count: urls.length };
+    }
+};
+exports.SeoService = SeoService;
+exports.SeoService = SeoService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof prisma_service_1.PrismaService !== "undefined" && prisma_service_1.PrismaService) === "function" ? _a : Object, typeof (_b = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _b : Object])
+], SeoService);
+
+
+/***/ }),
+/* 75 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SeoController = void 0;
+const common_1 = __webpack_require__(2);
+const seo_service_1 = __webpack_require__(74);
+let SeoController = class SeoController {
+    constructor(seoService) {
+        this.seoService = seoService;
+    }
+    async sitemap() {
+        return this.seoService.buildSitemap();
+    }
+};
+exports.SeoController = SeoController;
+__decorate([
+    (0, common_1.Get)('sitemap'),
+    (0, common_1.Header)('Content-Type', 'application/xml; charset=utf-8'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", typeof (_b = typeof Promise !== "undefined" && Promise) === "function" ? _b : Object)
+], SeoController.prototype, "sitemap", null);
+exports.SeoController = SeoController = __decorate([
+    (0, common_1.Controller)('seo'),
+    __metadata("design:paramtypes", [typeof (_a = typeof seo_service_1.SeoService !== "undefined" && seo_service_1.SeoService) === "function" ? _a : Object])
+], SeoController);
+
+
+/***/ }),
+/* 76 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SeoAdminController = void 0;
+const common_1 = __webpack_require__(2);
+const admin_guard_1 = __webpack_require__(77);
+const seo_service_1 = __webpack_require__(74);
+let SeoAdminController = class SeoAdminController {
+    constructor(seoService) {
+        this.seoService = seoService;
+    }
+    async pushBaidu() {
+        return this.seoService.pushAllToBaidu();
+    }
+};
+exports.SeoAdminController = SeoAdminController;
+__decorate([
+    (0, common_1.Post)('push-baidu'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], SeoAdminController.prototype, "pushBaidu", null);
+exports.SeoAdminController = SeoAdminController = __decorate([
+    (0, common_1.Controller)('admin/seo'),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    __metadata("design:paramtypes", [typeof (_a = typeof seo_service_1.SeoService !== "undefined" && seo_service_1.SeoService) === "function" ? _a : Object])
+], SeoAdminController);
+
+
+/***/ }),
+/* 77 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.AdminGuard = void 0;
+const common_1 = __webpack_require__(2);
+const crypto = __importStar(__webpack_require__(78));
+let AdminGuard = class AdminGuard {
+    canActivate(context) {
+        const request = context.switchToHttp().getRequest();
+        const expected = process.env.ADMIN_TOKEN;
+        if (!expected)
+            throw new common_1.ForbiddenException('管理员令牌未配置');
+        const got = String(request.headers['x-admin-token'] ?? '');
+        const a = Buffer.from(got);
+        const b = Buffer.from(expected);
+        if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+            throw new common_1.ForbiddenException('无效的管理员令牌');
+        }
+        return true;
+    }
+};
+exports.AdminGuard = AdminGuard;
+exports.AdminGuard = AdminGuard = __decorate([
+    (0, common_1.Injectable)()
+], AdminGuard);
+
+
+/***/ }),
+/* 78 */
+/***/ ((module) => {
+
+module.exports = require("crypto");
+
+/***/ }),
+/* 79 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
@@ -6255,9 +6543,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContentService = void 0;
 const common_1 = __webpack_require__(2);
 const prisma_service_1 = __webpack_require__(8);
-const content_generation_service_1 = __webpack_require__(74);
-const content_scoring_utils_1 = __webpack_require__(77);
-const crypto_1 = __webpack_require__(75);
+const content_generation_service_1 = __webpack_require__(80);
+const content_scoring_utils_1 = __webpack_require__(82);
+const crypto_1 = __webpack_require__(78);
 let ContentService = class ContentService {
     constructor(prisma, generation) {
         this.prisma = prisma;
@@ -6498,7 +6786,7 @@ exports.ContentService = ContentService = __decorate([
 
 
 /***/ }),
-/* 74 */
+/* 80 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -6549,11 +6837,11 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContentGenerationService = void 0;
 const common_1 = __webpack_require__(2);
 const config_1 = __webpack_require__(4);
-const crypto = __importStar(__webpack_require__(75));
+const crypto = __importStar(__webpack_require__(78));
 const prisma_service_1 = __webpack_require__(8);
 const minio_service_1 = __webpack_require__(11);
-const lunar_javascript_1 = __webpack_require__(76);
-const content_scoring_utils_1 = __webpack_require__(77);
+const lunar_javascript_1 = __webpack_require__(81);
+const content_scoring_utils_1 = __webpack_require__(82);
 const PERSONA = `你是"星契集"的首席星象师「观星先生」，文风：东方玄学的诗意 + 温暖理性，面向 18-35 岁中文读者，篇幅克制。
 价值观边界：不做封建迷信绝对论断；不涉性别对立与敏感政治；不提供医疗、投资建议；多用"可能/建议/不妨"的开放表达。`;
 const OUTPUT_RULES = `只输出严格 JSON（禁止 JSON 以外任何文字，禁止 markdown 代码块围栏）：
@@ -6850,19 +7138,13 @@ exports.ContentGenerationService = ContentGenerationService = __decorate([
 
 
 /***/ }),
-/* 75 */
-/***/ ((module) => {
-
-module.exports = require("crypto");
-
-/***/ }),
-/* 76 */
+/* 81 */
 /***/ ((module) => {
 
 module.exports = require("lunar-javascript");
 
 /***/ }),
-/* 77 */
+/* 82 */
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 
@@ -6873,7 +7155,7 @@ exports.pickExploration = pickExploration;
 exports.seededJitter = seededJitter;
 exports.baseScore = baseScore;
 exports.scoreFeed = scoreFeed;
-const crypto_1 = __webpack_require__(75);
+const crypto_1 = __webpack_require__(78);
 function beijingDate(d = new Date()) {
     return new Date(d.getTime() + 8 * 3600_000).toISOString().slice(0, 10);
 }
@@ -6925,7 +7207,7 @@ function scoreFeed(candidates, ctx, now) {
 
 
 /***/ }),
-/* 78 */
+/* 83 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -6946,9 +7228,9 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContentController = void 0;
 const common_1 = __webpack_require__(2);
 const express_1 = __webpack_require__(32);
-const content_service_1 = __webpack_require__(73);
+const content_service_1 = __webpack_require__(79);
 const jwt_auth_guard_1 = __webpack_require__(19);
-const optional_jwt_guard_1 = __webpack_require__(79);
+const optional_jwt_guard_1 = __webpack_require__(84);
 let ContentController = class ContentController {
     constructor(contentService) {
         this.contentService = contentService;
@@ -7040,7 +7322,7 @@ exports.ContentController = ContentController = __decorate([
 
 
 /***/ }),
-/* 79 */
+/* 84 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -7083,7 +7365,7 @@ exports.OptionalJwtGuard = OptionalJwtGuard = __decorate([
 
 
 /***/ }),
-/* 80 */
+/* 85 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -7104,8 +7386,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContentAdminController = void 0;
 const common_1 = __webpack_require__(2);
 const prisma_service_1 = __webpack_require__(8);
-const admin_guard_1 = __webpack_require__(81);
-const content_generation_service_1 = __webpack_require__(74);
+const admin_guard_1 = __webpack_require__(77);
+const content_generation_service_1 = __webpack_require__(80);
 let ContentAdminController = class ContentAdminController {
     constructor(prisma, generation) {
         this.prisma = prisma;
@@ -7248,76 +7530,7 @@ exports.ContentAdminController = ContentAdminController = __decorate([
 
 
 /***/ }),
-/* 81 */
-/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
-
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
-    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
-    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-};
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.AdminGuard = void 0;
-const common_1 = __webpack_require__(2);
-const crypto = __importStar(__webpack_require__(75));
-let AdminGuard = class AdminGuard {
-    canActivate(context) {
-        const request = context.switchToHttp().getRequest();
-        const expected = process.env.ADMIN_TOKEN;
-        if (!expected)
-            throw new common_1.ForbiddenException('管理员令牌未配置');
-        const got = String(request.headers['x-admin-token'] ?? '');
-        const a = Buffer.from(got);
-        const b = Buffer.from(expected);
-        if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
-            throw new common_1.ForbiddenException('无效的管理员令牌');
-        }
-        return true;
-    }
-};
-exports.AdminGuard = AdminGuard;
-exports.AdminGuard = AdminGuard = __decorate([
-    (0, common_1.Injectable)()
-], AdminGuard);
-
-
-/***/ }),
-/* 82 */
+/* 86 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -7330,15 +7543,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var _a;
+var _a, _b;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ContentCronService = void 0;
 const common_1 = __webpack_require__(2);
 const schedule_1 = __webpack_require__(6);
-const content_generation_service_1 = __webpack_require__(74);
+const content_generation_service_1 = __webpack_require__(80);
+const seo_service_1 = __webpack_require__(74);
+const SITE = 'https://www.xingqiji.xyz';
 let ContentCronService = class ContentCronService {
-    constructor(contentGeneration) {
+    constructor(contentGeneration, seo) {
         this.contentGeneration = contentGeneration;
+        this.seo = seo;
         this.logger = new common_1.Logger('ContentCron');
     }
     async dailyPipeline() {
@@ -7346,6 +7562,12 @@ let ContentCronService = class ContentCronService {
         try {
             const r = await this.contentGeneration.runDailyPipeline();
             this.logger.log(`每日内容完成: astro=${r.astro} almanac=${r.almanac}`);
+            const pushed = await this.seo.pushToBaidu([
+                `${SITE}/pages/content/detail?id=${r.astro}`,
+                `${SITE}/pages/content/detail?id=${r.almanac}`,
+                `${SITE}/pages/content/list`,
+            ]);
+            this.logger.log(`百度推送: success=${pushed.success} ${pushed.message.slice(0, 100)}`);
         }
         catch (e) {
             this.logger.error('每日内容管线失败', e);
@@ -7361,12 +7583,12 @@ __decorate([
 ], ContentCronService.prototype, "dailyPipeline", null);
 exports.ContentCronService = ContentCronService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [typeof (_a = typeof content_generation_service_1.ContentGenerationService !== "undefined" && content_generation_service_1.ContentGenerationService) === "function" ? _a : Object])
+    __metadata("design:paramtypes", [typeof (_a = typeof content_generation_service_1.ContentGenerationService !== "undefined" && content_generation_service_1.ContentGenerationService) === "function" ? _a : Object, typeof (_b = typeof seo_service_1.SeoService !== "undefined" && seo_service_1.SeoService) === "function" ? _b : Object])
 ], ContentCronService);
 
 
 /***/ }),
-/* 83 */
+/* 87 */
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 
@@ -7454,7 +7676,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(1);
 const common_1 = __webpack_require__(2);
 const app_module_1 = __webpack_require__(3);
-const all_exceptions_filter_1 = __webpack_require__(83);
+const all_exceptions_filter_1 = __webpack_require__(87);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
