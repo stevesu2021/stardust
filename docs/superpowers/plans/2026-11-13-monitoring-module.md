@@ -850,5 +850,5 @@ git add -A backend && git commit -m "chore(deploy): v20261114 监控模块上线
 - [ ] 邮件含 3 个模型健康状态/耗时，异常红色高亮 + 错误摘要
 - [ ] POST /api/admin/monitoring/run 可手动触发（x-admin-token）
 - [ ] umami/模型/SMTP 任一故障不阻断报告生成
-- [ ] 单测 13 例全过（窗口计算 8 + 渲染 5）
+- [ ] 单测 11 例全过（窗口计算 6 + 渲染 5）
 - [ ] 无任何密钥进入 git（umami 密码/授权码只在服务器脚本）

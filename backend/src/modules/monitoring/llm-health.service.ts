@@ -41,13 +41,13 @@ export class LlmHealthService {
     if (!url || !key || !model) return { name, usage, ok: false, skipped: true, latencyMs: 0 };
     const t0 = Date.now();
     try {
-      const res = await fetchWithTimeout(`${url.replace(/\/$/, '')}/chat/completions`, {
+      // max_tokens 256：兼容 thinking 类模型（推理链较长，过小会误报异常）
+      const { ok, status, data } = await requestJsonWithTimeout(`${url.replace(/\/$/, '')}/chat/completions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-        body: JSON.stringify({ model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 16, temperature: 0 }),
+        body: JSON.stringify({ model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 256, temperature: 0 }),
       });
-      const data: any = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(`http ${res.status}: ${JSON.stringify(data).slice(0, 150)}`);
+      if (!ok) throw new Error(`http ${status}: ${JSON.stringify(data).slice(0, 150)}`);
       if (!data?.choices?.[0]?.message) throw new Error('响应缺少 choices[0].message');
       return { name, usage, ok: true, skipped: false, latencyMs: Date.now() - t0 };
     } catch (e: any) {
@@ -61,7 +61,7 @@ export class LlmHealthService {
     const t0 = Date.now();
     try {
       // 与生产 generateCover 相同参数（已知可用组合），只验证不出图内容
-      const res = await fetchWithTimeout(url, {
+      const { ok, status, data } = await requestJsonWithTimeout(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
         body: JSON.stringify({
@@ -69,8 +69,7 @@ export class LlmHealthService {
           response_format: 'url', watermark: false,
         }),
       });
-      const data: any = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(`http ${res.status}: ${JSON.stringify(data).slice(0, 150)}`);
+      if (!ok) throw new Error(`http ${status}: ${JSON.stringify(data).slice(0, 150)}`);
       if (!data?.data?.[0]?.url && !data?.data?.[0]?.b64_json) throw new Error('响应缺少 data[0].url');
       return { name, usage, ok: true, skipped: false, latencyMs: Date.now() - t0 };
     } catch (e: any) {
@@ -79,11 +78,14 @@ export class LlmHealthService {
   }
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+/** fetch + json 读取全程置于同一超时窗口（响应头快但 body 挂起也能及时中止） */
+async function requestJsonWithTimeout(url: string, init: RequestInit): Promise<{ ok: boolean; status: number; data: any }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   try {
-    return await fetch(url, { ...init, signal: controller.signal });
+    const res = await fetch(url, { ...init, signal: controller.signal });
+    const data = await res.json().catch(() => null);
+    return { ok: res.ok, status: res.status, data };
   } catch (e: any) {
     if (e?.name === 'AbortError') throw new Error(`请求超时(${PROBE_TIMEOUT_MS / 1000}s)`);
     throw e;

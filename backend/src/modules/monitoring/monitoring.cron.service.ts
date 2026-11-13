@@ -9,8 +9,8 @@ export class MonitoringCronService {
 
   constructor(private readonly monitoring: MonitoringService) {}
 
-  // UTC 00:00 = 北京时间 08:00；MONITOR_ENABLED 未开启时跳过（手动接口不受限）
-  @Cron('0 0 * * *')
+  // 显式声明 UTC 时区：00:00 UTC = 北京时间 08:00（不依赖容器默认时区）
+  @Cron('0 0 * * *', { timeZone: 'UTC' })
   async dailyReport() {
     if (process.env.MONITOR_ENABLED !== 'true') return;
     try {
