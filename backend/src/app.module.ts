@@ -23,6 +23,7 @@ import { FamousPeopleModule } from './modules/famous-people/famous-people.module
 import { ProductModule } from './modules/product/product.module';
 import { ContentModule } from './modules/content/content.module';
 import { SeoModule } from './modules/seo/seo.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { SeoModule } from './modules/seo/seo.module';
     ProductModule,
     ContentModule,
     SeoModule,
+    MonitoringModule,
   ],
   // 登录态前即可触发的公共端点全部受全局限流保护
   providers: [
