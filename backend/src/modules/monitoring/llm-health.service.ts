@@ -9,31 +9,35 @@ const PROBE_TIMEOUT_MS = 30_000;
 export class LlmHealthService {
   constructor(private readonly config: ConfigService) {}
 
-  /** 三模型并行探活；单个失败/超时只记结果，永不 reject */
+  /** 三模型并行探活；单个失败/超时只记结果，永不 reject。显示名取实际配置的模型名 */
   async checkAll(): Promise<LlmCheckResult[]> {
     return Promise.all([
       this.checkChat(
-        'doubao-seed-2.1-lite', '文本生成（主模型）',
+        '文本生成（主模型）',
         this.config.get<string>('XIAOMIMIMO_API_URL') || '',
         this.config.get<string>('XIAOMIMIMO_API_KEY') || '',
         this.config.get<string>('XIAOMIMIMO_MODEL') || '',
+        'doubao(XIAOMIMIMO)',
       ),
       this.checkChat(
-        'qwen3-vl-32b-thinking', '面相手相兜底',
+        '面相手相兜底',
         this.config.get<string>('DASHSCOPE_BASE_URL') || '',
         this.config.get<string>('DASHSCOPE_API_KEY') || '',
         this.config.get<string>('DASHSCOPE_MODEL') || '',
+        'qwen(DASHSCOPE)',
       ),
       this.checkImage(
-        'doubao-seedream-5.0-pro', '封面/头像配图',
+        '封面/头像配图',
         this.config.get<string>('ARK_T2I_URL') || '',
         this.config.get<string>('ARK_T2I_API_KEY') || '',
         this.config.get<string>('ARK_T2I_MODEL') || '',
+        'seedream(ARK)',
       ),
     ]);
   }
 
-  private async checkChat(name: string, usage: string, url: string, key: string, model: string): Promise<LlmCheckResult> {
+  private async checkChat(usage: string, url: string, key: string, model: string, fallbackName: string): Promise<LlmCheckResult> {
+    const name = model || fallbackName;
     if (!url || !key || !model) return { name, usage, ok: false, skipped: true, latencyMs: 0 };
     const t0 = Date.now();
     try {
@@ -51,7 +55,8 @@ export class LlmHealthService {
     }
   }
 
-  private async checkImage(name: string, usage: string, url: string, key: string, model: string): Promise<LlmCheckResult> {
+  private async checkImage(usage: string, url: string, key: string, model: string, fallbackName: string): Promise<LlmCheckResult> {
+    const name = model || fallbackName;
     if (!url || !key || !model) return { name, usage, ok: false, skipped: true, latencyMs: 0 };
     const t0 = Date.now();
     try {
