@@ -122,7 +122,7 @@ ${llmHtml}
       ? [`数据暂不可用：${stats.error}`]
       : stats.rows.map(
           (r, i) =>
-            `${r.date.slice(5)}  PV=${r.pv}  独立访客=${r.uv}  访问次数=${r.visits}  环比=${trendLabel(r.pv, i + 1 < stats.rows.length ? stats.rows[i + 1].pv : null)}`,
+            `${r.date}  PV=${r.pv}  独立访客=${r.uv}  访问次数=${r.visits}  环比=${trendLabel(r.pv, i + 1 < stats.rows.length ? stats.rows[i + 1].pv : null)}`,
         )),
     '',
     '【大模型健康检查】',
