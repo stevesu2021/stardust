@@ -3,7 +3,10 @@
   <view v-if="daily" class="daily-card sd-reveal-2" @click="open">
     <image v-if="daily.coverImage" :src="daily.coverImage" class="cover" mode="aspectFill" />
     <view class="info">
-      <text class="kicker">✦ 今日星读</text>
+      <view class="kicker-row">
+        <text class="kicker">✦ 今日星读</text>
+        <text class="more-entry" @click.stop="goList">更多 ›</text>
+      </view>
       <text class="title">{{ daily.title }}</text>
       <text class="summary">{{ daily.summary }}</text>
       <text class="more">阅读全文 ›</text>
@@ -30,6 +33,10 @@ function open() {
     uni.navigateTo({ url: `/pages/content/detail?id=${daily.value.id}` })
   }
 }
+
+function goList() {
+  uni.navigateTo({ url: '/pages/content/list' })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -53,11 +60,23 @@ function open() {
     flex-direction: column;
   }
 
+  .kicker-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8rpx;
+  }
+
   .kicker {
     font-size: 20rpx;
     color: $sd-gold;
     letter-spacing: 2rpx;
-    margin-bottom: 8rpx;
+  }
+
+  .more-entry {
+    font-size: 20rpx;
+    color: $sd-text-3;
+    padding: 4rpx 8rpx;
   }
 
   .title {

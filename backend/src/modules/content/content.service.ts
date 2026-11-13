@@ -148,12 +148,12 @@ export class ContentService {
     await this.prisma.content.update({ where: { id }, data: { viewCount: { increment: 1 } } }).catch(() => {});
     const related = await this.prisma.content.findMany({
       where: { status: 'published', id: { not: id }, topicId: r.topicId, publishAt: { lte: new Date() } },
-      orderBy: { publishAt: 'desc' }, take: 3,
+      orderBy: { publishAt: 'desc' }, take: 6,
     });
-    const fallback = related.length < 3
+    const fallback = related.length < 6
       ? await this.prisma.content.findMany({
           where: { status: 'published', id: { notIn: [id, ...related.map((x) => x.id)] }, publishAt: { lte: new Date() } },
-          orderBy: { likeCount: 'desc' }, take: 3 - related.length,
+          orderBy: { likeCount: 'desc' }, take: 6 - related.length,
         })
       : [];
     let liked = false; let isFinished = false;

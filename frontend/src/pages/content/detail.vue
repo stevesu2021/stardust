@@ -35,10 +35,17 @@
 
         <!-- 相关阅读 -->
         <view v-if="detail.related?.length" class="related">
-          <SectionTitle kicker="✦" title="相关阅读" />
+          <SectionTitle kicker="✦" title="继续阅读" />
           <view v-for="r in detail.related" :key="r.id" class="related-item" @click="goRelated(r.id)">
-            <text class="r-title">{{ r.title }}</text>
+            <image v-if="r.coverImage" :src="r.coverImage" class="r-cover" mode="aspectFill" />
+            <view class="r-info">
+              <text class="r-title">{{ r.title }}</text>
+              <text v-if="r.summary" class="r-summary">{{ r.summary }}</text>
+            </view>
             <text class="r-more">›</text>
+          </view>
+          <view class="all-articles" @click="goList">
+            <text>✦ 查看全部星读文章</text>
           </view>
         </view>
 
@@ -151,6 +158,10 @@ function goRelated(id: string) {
   uni.redirectTo({ url: `/pages/content/detail?id=${id}` })
 }
 
+function goList() {
+  uni.navigateTo({ url: '/pages/content/list' })
+}
+
 onLoad((opts: any) => {
   contentId.value = opts?.id || ''
   if (contentId.value) load(contentId.value)
@@ -261,24 +272,64 @@ onLoad((opts: any) => {
   .related-item {
     @include sd-card-surface();
     margin-bottom: 16rpx;
-    padding: 24rpx;
+    padding: 20rpx;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16rpx;
+    gap: 20rpx;
+
+    .r-cover {
+      width: 140rpx;
+      height: 140rpx;
+      border-radius: $sd-radius;
+      flex-shrink: 0;
+    }
+
+    .r-info {
+      flex: 1;
+      min-width: 0;
+    }
 
     .r-title {
-      flex: 1;
       font-size: 26rpx;
       color: $sd-text;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    }
+
+    .r-summary {
+      margin-top: 8rpx;
+      font-size: 20rpx;
+      color: $sd-text-3;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .r-more {
       color: $sd-gold;
       font-size: 28rpx;
+      flex-shrink: 0;
+    }
+  }
+
+  .all-articles {
+    margin-top: 10rpx;
+    padding: 20rpx;
+    border-radius: $sd-radius-pill;
+    border: 1rpx solid rgba(232, 195, 106, 0.45);
+    text-align: center;
+    font-size: 26rpx;
+    color: $sd-gold;
+    letter-spacing: 2rpx;
+
+    &:active {
+      opacity: 0.8;
+      transform: scale(0.98);
     }
   }
 }

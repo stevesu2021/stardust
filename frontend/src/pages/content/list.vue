@@ -58,6 +58,10 @@
       />
 
       <view v-if="loadingMore" class="loading-more"><text>✶ 正在加载…</text></view>
+      <view v-else-if="cursor" class="load-more-btn" @click="loadFeed(false)">
+        <text>✦ 加载更多文章</text>
+      </view>
+      <view v-else-if="items.length" class="loading-more"><text>— 没有更多了 —</text></view>
     </view>
   </view>
 </template>
@@ -279,5 +283,23 @@ loadFeed(true)
   padding: 24rpx;
   font-size: 24rpx;
   color: $sd-text-3;
+}
+
+.load-more-btn {
+  margin: 10rpx auto 30rpx;
+  padding: 20rpx;
+  width: 360rpx;
+  box-sizing: border-box;
+  border-radius: $sd-radius-pill;
+  border: 1rpx solid rgba(232, 195, 106, 0.45);
+  text-align: center;
+  font-size: 26rpx;
+  color: $sd-gold;
+  letter-spacing: 2rpx;
+
+  &:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
 }
 </style>
