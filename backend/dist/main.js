@@ -51,6 +51,7 @@ const famous_people_module_1 = __webpack_require__(66);
 const product_module_1 = __webpack_require__(69);
 const content_module_1 = __webpack_require__(72);
 const seo_module_1 = __webpack_require__(73);
+const monitoring_module_1 = __webpack_require__(87);
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -89,6 +90,7 @@ exports.AppModule = AppModule = __decorate([
             product_module_1.ProductModule,
             content_module_1.ContentModule,
             seo_module_1.SeoModule,
+            monitoring_module_1.MonitoringModule,
         ],
         providers: [
             {
@@ -7599,6 +7601,535 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MonitoringModule = void 0;
+const common_1 = __webpack_require__(2);
+const umami_stats_service_1 = __webpack_require__(88);
+const llm_health_service_1 = __webpack_require__(91);
+const mailer_service_1 = __webpack_require__(92);
+const monitoring_service_1 = __webpack_require__(94);
+const monitoring_cron_service_1 = __webpack_require__(95);
+const monitoring_admin_controller_1 = __webpack_require__(96);
+let MonitoringModule = class MonitoringModule {
+};
+exports.MonitoringModule = MonitoringModule;
+exports.MonitoringModule = MonitoringModule = __decorate([
+    (0, common_1.Module)({
+        providers: [umami_stats_service_1.UmamiStatsService, llm_health_service_1.LlmHealthService, mailer_service_1.MailerService, monitoring_service_1.MonitoringService, monitoring_cron_service_1.MonitoringCronService],
+        controllers: [monitoring_admin_controller_1.MonitoringAdminController],
+    })
+], MonitoringModule);
+
+
+/***/ }),
+/* 88 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.UmamiStatsService = void 0;
+const common_1 = __webpack_require__(2);
+const config_1 = __webpack_require__(4);
+const pg_1 = __webpack_require__(89);
+const monitoring_report_util_1 = __webpack_require__(90);
+let UmamiStatsService = class UmamiStatsService {
+    constructor(config) {
+        this.config = config;
+    }
+    async getDailyStats() {
+        const url = this.config.get('UMAMI_DB_URL') || '';
+        const websiteId = this.config.get('UMAMI_WEBSITE_ID') || '';
+        if (!url || !websiteId) {
+            return { rows: [], error: !url ? 'UMAMI_DB_URL 未配置' : 'UMAMI_WEBSITE_ID 未配置' };
+        }
+        const { days, startUtc, endUtc } = (0, monitoring_report_util_1.reportWindow)();
+        const pool = new pg_1.Pool({ connectionString: url, max: 1, connectionTimeoutMillis: 8000 });
+        try {
+            const res = await pool.query(`SELECT to_char(created_at AT TIME ZONE 'Asia/Shanghai', 'YYYY-MM-DD') AS d,
+                count(*) AS pv,
+                count(DISTINCT session_id) AS uv,
+                count(DISTINCT visit_id) AS visits
+         FROM website_event
+         WHERE website_id = $1 AND created_at >= $2 AND created_at < $3
+         GROUP BY 1`, [websiteId, startUtc, endUtc]);
+            const rows = res.rows.map((r) => ({
+                date: r.d, pv: Number(r.pv), uv: Number(r.uv), visits: Number(r.visits),
+            }));
+            return { rows: (0, monitoring_report_util_1.fillMissingDays)(rows, days) };
+        }
+        catch (e) {
+            return { rows: [], error: `umami 查询失败: ${String(e?.message || e).slice(0, 200)}` };
+        }
+        finally {
+            await pool.end().catch(() => { });
+        }
+    }
+};
+exports.UmamiStatsService = UmamiStatsService;
+exports.UmamiStatsService = UmamiStatsService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+], UmamiStatsService);
+
+
+/***/ }),
+/* 89 */
+/***/ ((module) => {
+
+module.exports = require("pg");
+
+/***/ }),
+/* 90 */
+/***/ ((__unused_webpack_module, exports) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.beijingDateStr = beijingDateStr;
+exports.beijingMidnightUtc = beijingMidnightUtc;
+exports.reportWindow = reportWindow;
+exports.fillMissingDays = fillMissingDays;
+exports.renderReport = renderReport;
+const BJ_OFFSET_MS = 8 * 3600_000;
+function beijingDateStr(now = new Date()) {
+    return new Date(now.getTime() + BJ_OFFSET_MS).toISOString().slice(0, 10);
+}
+function beijingMidnightUtc(dateStr) {
+    return new Date(`${dateStr}T00:00:00+08:00`);
+}
+function reportWindow(now = new Date()) {
+    const endUtc = beijingMidnightUtc(beijingDateStr(now));
+    const startUtc = new Date(endUtc.getTime() - 4 * 86400_000);
+    const days = [];
+    for (let i = 1; i <= 4; i++) {
+        days.push(beijingDateStr(new Date(endUtc.getTime() - i * 86400_000)));
+    }
+    return { days, startUtc, endUtc };
+}
+function fillMissingDays(rows, days) {
+    const map = new Map(rows.map((r) => [r.date, r]));
+    return days.map((d) => map.get(d) || { date: d, pv: 0, uv: 0, visits: 0 });
+}
+function trendLabel(cur, prev) {
+    if (prev === null)
+        return '—';
+    if (prev === 0)
+        return cur > 0 ? '新增' : '—';
+    const pct = Math.round(((cur - prev) / prev) * 100);
+    return pct > 0 ? `+${pct}%` : `${pct}%`;
+}
+function trendColor(cur, prev) {
+    if (prev === null || prev === 0)
+        return '#8a8f9e';
+    return cur >= prev ? '#7ec699' : '#e06c75';
+}
+function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function renderReport(input) {
+    const { reportDate, stats, llm } = input;
+    const statsHtml = stats.error
+        ? `<p style="color:#e06c75;font-size:13px;">数据暂不可用：${escapeHtml(stats.error)}</p>`
+        : `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#e8e6df;">
+<thead><tr style="color:#8a8f9e;"><th align="left" style="padding:6px 4px;">日期</th><th>PV</th><th>独立访客</th><th>访问次数</th><th>环比</th></tr></thead>
+<tbody>${stats.rows
+            .map((r, i) => {
+            const prev = i + 1 < stats.rows.length ? stats.rows[i + 1].pv : null;
+            return `<tr style="border-top:1px solid #23263a;">
+<td style="padding:6px 4px;">${r.date.slice(5)}</td>
+<td align="center">${r.pv}</td><td align="center">${r.uv}</td><td align="center">${r.visits}</td>
+<td align="center" style="color:${trendColor(r.pv, prev)};">${trendLabel(r.pv, prev)}</td></tr>`;
+        })
+            .join('')}</tbody></table>`;
+    const llmHtml = `<table style="width:100%;border-collapse:collapse;font-size:13px;color:#e8e6df;">
+<thead><tr style="color:#8a8f9e;"><th align="left" style="padding:6px 4px;">模型</th><th align="left">用途</th><th>状态</th><th>耗时</th></tr></thead>
+<tbody>${llm
+        .map((c) => `<tr style="border-top:1px solid #23263a;${c.ok ? '' : 'color:#e06c75;'}">
+<td style="padding:6px 4px;">${escapeHtml(c.name)}</td>
+<td>${escapeHtml(c.usage)}</td>
+<td align="center">${c.skipped ? '未配置，跳过' : c.ok ? '● 正常' : '▲ 异常'}</td>
+<td align="center">${c.skipped ? '—' : `${(c.latencyMs / 1000).toFixed(1)}s`}</td></tr>
+${c.ok || c.skipped ? '' : `<tr><td colspan="4" style="padding:0 4px 8px;color:#e06c75;font-size:12px;">${escapeHtml(c.error || '未知错误')}</td></tr>`}`)
+        .join('')}</tbody></table>`;
+    const html = `<div style="background:#0b0e1a;padding:24px;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;">
+<div style="text-align:center;padding:8px 0 16px;">
+<div style="font-size:20px;color:#e8c36a;letter-spacing:4px;">✦ 星契集监控日报 ✦</div>
+<div style="font-size:12px;color:#8a8f9e;margin-top:6px;">${reportDate} · 系统自动生成</div></div>
+<h3 style="color:#e8c36a;border-left:3px solid #e8c36a;padding-left:8px;font-size:15px;margin:20px 0 8px;">访问量（近 4 天，北京时间）</h3>
+${statsHtml}
+<h3 style="color:#e8c36a;border-left:3px solid #e8c36a;padding-left:8px;font-size:15px;margin:24px 0 8px;">大模型健康检查</h3>
+${llmHtml}
+<p style="color:#565b6b;font-size:11px;margin-top:24px;">本邮件由星契集监控模块自动发送 · 每日 08:00（北京时间）</p></div>`;
+    const text = [
+        `星契集监控日报 ${reportDate}`,
+        '',
+        '【访问量（近 4 天）】',
+        ...(stats.error
+            ? [`数据暂不可用：${stats.error}`]
+            : stats.rows.map((r, i) => `${r.date}  PV=${r.pv}  独立访客=${r.uv}  访问次数=${r.visits}  环比=${trendLabel(r.pv, i + 1 < stats.rows.length ? stats.rows[i + 1].pv : null)}`)),
+        '',
+        '【大模型健康检查】',
+        ...llm.map((c) => `${c.name}（${c.usage}）：${c.skipped ? '未配置，跳过' : c.ok ? `● 正常 ${(c.latencyMs / 1000).toFixed(1)}s` : `▲ 异常 ${(c.latencyMs / 1000).toFixed(1)}s ${c.error || ''}`}`),
+    ].join('\n');
+    return { subject: `【星契集监控】${reportDate} 日报`, html, text };
+}
+
+
+/***/ }),
+/* 91 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LlmHealthService = void 0;
+const common_1 = __webpack_require__(2);
+const config_1 = __webpack_require__(4);
+const PROBE_TIMEOUT_MS = 30_000;
+let LlmHealthService = class LlmHealthService {
+    constructor(config) {
+        this.config = config;
+    }
+    async checkAll() {
+        return Promise.all([
+            this.checkChat('文本生成（主模型）', this.config.get('XIAOMIMIMO_API_URL') || '', this.config.get('XIAOMIMIMO_API_KEY') || '', this.config.get('XIAOMIMIMO_MODEL') || '', 'doubao(XIAOMIMIMO)'),
+            this.checkChat('面相手相兜底', this.config.get('DASHSCOPE_BASE_URL') || '', this.config.get('DASHSCOPE_API_KEY') || '', this.config.get('DASHSCOPE_MODEL') || '', 'qwen(DASHSCOPE)'),
+            this.checkImage('封面/头像配图', this.config.get('ARK_T2I_URL') || '', this.config.get('ARK_T2I_API_KEY') || '', this.config.get('ARK_T2I_MODEL') || '', 'seedream(ARK)'),
+        ]);
+    }
+    async checkChat(usage, url, key, model, fallbackName) {
+        const name = model || fallbackName;
+        if (!url || !key || !model)
+            return { name, usage, ok: false, skipped: true, latencyMs: 0 };
+        const t0 = Date.now();
+        try {
+            const res = await fetchWithTimeout(`${url.replace(/\/$/, '')}/chat/completions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+                body: JSON.stringify({ model, messages: [{ role: 'user', content: 'ping' }], max_tokens: 16, temperature: 0 }),
+            });
+            const data = await res.json().catch(() => null);
+            if (!res.ok)
+                throw new Error(`http ${res.status}: ${JSON.stringify(data).slice(0, 150)}`);
+            if (!data?.choices?.[0]?.message)
+                throw new Error('响应缺少 choices[0].message');
+            return { name, usage, ok: true, skipped: false, latencyMs: Date.now() - t0 };
+        }
+        catch (e) {
+            return { name, usage, ok: false, skipped: false, latencyMs: Date.now() - t0, error: String(e?.message || e).slice(0, 200) };
+        }
+    }
+    async checkImage(usage, url, key, model, fallbackName) {
+        const name = model || fallbackName;
+        if (!url || !key || !model)
+            return { name, usage, ok: false, skipped: true, latencyMs: 0 };
+        const t0 = Date.now();
+        try {
+            const res = await fetchWithTimeout(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+                body: JSON.stringify({
+                    model, prompt: '一枚金色五角星，深蓝纯色背景，极简', size: '1024x1024',
+                    response_format: 'url', watermark: false,
+                }),
+            });
+            const data = await res.json().catch(() => null);
+            if (!res.ok)
+                throw new Error(`http ${res.status}: ${JSON.stringify(data).slice(0, 150)}`);
+            if (!data?.data?.[0]?.url && !data?.data?.[0]?.b64_json)
+                throw new Error('响应缺少 data[0].url');
+            return { name, usage, ok: true, skipped: false, latencyMs: Date.now() - t0 };
+        }
+        catch (e) {
+            return { name, usage, ok: false, skipped: false, latencyMs: Date.now() - t0, error: String(e?.message || e).slice(0, 200) };
+        }
+    }
+};
+exports.LlmHealthService = LlmHealthService;
+exports.LlmHealthService = LlmHealthService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+], LlmHealthService);
+async function fetchWithTimeout(url, init) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+    try {
+        return await fetch(url, { ...init, signal: controller.signal });
+    }
+    catch (e) {
+        if (e?.name === 'AbortError')
+            throw new Error(`请求超时(${PROBE_TIMEOUT_MS / 1000}s)`);
+        throw e;
+    }
+    finally {
+        clearTimeout(timer);
+    }
+}
+
+
+/***/ }),
+/* 92 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MailerService = void 0;
+const common_1 = __webpack_require__(2);
+const config_1 = __webpack_require__(4);
+const nodemailer = __importStar(__webpack_require__(93));
+let MailerService = class MailerService {
+    constructor(config) {
+        this.config = config;
+    }
+    async send(report) {
+        const host = this.config.get('SMTP_HOST') || '';
+        const port = Number(this.config.get('SMTP_PORT') || 465);
+        const user = this.config.get('SMTP_USER') || '';
+        const pass = this.config.get('SMTP_PASS') || '';
+        const to = this.config.get('MONITOR_MAIL_TO') || '';
+        if (!host || !user || !pass || !to) {
+            return { sent: false, error: 'SMTP 未配置（需 SMTP_HOST/SMTP_USER/SMTP_PASS/MONITOR_MAIL_TO）' };
+        }
+        try {
+            const transport = nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+            await transport.sendMail({
+                from: `"星契集监控" <${user}>`,
+                to,
+                subject: report.subject,
+                html: report.html,
+                text: report.text,
+            });
+            return { sent: true };
+        }
+        catch (e) {
+            return { sent: false, error: `SMTP 发送失败: ${String(e?.message || e).slice(0, 200)}` };
+        }
+    }
+};
+exports.MailerService = MailerService;
+exports.MailerService = MailerService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof config_1.ConfigService !== "undefined" && config_1.ConfigService) === "function" ? _a : Object])
+], MailerService);
+
+
+/***/ }),
+/* 93 */
+/***/ ((module) => {
+
+module.exports = require("nodemailer");
+
+/***/ }),
+/* 94 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a, _b, _c;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MonitoringService = void 0;
+const common_1 = __webpack_require__(2);
+const umami_stats_service_1 = __webpack_require__(88);
+const llm_health_service_1 = __webpack_require__(91);
+const mailer_service_1 = __webpack_require__(92);
+const monitoring_report_util_1 = __webpack_require__(90);
+let MonitoringService = class MonitoringService {
+    constructor(umamiStats, llmHealth, mailer) {
+        this.umamiStats = umamiStats;
+        this.llmHealth = llmHealth;
+        this.mailer = mailer;
+        this.logger = new common_1.Logger('Monitoring');
+    }
+    async runDailyReport(trigger) {
+        const reportDate = (0, monitoring_report_util_1.beijingDateStr)();
+        const stats = await this.umamiStats.getDailyStats();
+        const llm = await this.llmHealth.checkAll();
+        const report = (0, monitoring_report_util_1.renderReport)({ reportDate, stats, llm });
+        const mail = await this.mailer.send(report);
+        const okCount = llm.filter((c) => c.ok).length;
+        this.logger.log(`日报完成 trigger=${trigger} 日期=${reportDate} 昨日PV=${stats.rows[0]?.pv ?? '-'} ` +
+            `模型正常=${okCount}/${llm.length} 邮件=${mail.sent ? '已发送' : `未发送(${mail.error || ''})`}`);
+        return { trigger, reportDate, stats, llm, mail };
+    }
+};
+exports.MonitoringService = MonitoringService;
+exports.MonitoringService = MonitoringService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof umami_stats_service_1.UmamiStatsService !== "undefined" && umami_stats_service_1.UmamiStatsService) === "function" ? _a : Object, typeof (_b = typeof llm_health_service_1.LlmHealthService !== "undefined" && llm_health_service_1.LlmHealthService) === "function" ? _b : Object, typeof (_c = typeof mailer_service_1.MailerService !== "undefined" && mailer_service_1.MailerService) === "function" ? _c : Object])
+], MonitoringService);
+
+
+/***/ }),
+/* 95 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MonitoringCronService = void 0;
+const common_1 = __webpack_require__(2);
+const schedule_1 = __webpack_require__(6);
+const monitoring_service_1 = __webpack_require__(94);
+let MonitoringCronService = class MonitoringCronService {
+    constructor(monitoring) {
+        this.monitoring = monitoring;
+        this.logger = new common_1.Logger('MonitoringCron');
+    }
+    async dailyReport() {
+        if (process.env.MONITOR_ENABLED !== 'true')
+            return;
+        try {
+            await this.monitoring.runDailyReport('cron');
+        }
+        catch (e) {
+            this.logger.error('监控日报执行失败', e);
+        }
+    }
+};
+exports.MonitoringCronService = MonitoringCronService;
+__decorate([
+    (0, schedule_1.Cron)('0 0 * * *'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], MonitoringCronService.prototype, "dailyReport", null);
+exports.MonitoringCronService = MonitoringCronService = __decorate([
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [typeof (_a = typeof monitoring_service_1.MonitoringService !== "undefined" && monitoring_service_1.MonitoringService) === "function" ? _a : Object])
+], MonitoringCronService);
+
+
+/***/ }),
+/* 96 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
+var _a;
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MonitoringAdminController = void 0;
+const common_1 = __webpack_require__(2);
+const admin_guard_1 = __webpack_require__(77);
+const monitoring_service_1 = __webpack_require__(94);
+let MonitoringAdminController = class MonitoringAdminController {
+    constructor(monitoring) {
+        this.monitoring = monitoring;
+    }
+    async run() {
+        return this.monitoring.runDailyReport('manual');
+    }
+};
+exports.MonitoringAdminController = MonitoringAdminController;
+__decorate([
+    (0, common_1.Post)('run'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], MonitoringAdminController.prototype, "run", null);
+exports.MonitoringAdminController = MonitoringAdminController = __decorate([
+    (0, common_1.Controller)('admin/monitoring'),
+    (0, common_1.UseGuards)(admin_guard_1.AdminGuard),
+    __metadata("design:paramtypes", [typeof (_a = typeof monitoring_service_1.MonitoringService !== "undefined" && monitoring_service_1.MonitoringService) === "function" ? _a : Object])
+], MonitoringAdminController);
+
+
+/***/ }),
+/* 97 */
+/***/ (function(__unused_webpack_module, exports, __webpack_require__) {
+
+
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.AllExceptionsFilter = void 0;
 const common_1 = __webpack_require__(2);
 let AllExceptionsFilter = class AllExceptionsFilter {
@@ -7676,7 +8207,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __webpack_require__(1);
 const common_1 = __webpack_require__(2);
 const app_module_1 = __webpack_require__(3);
-const all_exceptions_filter_1 = __webpack_require__(87);
+const all_exceptions_filter_1 = __webpack_require__(97);
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({
