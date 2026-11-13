@@ -129,6 +129,19 @@ async function load(id: string) {
 
 function like() {
   if (!contentId.value) return
+  // 游客可畅读全文；点赞需登录态，弹窗引导而非 401 强跳登录页
+  if (!isLoggedIn()) {
+    uni.showModal({
+      title: '登录后保存你的喜欢',
+      content: '游客可以阅读全部星读文章，登录后可点赞并记录阅读足迹',
+      confirmText: '去登录',
+      cancelText: '继续阅读',
+      success: (res: any) => {
+        if (res.confirm) uni.navigateTo({ url: '/pages/auth/login' })
+      },
+    })
+    return
+  }
   api.content.toggleLike(contentId.value).then((res: any) => {
     liked.value = res.liked
     likeCount.value = res.likeCount
